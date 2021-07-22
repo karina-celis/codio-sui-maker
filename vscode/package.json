@@ -16,7 +16,7 @@
     "bugs": {
         "url": "https://github.com/rbrisita/codio-sui/projects/2"
     },
-    "version": "0.8.0",
+    "version": "0.8.1",
     "license": "MIT",
     "publisher": "rbrisita",
     "icon": "media/icon.png",
@@ -124,7 +124,8 @@
             {
                 "command": "codio.stopCodio",
                 "category": "Codio",
-                "title": "Stop Codio"
+                "title": "Stop Codio",
+                "icon": "$(stop-circle)"
             },
             {
                 "command": "codio.pauseCodio",
@@ -285,9 +286,14 @@
                     "group": "navigation@2"
                 },
                 {
-                    "command": "codio.forward",
+                    "command": "codio.stopCodio",
                     "when": "inCodioSession && view == codioMessages",
                     "group": "navigation@3"
+                },
+                {
+                    "command": "codio.forward",
+                    "when": "inCodioSession && view == codioMessages",
+                    "group": "navigation@4"
                 }
             ]
         },

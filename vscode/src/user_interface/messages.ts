@@ -101,7 +101,7 @@ class UIController {
     this.statusBar.show();
 
     recorder.onTimerUpdate(async (currentTime) => {
-      this.statusBar.text = `$(pulse) Recording Codio $(mention) ${Math.round(currentTime)}s $(stop-circle)`;
+      this.statusBar.text = `$(pulse) Recording Codio $(mention) ${Math.round(currentTime)}s $(save)`;
     });
 
     recorder.process.then(() => {

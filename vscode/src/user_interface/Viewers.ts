@@ -39,7 +39,7 @@ export class CodiosDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
     const libraryCodios = await this.fsManager.getLibraryCodios();
 
     if (!workspaceCodios.length && !libraryCodios.length) {
-      return [new RecordActionItem()];
+      return [new RecordActionItem(this.extensionPath)];
     }
 
     if (!element) {
@@ -63,9 +63,12 @@ export class CodiosDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
  * Creates an interactive item to record a codio.
  */
 class RecordActionItem extends vscode.TreeItem {
-  constructor() {
+  constructor(extensionPath: string) {
     super('Record Codio');
-    this.iconPath = '$(record)';
+    this.iconPath = {
+      dark: join(extensionPath, 'media/dark/mic.svg'),
+      light: join(extensionPath, 'media/light/mic.svg'),
+    };
     this.tooltip = 'Record Codio to Project';
     this.command = {
       command: CommandNames.RECORD_CODIO_TO_PROJECT,

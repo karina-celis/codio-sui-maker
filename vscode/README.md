@@ -64,4 +64,4 @@ It exposes the following API for other extensions to use:
 > Note: We aim to expose more functionality in the future - such as dealing with user input mid-recording, support for execution and more. Please feel free to open an issue!
 
 ## Attribution
-Icons backward, play, pause, and forward are from [IcoMoon](https://icomoon.io/app/#/select).
+Icons backward, play, pause, forward, and mic are from [IcoMoon](https://icomoon.io/app/#/select).
