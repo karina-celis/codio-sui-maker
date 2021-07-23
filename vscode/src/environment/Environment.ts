@@ -33,11 +33,17 @@ export default class Environment {
   private static instance: IPlatform;
   private constructor() { }
 
-  public static getInstance() {
+  /**
+   * Find OS type and create associated class for it.
+   * @returns An instance of an IPlatform interface.
+   */
+  public static getInstance(): IPlatform {
     if (!Environment.instance) {
       const className = os_type();
       console.log('className', className);
-      Environment.instance = <IPlatform>new supported[className]();
+      if (supported[className]) {
+        Environment.instance = <IPlatform>new supported[className]();
+      }
     }
 
     return Environment.instance;

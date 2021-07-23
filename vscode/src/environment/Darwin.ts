@@ -1,3 +1,4 @@
+import { ChildProcess, exec } from "child_process";
 import { promiseExec } from "../utils";
 import IPlatform from "./IPlatform";
 
@@ -23,5 +24,37 @@ export default class Darwin implements IPlatform {
     console.log('Darwin normalizeFilePath', filePath);
 
     return filePath;
+  }
+
+  public async record(inputDevice: string, filePath: string): Promise<[ChildProcess, number]> {
+    console.log('Darwin record', inputDevice, filePath);
+
+    const process = exec(`ffmpeg -f avfoundation -i :"${inputDevice}" ${filePath}`);
+    const pid = process ? process.pid : null;
+    return [process, pid];
+  }
+
+  async pause(pid: number): Promise<void> {
+    console.log('Darwin pause', pid);
+
+    process.kill(pid, 'SIGSTOP');
+  }
+
+  async resume(pid: number): Promise<void> {
+    console.log('Darwin resume', pid);
+
+    process.kill(pid, 'SIGCONT');
+  }
+
+  async stopPlaying(pid: number): Promise<void> {
+    console.log('Darwin stopPlaying', pid);
+
+    process.kill(pid);
+  }
+
+  async stopRecording(pid: number, cp: ChildProcess): Promise<void> {
+    console.log('Darwin stopRecording', pid, cp);
+
+    process.kill(pid);
   }
 }

@@ -78,62 +78,6 @@ export function isTreeItem(obj = {}): boolean {
   return 'contextValue' in obj || 'command' in obj;
 }
 
-/**
- * Finds Process Id of given command. This is Windows based because of how
- * some third party package managers install shims.
- * @see https://github.com/lukesampson/scoop/issues/4376
- * @param cmd Command to find in the tasklist.
- * @returns Resolves to PID found or error strings if rejected.
- */
-export function findPID(cmd: string): Promise<number> {
-  return new Promise((res, rej) => {
-    let output = '';
-
-    const callAndParse = (cmd: string) => {
-      const taskListProcess = spawn('tasklist.exe', ['/FI', `"IMAGENAME eq ${cmd}"`, '/FO', 'CSV', '/NH'], {
-        shell: 'powershell.exe',
-      });
-
-      taskListProcess.stderr.on('data', (data) => {
-        rej(data.toString());
-      });
-
-      // Compile data received
-      taskListProcess.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-
-      taskListProcess.on('close', (code) => {
-        if (code) {
-          rej(`Error code: ${code}`);
-        }
-
-        const arr = getLastLine(output).split(',');
-        if (arr.length < 2) {
-          rej('PID in array not found.');
-        }
-
-        const pid = parseInt(arr[1]);
-        pid > 0 ? res(pid) : rej('Valid PID not found.');
-      });
-    };
-
-    callAndParse(cmd);
-  });
-}
-
-/**
- * Get the last non-empty line from the given output.
- * @param output Output to parse.
- * @returns String found or empty string on no data.
- */
-function getLastLine(output: string): string {
-  let lines = output.split('\n');
-  lines = lines.filter((line) => line.length);
-  const last = lines[lines.length - 1];
-  return last.replace(/"/gm, '');
-}
-
 let extensionPath = null;
 
 /**

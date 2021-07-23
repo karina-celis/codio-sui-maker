@@ -4,6 +4,7 @@ import FSManager from '../filesystem/FSManager';
 import { commands, Disposable, TextEditorSelectionChangeEvent, window } from 'vscode';
 import AudioHandler from '../audio/Audio';
 import Subtitles from './Subtitles';
+import Environment from '../environment/Environment';
 
 const IS_PLAYING = 'isPlaying';
 const IN_CODIO_SESSION = 'inCodioSession';
@@ -47,7 +48,7 @@ export default class Player {
         this.codeEditorPlayer.destroy();
       }
 
-      this.audioPlayer = new AudioHandler(FSManager.audioPath(this.codioPath));
+      this.audioPlayer = new AudioHandler(FSManager.audioPath(this.codioPath), Environment.getInstance());
 
       this.subtitlesPlayer = new Subtitles();
       loaded = await this.subtitlesPlayer.load(FSManager.subtitlesPath(this.codioPath));

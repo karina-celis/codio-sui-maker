@@ -1,3 +1,5 @@
+import { ChildProcess } from "child_process";
+
 export default interface IPlatform {
   /**
  * Check if dependencies need to be installed.
@@ -19,4 +21,36 @@ export default interface IPlatform {
    * @returns Normalized given file path.
    */
   normalizeFilePath(filePath: string): string;
+
+  /**
+   * Record using dependencies according to OS type.
+   * @param inputDevice Input device identifier to use.
+   * @param filePath File path to save at.
+   */
+  record(inputDevice: string, filePath: string): Promise<[ChildProcess, number]>;
+
+  /**
+   * Pause given process ID according to OS type.
+   * @param pid Process ID to pause.
+   */
+  pause(pid: number): Promise<void>;
+
+  /**
+   * Resume given process ID according to OS type.
+   * @param pid Process ID to resume.
+   */
+  resume(pid: number): Promise<void>;
+
+  /**
+   * Stop playing audio according to OS type.
+   * @param pid Process ID to stop.
+   */
+  stopPlaying(pid: number): Promise<void>;
+
+  /**
+   * Stop recording audio according to OS type.
+   * @param pid Process ID to stop.
+   * @param cp Child process to try to quit.
+   */
+  stopRecording(pid: number, cp: ChildProcess): Promise<string | void>;
 }
