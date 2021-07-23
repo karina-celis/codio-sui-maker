@@ -53,4 +53,9 @@ export default interface IPlatform {
    * @param cp Child process to try to quit.
    */
   stopRecording(pid: number, cp: ChildProcess): Promise<string | void>;
+
+  /**
+   * Return extension folder according to OS type.
+   */
+  getExtensionFolder(): string;
 }

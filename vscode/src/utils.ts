@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
-import { exec, spawn } from 'child_process';
+import { exec } from 'child_process';
 import * as fs from 'fs';
 import * as util from 'util';
-import { platform } from 'os';
-import { sep } from 'path';
 
 //filesystem
 export const createReadStream = fs.createReadStream;
@@ -14,9 +12,6 @@ export const readdir = util.promisify(fs.readdir);
 export const unlink = util.promisify(fs.unlink);
 export const mkdir = util.promisify(fs.mkdir);
 export const exists = util.promisify(fs.exists);
-
-export const isWindows = platform() === 'win32';
-export const isMacOs = platform() === 'darwin';
 
 export const uriSeperator = '/';
 //ffmpeg

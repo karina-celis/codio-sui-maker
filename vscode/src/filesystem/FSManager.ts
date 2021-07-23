@@ -1,18 +1,16 @@
-import * as vscode from 'vscode';
+import { Uri, window } from 'vscode';
 import { unzip } from 'cross-zip';
 import { mkdir, readFile, unlink, readdir, exists, writeFile, uriSeperator } from '../utils';
 import { saveProjectFiles, reduceToRoot } from './saveProjectFiles';
-import * as os from 'os';
-import * as fs from 'fs';
+import { tmpdir } from 'os';
+import { lstatSync, statSync, PathLike, renameSync } from 'fs';
 import { join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { getWorkspaceRootAndCodiosFolder } from './workspace';
 import Environment from '../environment/Environment';
 
-const homedir = os.homedir();
-const userOS = os.platform();
 const onCodiosChangedSubscribers = [];
-const EXTENSION_FOLDER = userOS === 'darwin' ? join(homedir, 'Library', 'codio') : join(homedir, 'codio');
+const EXTENSION_FOLDER = Environment.getInstance().getExtensionFolder();
 const codiosFolder = join(EXTENSION_FOLDER, 'codios');
 
 const CODIO_META_FILE = 'meta.json';
@@ -31,10 +29,10 @@ export default class FSManager {
   }
 
   constructor() {
-    this.tempFolder = os.tmpdir();
+    this.tempFolder = tmpdir();
   }
 
-  static async saveFile(path: number | fs.PathLike, content: unknown): Promise<void> {
+  static async saveFile(path: number | PathLike, content: unknown): Promise<void> {
     try {
       await writeFile(path, content);
       console.log('The file was saved!', path);
@@ -69,7 +67,7 @@ export default class FSManager {
     return parsedTimeline;
   }
 
-  static toRelativePath(uri: vscode.Uri, rootPath: string): string {
+  static toRelativePath(uri: Uri, rootPath: string): string {
     const pathSplit = uri.path.split(uriSeperator);
     const rootPathSplit = rootPath.split(uriSeperator);
     const relativePath = pathSplit.slice(rootPathSplit.length).join(uriSeperator);
@@ -81,7 +79,7 @@ export default class FSManager {
     metaData: Record<string, unknown>,
     files: Array<string>,
     codioPath: string,
-    destinationFolder?: vscode.Uri,
+    destinationFolder?: Uri,
   ): Promise<void> {
     const codioContentJson = JSON.stringify(codioContent);
     const metaDataJson = JSON.stringify(metaData);
@@ -92,7 +90,7 @@ export default class FSManager {
     if (destinationFolder) {
       await this.zip(codioPath, destinationFolder.fsPath);
     } else {
-      fs.renameSync(codioPath, join(codiosFolder, uuid()));
+      renameSync(codioPath, join(codiosFolder, uuid()));
     }
     this.update();
   }
@@ -104,7 +102,7 @@ export default class FSManager {
     onCodiosChangedSubscribers.forEach((func) => func());
   }
 
-  static normalizeFilesPath(fullPathFiles: Array<string>, root?: vscode.Uri): { rootPath: string; files: string[] } {
+  static normalizeFilesPath(fullPathFiles: Array<string>, root?: Uri): { rootPath: string; files: string[] } {
     // In Windows, case doesn't matter in file names, and some events return files with different cases.
     // That is not the same in Linux for example, where case does matter. The reduceToRoot algorithm is case sensitive,
     // which is why we are normalizing for windows here
@@ -112,7 +110,7 @@ export default class FSManager {
     const filesWithNormalizedCase = fullPathFiles.map((file) => env.normalizeFilePath(file));
     if (root) {
       const normalizedFiles = filesWithNormalizedCase.map((path) =>
-        this.toRelativePath(vscode.Uri.file(path), root.path),
+        this.toRelativePath(Uri.file(path), root.path),
       );
       return { rootPath: root.path, files: normalizedFiles };
     } else if (filesWithNormalizedCase.length > 1) {
@@ -171,8 +169,8 @@ export default class FSManager {
     }
   }
 
-  getCodioUnzipped(uri: vscode.Uri): string | Promise<string> {
-    if (fs.lstatSync(uri.fsPath).isDirectory()) {
+  getCodioUnzipped(uri: Uri): string | Promise<string> {
+    if (lstatSync(uri.fsPath).isDirectory()) {
       return uri.fsPath;
     } else {
       return this.unzipCodio(uri.fsPath);
@@ -215,16 +213,16 @@ export default class FSManager {
     return path;
   }
 
-  async getCodiosUnzippedFromCodioFolder(folder: fs.PathLike): Promise<unknown[]> {
+  async getCodiosUnzippedFromCodioFolder(folder: PathLike): Promise<unknown[]> {
     const folderContents = await readdir(folder);
     return await Promise.all(
       folderContents
         .map((file) => {
           const fullPath = join(folder.toString(), file);
-          if (fs.statSync(fullPath).isDirectory()) {
+          if (statSync(fullPath).isDirectory()) {
             return fullPath;
           } else if (file.endsWith('.codio')) {
-            return this.getCodioUnzipped(vscode.Uri.file(fullPath));
+            return this.getCodioUnzipped(Uri.file(fullPath));
           }
         })
         .filter((folder) => !!folder),
@@ -237,7 +235,7 @@ export default class FSManager {
    * @param workspaceRoot Optional URI for the root of the workspace.
    * @returns An array of codios found.
    */
-  private async getCodios(folder = codiosFolder, workspaceRoot?: vscode.Uri): Promise<Codio[]> {
+  private async getCodios(folder = codiosFolder, workspaceRoot?: Uri): Promise<Codio[]> {
     const codios: Codio[] = [];
 
     try {
@@ -246,7 +244,7 @@ export default class FSManager {
         directories.map(async (dir: string) => {
           codios.push({
             ...(await this.getMetaData(dir)),
-            uri: vscode.Uri.file(dir),
+            uri: Uri.file(dir),
             workspaceRoot,
           });
         }),
@@ -313,14 +311,14 @@ export default class FSManager {
     }
   }
 
-  async choose(codiosMetadata: Array<Codio>): Promise<{ path: string; workspaceRoot: vscode.Uri } | undefined> {
+  async choose(codiosMetadata: Array<Codio>): Promise<{ path: string; workspaceRoot: Uri } | undefined> {
     let unlock;
     let itemSelected;
     const quickPickItems = codiosMetadata.map((item) => ({
       label: item.name,
       details: { path: item.uri.fsPath, workspaceRoot: item.workspaceRoot },
     }));
-    const quickPick = vscode.window.createQuickPick();
+    const quickPick = window.createQuickPick();
     quickPick.items = quickPickItems;
     quickPick.onDidChangeSelection((e) => {
       itemSelected = e[0];
@@ -341,7 +339,7 @@ export default class FSManager {
     }
   }
 
-  async chooseCodio(): Promise<{ path: string; workspaceRoot?: vscode.Uri } | undefined> {
+  async chooseCodio(): Promise<{ path: string; workspaceRoot?: Uri } | undefined> {
     return this.choose(await this.getAllCodiosMetadata());
   }
 }

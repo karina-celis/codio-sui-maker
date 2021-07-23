@@ -1,4 +1,6 @@
 import { ChildProcess, exec } from "child_process";
+import { homedir } from "os";
+import { join } from "path";
 import { promiseExec } from "../utils";
 import IPlatform from "./IPlatform";
 
@@ -56,5 +58,9 @@ export default class Darwin implements IPlatform {
     console.log('Darwin stopRecording', pid, cp);
 
     process.kill(pid);
+  }
+
+  getExtensionFolder(): string {
+    return join(homedir(), 'Library', 'codio');
   }
 }

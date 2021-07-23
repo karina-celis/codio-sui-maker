@@ -1,8 +1,9 @@
 import { ChildProcess, spawn } from "child_process";
-import { sep } from "path";
+import { join, sep } from "path";
 import { zip } from 'cross-zip';
 import { exists, getExtensionPath } from "../utils";
 import IPlatform from "./IPlatform";
+import { homedir } from "os";
 
 export default class Windows_NT implements IPlatform {
   public async resolveDependencies(): Promise<boolean> {
@@ -235,5 +236,9 @@ export default class Windows_NT implements IPlatform {
       return false;
     }
     return true;
+  }
+
+  getExtensionFolder(): string {
+    return join(homedir(), 'codio');
   }
 }
