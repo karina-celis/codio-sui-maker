@@ -6,7 +6,8 @@ import { registerTreeViews } from './user_interface/Viewers';
 import FSManager from './filesystem/FSManager';
 import { codioCommands, CommandNames } from './commands';
 import { getWorkspaceUriAndCodioDestinationUri } from './filesystem/workspace';
-import { checkDependencies, saveExtensionPath } from './utils';
+import { saveExtensionPath } from './utils';
+import Environment from './environment/Environment';
 
 const fsManager = new FSManager();
 const player = new Player();
@@ -14,7 +15,7 @@ const recorder = new Recorder();
 
 export async function activate(context: ExtensionContext): Promise<void> {
   saveExtensionPath(context.extensionPath);
-  await checkDependencies();
+  await Environment.getInstance().resolveDependencies();
 
   await fsManager.createExtensionFolders();
   UI.shouldDisplayMessages = true;
