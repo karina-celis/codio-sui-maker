@@ -1,3 +1,4 @@
+import { promiseExec } from "../utils";
 import IPlatform from "./IPlatform";
 
 export default class Darwin implements IPlatform {
@@ -10,5 +11,17 @@ export default class Darwin implements IPlatform {
     // TODO: ffmpeg
 
     return true;
+  }
+
+  public async zip(srcPath: string, destPath: string): Promise<void> {
+    console.log('Darwin zip', srcPath, destPath);
+
+    await promiseExec(`cd ${srcPath} && zip -r ${destPath} .`);
+  }
+
+  public normalizeFilePath(filePath: string): string {
+    console.log('Darwin normalizeFilePath', filePath);
+
+    return filePath;
   }
 }

@@ -1,13 +1,10 @@
 import { spawn } from "child_process";
 import { sep } from "path";
+import { zip } from 'cross-zip';
 import { exists, getExtensionPath } from "../utils";
 import IPlatform from "./IPlatform";
 
 export default class Windows_NT implements IPlatform {
-  /**
-   * Check if dependencies need to be installed.
-   * @returns Resolve to true if all dependencies are available.
-   */
   public async resolveDependencies(): Promise<boolean> {
     console.log('Windows resolveDependencies');
     // TODO: ffmpeg
@@ -53,5 +50,17 @@ export default class Windows_NT implements IPlatform {
         rej(false);
       }
     });
+  }
+
+  public async zip(srcPath: string, destPath: string): Promise<void> {
+    console.log('Windows zip', srcPath, destPath);
+
+    await new Promise((res, rej) => zip(srcPath, destPath, (error: Error) => (error ? rej(error) : res(''))));
+  }
+
+  public normalizeFilePath(filePath: string): string {
+    console.log('Windows normalizeFilePath', filePath);
+
+    return filePath.toLowerCase();
   }
 }

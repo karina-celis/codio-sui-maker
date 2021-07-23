@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
-import { zip, unzip } from 'cross-zip';
-import { mkdir, readFile, unlink, readdir, exists, writeFile, uriSeperator, isWindows, promiseExec } from '../utils';
+import { unzip } from 'cross-zip';
+import { mkdir, readFile, unlink, readdir, exists, writeFile, uriSeperator } from '../utils';
 import { saveProjectFiles, reduceToRoot } from './saveProjectFiles';
 import * as os from 'os';
 import * as fs from 'fs';
 import { join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { getWorkspaceRootAndCodiosFolder } from './workspace';
+import Environment from '../environment/Environment';
 
 const homedir = os.homedir();
 const userOS = os.platform();
@@ -105,9 +106,10 @@ export default class FSManager {
 
   static normalizeFilesPath(fullPathFiles: Array<string>, root?: vscode.Uri): { rootPath: string; files: string[] } {
     // In Windows, case doesn't matter in file names, and some events return files with different cases.
-    // That is not the same in Linux for example, where case does matter. The reduceToRoot algorithm is case sensetive,
+    // That is not the same in Linux for example, where case does matter. The reduceToRoot algorithm is case sensitive,
     // which is why we are normalizing for windows here
-    const filesWithNormalizedCase = fullPathFiles.map((file) => (isWindows ? file.toLowerCase() : file));
+    const env = Environment.getInstance();
+    const filesWithNormalizedCase = fullPathFiles.map((file) => env.normalizeFilePath(file));
     if (root) {
       const normalizedFiles = filesWithNormalizedCase.map((path) =>
         this.toRelativePath(vscode.Uri.file(path), root.path),
@@ -177,14 +179,16 @@ export default class FSManager {
     }
   }
 
-  static async zip(srcPath: string, distPath: string): Promise<string> {
+  /**
+   * Save files found in given codio path to a zip file in given destination path.
+   * @param srcPath Source folder where files live.
+   * @param destPath Destination folder where created zip file will live.
+   * @returns The destination string where the zip file was successfully saved.
+   */
+  static async zip(srcPath: string, destPath: string): Promise<string> {
     try {
-      if (isWindows) {
-        await new Promise((res, rej) => zip(srcPath, distPath, (error: Error) => (error ? rej(error) : res(''))));
-      } else {
-        await promiseExec(`cd ${srcPath} && zip -r ${distPath} .`);
-      }
-      return `${distPath}`;
+      await Environment.getInstance().zip(srcPath, destPath);
+      return `${destPath}`;
     } catch (e) {
       console.log(`zip for folder ${srcPath} failed`, e);
     }
