@@ -43,7 +43,7 @@ export default async function recordCodio(
     return;
   }
 
-  UI.showMessage(MESSAGES.startingToRecord);
-  recorder.startRecording();
+  await recorder.startRecording();
   UI.showRecorderStatusBar(recorder);
+  UI.showMessage(MESSAGES.startingToRecord);
 }

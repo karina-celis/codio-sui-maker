@@ -1,6 +1,6 @@
 import { ChildProcess, exec, spawn } from 'child_process';
 import { getDeviceList } from './ffmpegDeviceListParser';
-import IPlatform from 'src/environment/IPlatform';
+import IPlatform from '../environment/IPlatform';
 
 /**
  * Possible audio process states.
@@ -27,7 +27,8 @@ export default class AudioHandler {
 
   async setDevice(prompt: (items: string[]) => Promise<string | undefined>): Promise<boolean> {
     if (this.iPlatform) {
-      const deviceList: DeviceList = await getDeviceList();
+      const deviceList: DeviceList = await getDeviceList(this.iPlatform.getDeviceParser());
+      console.log('deviceList', deviceList);
       const audioDevices: Device[] = deviceList.audioDevices;
       if (audioDevices.length) {
         if (audioDevices.length > 1) {

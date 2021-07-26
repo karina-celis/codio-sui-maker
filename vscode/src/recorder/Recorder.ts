@@ -69,9 +69,9 @@ export default class Recorder {
   /**
    * Start recording on all media and set state.
    */
-  startRecording(): void {
+  async startRecording(): Promise<void> {
     this.codeEditorRecorder.record();
-    this.audioRecorder.record();
+    await this.audioRecorder.record();
     this.timer.run();
     this.process = new Promise((resolve) => (this.stopRecordingResolver = resolve));
     this.recordingStartTime = Date.now() + 300;

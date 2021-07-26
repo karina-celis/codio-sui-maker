@@ -1,10 +1,11 @@
 import { ChildProcess } from "child_process";
+import IDeviceParser from "./IDeviceParser";
 
 export default interface IPlatform {
   /**
- * Check if dependencies need to be installed.
- * @returns Resolve to true if all dependencies are available.
- */
+   * Check if dependencies need to be installed.
+   * @returns Resolve to true if all dependencies are available.
+   */
   resolveDependencies(): Promise<boolean>;
 
   /**
@@ -58,4 +59,9 @@ export default interface IPlatform {
    * Return extension folder according to OS type.
    */
   getExtensionFolder(): string;
+
+  /**
+   * Returns a device parser to be used to find input (audio and video) devices according to OS type.
+   */
+  getDeviceParser(): IDeviceParser;
 }

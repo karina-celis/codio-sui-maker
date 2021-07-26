@@ -2,9 +2,13 @@ import { ChildProcess, exec } from "child_process";
 import { homedir } from "os";
 import { join } from "path";
 import { promiseExec } from "../utils";
+import IDeviceParser from "./IDeviceParser";
 import IPlatform from "./IPlatform";
 
 export default class Darwin implements IPlatform {
+  // Line Parser specific
+  private type = 'video';
+
   /**
    * Check if dependencies need to be installed.
    * @returns Resolve to true if all dependencies are available.
@@ -62,5 +66,42 @@ export default class Darwin implements IPlatform {
 
   getExtensionFolder(): string {
     return join(homedir(), 'Library', 'codio');
+  }
+
+  getDeviceParser(): IDeviceParser {
+    return {
+      cmd: `ffmpeg -hide_banner -nostats -f avfoundation -list_devices true -i ""`,
+      searchPrefix: (line: string) => line.search(/^\[AVFoundation/) > -1,
+      lineParser: this.lineParser.bind(this),
+    }
+  }
+
+  /**
+   * Check given line for identifiable device information to create a device object from.
+   * @param line Line to parse.
+   * @returns Created type and device data if given line is valid, undefined otherwise.
+   */
+  private lineParser(line: string): Record<string, string | Device> | undefined {
+    console.log('lineParser line', line);
+    console.log('lineParser this.type', this.type);
+
+    // Check for when audio devices are encountered.
+    if (this.type === 'video' && line.search(/AVFoundation\saudio\sdevices/) > -1) {
+      this.type = 'audio';
+      return;
+    }
+
+    // Get device parameters.
+    const params = line.match(/^\[AVFoundation.*?\]\s\[(\d*?)\]\s(.*)$/);
+    if (params) {
+      const device: Device = {
+        id: parseInt(params[1]),
+        name: params[2],
+      };
+
+      return { type: this.type, device };
+    }
+
+    return undefined;
   }
 }

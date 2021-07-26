@@ -4,8 +4,13 @@ import { zip } from 'cross-zip';
 import { exists, getExtensionPath } from "../utils";
 import IPlatform from "./IPlatform";
 import { homedir } from "os";
+import IDeviceParser from "./IDeviceParser";
 
 export default class Windows_NT implements IPlatform {
+  // Line Parser specific
+  private type = 'video';
+  private lastDevice: Device;
+
   public async resolveDependencies(): Promise<boolean> {
     console.log('Windows resolveDependencies');
     // TODO: ffmpeg
@@ -240,5 +245,49 @@ export default class Windows_NT implements IPlatform {
 
   getExtensionFolder(): string {
     return join(homedir(), 'codio');
+  }
+
+  getDeviceParser(): IDeviceParser {
+    return {
+      cmd: `ffmpeg.exe -hide_banner -nostats -f dshow -list_devices true -i dummy`,
+      searchPrefix: (line: string) => line.search(/\[dshow/) > -1,
+      lineParser: this.lineParser.bind(this),
+    }
+  }
+
+  /**
+   * Check given line for identifiable device information to create a device object from.
+   * @param line Line to parse.
+   * @returns Created type and device data if given line is valid, undefined otherwise.
+   */
+  private lineParser(line: string): Record<string, string | Device> | undefined {
+    console.log('lineParser line', line);
+    console.log('lineParser this.type', this.type);
+
+    // Check for when audio devices are encountered.
+    if (this.type === 'video' && line.search(/DirectShow\saudio\sdevices/) > -1) {
+      this.type = 'audio';
+      return;
+    }
+
+    // Check for when alternative name is reached on Windows
+    // and set last device's  alternativeName to it.
+    if (line.search(/Alternative\sname/) > -1) {
+      this.lastDevice.alternativeName = line.match(/Alternative\sname\s*?\"(.*?)\"/)[1];
+      return;
+    }
+
+    // Get device parameters.
+    const params = line.match(/\"(.*?)\"/);
+    if (params) {
+      const device: Device = {
+        name: params[1],
+      };
+
+      this.lastDevice = device;
+      return { type: this.type, device };
+    }
+
+    return undefined;
   }
 }
