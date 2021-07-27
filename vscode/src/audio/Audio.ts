@@ -102,10 +102,41 @@ export default class AudioHandler {
    * Stop audio process in regards to OS.
    */
   private async stopAudioProcess(): Promise<void> {
+    console.log('stopAudioProcess');
+    const cp = this.currentAudioProcess;
     if (this.isRecording()) {
-      await this.iPlatform.stopRecording(this.pid, this.currentAudioProcess);
+      // Kill if VS Code process exits before audio process
+      const killFunc = () => { this.iPlatform.kill(this.pid, cp); };
+      process.once('exit', killFunc);
+
+      // Listen to child process events and handle accordingly when quitting
+      const p = new Promise<string>((res, rej) => {
+        cp.once('exit', (code, signal) => {
+          console.log('Audio cp exit', code, signal);
+
+          process.removeListener('exit', killFunc);
+
+          if (this.processExitedCleanly(code, signal)) {
+            res('');
+          } else {
+            killFunc();
+            rej('stopAudioProcess processExitedCleanly Error');
+          }
+        });
+
+        cp.once('error', (err) => {
+          console.log('Audio cp error', err);
+
+          process.removeListener('exit', killFunc);
+          killFunc();
+          rej(err.message);
+        });
+      });
+
+      this.quitRecording(cp);
+      await p;
     } else {
-      this.iPlatform.stopPlaying(this.pid);
+      this.iPlatform.kill(this.pid, this.currentAudioProcess);
     }
 
     this.clear();
@@ -120,9 +151,31 @@ export default class AudioHandler {
   }
 
   /**
+   * Quit recording on ffmpeg by sending 'q' to the process input.
+   * Only valid if duration argument not given when executed.
+   */
+  private quitRecording(cp: ChildProcess) {
+    cp.stdin.write('q');
+  }
+
+  /**
+   * Check if process exited cleanly.
+   * @param code Exit code; 0 for no issues.
+   * @param signal Signal code; null for no issues.
+   * @return True on clean exit, false otherwise.
+   */
+  private processExitedCleanly(code: number, signal: string) {
+    if (code || signal) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
    * Clear process and reset state.
    */
   private clear(): void {
+    console.log('clear');
     this.currentAudioProcess = null;
     this.state = State.NONE;
   }

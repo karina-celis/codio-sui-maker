@@ -35,7 +35,7 @@ export default class Darwin implements IPlatform {
   public async record(inputDevice: string, filePath: string): Promise<[ChildProcess, number]> {
     console.log('Darwin record', inputDevice, filePath);
 
-    const process = exec(`ffmpeg -f avfoundation -i :"${inputDevice}" ${filePath}`);
+    const process = exec(`ffmpeg -hide_banner -nostats -loglevel error -f avfoundation -i :"${inputDevice}" -y ${filePath}`);
     const pid = process ? process.pid : null;
     return [process, pid];
   }
@@ -52,16 +52,10 @@ export default class Darwin implements IPlatform {
     process.kill(pid, 'SIGCONT');
   }
 
-  async stopPlaying(pid: number): Promise<void> {
-    console.log('Darwin stopPlaying', pid);
-
-    process.kill(pid);
-  }
-
-  async stopRecording(pid: number, cp: ChildProcess): Promise<void> {
-    console.log('Darwin stopRecording', pid, cp);
-
-    process.kill(pid);
+  async kill(pid: number, cp: ChildProcess): Promise<void> {
+    console.log('Darwin kill', pid);
+    // process.kill(pid); // kill ESRCH because of unresolved promise
+    cp.kill();
   }
 
   getExtensionFolder(): string {
@@ -84,6 +78,12 @@ export default class Darwin implements IPlatform {
   private lineParser(line: string): Record<string, string | Device> | undefined {
     console.log('lineParser line', line);
     console.log('lineParser this.type', this.type);
+
+    // Check for when video devices are encountered.
+    if (this.type === 'audio' && line.search(/AVFoundation\svideo\sdevices/) > -1) {
+      this.type = 'video';
+      return;
+    }
 
     // Check for when audio devices are encountered.
     if (this.type === 'video' && line.search(/AVFoundation\saudio\sdevices/) > -1) {

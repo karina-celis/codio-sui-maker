@@ -170,45 +170,10 @@ export default class Windows_NT implements IPlatform {
     resume(pid);
   }
 
-  async stopPlaying(pid: number): Promise<void> {
-    console.log('Windows stopPlaying', pid);
+  async kill(pid: number, cp: ChildProcess): Promise<void> {
+    console.log('Windows kill', pid);
 
     this.taskKill(pid);
-  }
-
-  async stopRecording(pid: number, cp: ChildProcess): Promise<string> {
-    console.log('Windows stopRecording', pid, cp);
-
-    // Kill if VS Code process exits before audio process
-    const anonFunc = () => { this.taskKill(pid) };
-    process.once('exit', anonFunc);
-
-    // Listen to child process events and handle accordingly when quitting
-    const p = new Promise<string>((res, rej) => {
-      cp.once('exit', (code, signal) => {
-        console.log('Windows cp exit', code, signal);
-
-        process.removeListener('exit', anonFunc);
-
-        if (this.exitWin32Process(code, signal)) {
-          res('');
-        } else {
-          this.taskKill(pid);
-          rej('stopAudioProcess exitWin32Process Error');
-        }
-      });
-      cp.once('error', (err) => {
-        console.log('Windows cp error', err);
-
-        process.removeListener('exit', anonFunc);
-        this.taskKill(pid);
-        rej(err.message);
-      });
-    });
-
-    this.quitRecording(cp);
-
-    return p;
   }
 
   /**
@@ -220,27 +185,6 @@ export default class Windows_NT implements IPlatform {
    */
   private taskKill(pid: number) {
     spawn('taskkill', ['/pid', pid.toString(), '/f', '/t']);
-  }
-
-  /**
-   * Quit recording on ffmpeg by sending 'q' to the process input.
-   * Only valid if duration argument not given when executed.
-   */
-  private quitRecording(cp: ChildProcess) {
-    cp.stdin.write('q');
-  }
-
-  /**
-   * Check if windows process exited cleanly.
-   * @param code Exit code; 0 for no issues.
-   * @param signal Signal code; null for no issues.
-   * @return True on clean exit, false otherwise.
-   */
-  private exitWin32Process(code: number, signal: string) {
-    if (code || signal) {
-      return false;
-    }
-    return true;
   }
 
   getExtensionFolder(): string {
@@ -263,6 +207,12 @@ export default class Windows_NT implements IPlatform {
   private lineParser(line: string): Record<string, string | Device> | undefined {
     console.log('lineParser line', line);
     console.log('lineParser this.type', this.type);
+
+    // Check for when video devices are encountered.
+    if (this.type === 'audio' && line.search(/DirectShow\svideo\sdevices/) > -1) {
+      this.type = 'video';
+      return;
+    }
 
     // Check for when audio devices are encountered.
     if (this.type === 'video' && line.search(/DirectShow\saudio\sdevices/) > -1) {

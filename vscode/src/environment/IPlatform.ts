@@ -43,17 +43,11 @@ export default interface IPlatform {
   resume(pid: number): Promise<void>;
 
   /**
-   * Stop playing audio according to OS type.
-   * @param pid Process ID to stop.
-   */
-  stopPlaying(pid: number): Promise<void>;
-
-  /**
-   * Stop recording audio according to OS type.
+   * Kill audio process according to OS type.
    * @param pid Process ID to stop.
    * @param cp Child process to try to quit.
    */
-  stopRecording(pid: number, cp: ChildProcess): Promise<string | void>;
+  kill(pid: number, cp: ChildProcess): Promise<void>;
 
   /**
    * Return extension folder according to OS type.
