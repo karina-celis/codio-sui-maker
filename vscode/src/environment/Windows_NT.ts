@@ -12,9 +12,7 @@ export default class Windows_NT implements IPlatform {
   private lastDevice: Device;
 
   public async resolveDependencies(): Promise<boolean> {
-    console.log('Windows resolveDependencies');
     // TODO: ffmpeg
-
     // Recorder Pause/Resume
     const libPath = `${getExtensionPath()}${sep}dependencies${sep}win${sep}win32-${process.arch}_lib.node`;
     const fileExists = await exists(libPath);
@@ -29,8 +27,6 @@ export default class Windows_NT implements IPlatform {
    * Install ntsuspend.
    */
   private async installWindowsPauseResume(): Promise<boolean> {
-    console.log('Windows installWindowsPauseResume');
-
     const libPath = `${getExtensionPath()}${sep}dependencies${sep}win${sep}install.cjs`;
 
     return new Promise((res, rej) => {
@@ -59,20 +55,14 @@ export default class Windows_NT implements IPlatform {
   }
 
   public async zip(srcPath: string, destPath: string): Promise<void> {
-    console.log('Windows zip', srcPath, destPath);
-
     await new Promise((res, rej) => zip(srcPath, destPath, (error: Error) => (error ? rej(error) : res(''))));
   }
 
   public normalizeFilePath(filePath: string): string {
-    console.log('Windows normalizeFilePath', filePath);
-
     return filePath.toLowerCase();
   }
 
   public async record(inputDevice: string, filePath: string): Promise<[ChildProcess, number]> {
-    console.log('Windows record', inputDevice, filePath);
-
     let pid = null;
     const cp = spawn(
       'ffmpeg',
@@ -157,22 +147,16 @@ export default class Windows_NT implements IPlatform {
   }
 
   async pause(pid: number): Promise<void> {
-    console.log('Windows pause', pid);
-
     const { suspend } = await import(`..${sep}..${sep}dependencies${sep}win${sep}win32-${process.arch}_lib.node`);
     suspend(pid);
   }
 
   async resume(pid: number): Promise<void> {
-    console.log('Windows resume', pid);
-
     const { resume } = await import(`..${sep}..${sep}dependencies${sep}win${sep}win32-${process.arch}_lib.node`);
     resume(pid);
   }
 
   async kill(pid: number, cp: ChildProcess): Promise<void> {
-    console.log('Windows kill', pid);
-
     this.taskKill(pid);
   }
 
@@ -205,9 +189,6 @@ export default class Windows_NT implements IPlatform {
    * @returns Created type and device data if given line is valid, undefined otherwise.
    */
   private lineParser(line: string): Record<string, string | Device> | undefined {
-    console.log('lineParser line', line);
-    console.log('lineParser this.type', this.type);
-
     // Check for when video devices are encountered.
     if (this.type === 'audio' && line.search(/DirectShow\svideo\sdevices/) > -1) {
       this.type = 'video';

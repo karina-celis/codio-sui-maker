@@ -1,5 +1,5 @@
 import { ChildProcess, exec, spawn } from 'child_process';
-import { getDeviceList } from './ffmpegDeviceListParser';
+import { getDeviceList } from '../utils';
 import IPlatform from '../environment/IPlatform';
 
 /**
@@ -102,7 +102,6 @@ export default class AudioHandler {
    * Stop audio process in regards to OS.
    */
   private async stopAudioProcess(): Promise<void> {
-    console.log('stopAudioProcess');
     const cp = this.currentAudioProcess;
     if (this.isRecording()) {
       // Kill if VS Code process exits before audio process
@@ -175,7 +174,6 @@ export default class AudioHandler {
    * Clear process and reset state.
    */
   private clear(): void {
-    console.log('clear');
     this.currentAudioProcess = null;
     this.state = State.NONE;
   }

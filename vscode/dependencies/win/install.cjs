@@ -30,8 +30,6 @@ const install = async () => {
 
   const sep = path.sep;
   const dest = path.join(`${__dirname}..${sep}..${sep}..${sep}dependencies${sep}win${sep}`, filename);
-  console.error('__dirname', __dirname);
-  console.error('dest', dest);
   const stream = fs.createWriteStream(dest);
   stream.once('close', () => {
     const ntsuspend = require(`..${sep}..${sep}dependencies${sep}win${sep}win32-${process.arch}_lib.node`);

@@ -52,7 +52,6 @@ export default class CodioProgressTimer {
       this.currentSecond = codioTime;
       this.timer = setInterval(() => {
         this.currentSecond++;
-        // console.log('ProgressTimers run setInterval', this.currentSecond);
 
         if (this.codioLength && this.currentSecond > this.codioLength / 1000) {
           this.onUpdateObservers.forEach((observer) => observer(this.codioLength / 1000, this.codioLength / 1000));
