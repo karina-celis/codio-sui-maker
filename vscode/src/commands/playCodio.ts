@@ -20,24 +20,26 @@ export default async function playCodio(
     const hasFfmpeg = await checkForFfmpeg();
     if (!hasFfmpeg) {
       UI.showMessage(MESSAGES.ffmpegNotAvailable);
+      return;
+    }
+
+    if (recorder && recorder.isRecording) {
+      UI.showMessage(MESSAGES.cantPlayWhileRecording);
+      return;
+    }
+
+    if (player && player.isPlaying) {
+      player.stop();
+    }
+
+    if (codioUri) {
+      const codioUnzippedFolder = await fsManager.getCodioUnzipped(codioUri);
+      await loadAndPlay(player, codioUnzippedFolder, workspaceUri?.fsPath);
     } else {
-      const workspacePath = workspaceUri?.fsPath;
-      if (recorder && recorder.isRecording) {
-        UI.showMessage(MESSAGES.cantPlayWhileRecording);
-        return;
-      }
-      if (player && player.isPlaying) {
-        player.stop();
-      }
-      if (codioUri) {
-        const codioUnzippedFolder = await fsManager.getCodioUnzipped(codioUri);
-        await loadAndPlay(player, codioUnzippedFolder, workspacePath);
-      } else {
-        const itemSelected = await fsManager.chooseCodio();
-        if (itemSelected?.path) {
-          //@TODO: add an if to check that the folder contains audio.mp3 and actions.json
-          await loadAndPlay(player, itemSelected.path, itemSelected.workspaceRoot?.fsPath);
-        }
+      const itemSelected = await fsManager.chooseCodio();
+      if (itemSelected?.path) {
+        //@TODO: add an if to check that the folder contains audio.mp3 and actions.json
+        await loadAndPlay(player, itemSelected.path, itemSelected.workspaceRoot?.fsPath);
       }
     }
   } catch (e) {

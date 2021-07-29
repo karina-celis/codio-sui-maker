@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import * as fs from 'fs';
 import * as util from 'util';
 import IDeviceParser from './environment/IDeviceParser';
@@ -32,7 +32,7 @@ export function getDeviceList(
 
   // Parse
   const execute = (fulfill?: (value: unknown) => void) => {
-    exec(deviceParser.cmd, (err, stdout, stderr) => {
+    execFile(deviceParser.cmd, deviceParser.args, (err, stdout, stderr) => {
       stderr
         .split('\n')
         .filter(deviceParser.searchPrefix)
@@ -58,7 +58,7 @@ export function getDeviceList(
 //ffmpeg
 export const checkForFfmpeg = async (): Promise<unknown> => {
   return new Promise((res) => {
-    exec('ffmpeg -h', (error) => {
+    execFile('ffmpeg', ['-version'], (error) => {
       res(!error);
     });
   });

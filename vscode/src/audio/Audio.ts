@@ -1,4 +1,4 @@
-import { ChildProcess, exec, spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 import { getDeviceList } from '../utils';
 import IPlatform from '../environment/IPlatform';
 
@@ -62,7 +62,18 @@ export default class AudioHandler {
    * @param time Time in seconds to seek into audio file.
    */
   play(time: number): void {
-    this.currentAudioProcess = exec(`ffplay -hide_banner -nodisp -nostats -autoexit -ss ${time} ${this.audioFilePath}`);
+    this.currentAudioProcess = spawn(
+      'ffplay',
+      [
+        '-hide_banner',
+        '-nodisp',
+        '-nostats',
+        '-autoexit',
+        '-ss',
+        `${time}`,
+        `${this.audioFilePath}`
+      ]
+    );
     this.pid = this.currentAudioProcess.pid;
     this.state = State.PLAYING;
   }

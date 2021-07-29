@@ -51,7 +51,17 @@ export default class Darwin implements IPlatform {
 
   getDeviceParser(): IDeviceParser {
     return {
-      cmd: `ffmpeg -hide_banner -nostats -f avfoundation -list_devices true -i ""`,
+      cmd: 'ffmpeg',
+      args: [
+        '-hide_banner',
+        '-nostats',
+        '-f',
+        'avfoundation',
+        '-list_devices',
+        'true',
+        '-i',
+        '""'
+      ],
       searchPrefix: (line: string) => line.search(/^\[AVFoundation/) > -1,
       lineParser: this.lineParser.bind(this),
     }

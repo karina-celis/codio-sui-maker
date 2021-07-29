@@ -1,4 +1,4 @@
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, execFile, spawn } from "child_process";
 import { join, sep } from "path";
 import { zip } from 'cross-zip';
 import { exists, getExtensionPath } from "../utils";
@@ -74,11 +74,10 @@ export default class Windows_NT implements IPlatform {
         '-f',
         'dshow',
         '-i',
-        `audio="${inputDevice}"`,
+        `audio=${inputDevice}`,
         '-y',
         filePath,
       ],
-      { shell: 'powershell.exe' }, // Using powershell will result in one instance to handle
     );
 
     try {
@@ -99,38 +98,35 @@ export default class Windows_NT implements IPlatform {
    */
   private findPID(cmd: string): Promise<number> {
     return new Promise((res, rej) => {
-      let output = '';
-
-      const callAndParse = (cmd: string) => {
-        const taskListProcess = spawn('tasklist.exe', ['/FI', `"IMAGENAME eq ${cmd}"`, '/FO', 'CSV', '/NH'], {
-          shell: 'powershell.exe',
-        });
-
-        taskListProcess.stderr.on('data', (data) => {
-          rej(data.toString());
-        });
-
-        // Compile data received
-        taskListProcess.stdout.on('data', (data) => {
-          output += data.toString();
-        });
-
-        taskListProcess.on('close', (code) => {
-          if (code) {
-            rej(`Error code: ${code}`);
+      const cp = execFile(
+        'tasklist.exe',
+        [
+          '/FI',
+          `IMAGENAME eq ${cmd}`,
+          '/FO',
+          'CSV',
+          '/NH'
+        ],
+        (error, stdout) => {
+          if (error) {
+            console.error(`exec error: ${error}`);
+            return;
           }
 
-          const arr = this.getLastLine(output).split(',');
+          const arr = this.getLastLine(stdout).split(',');
           if (arr.length < 2) {
             rej('PID in array not found.');
+            return;
           }
 
           const pid = parseInt(arr[1]);
           pid > 0 ? res(pid) : rej('Valid PID not found.');
-        });
-      };
+        }
+      );
 
-      callAndParse(cmd);
+      cp.stderr.on('data', (data) => {
+        rej(data.toString());
+      });
     });
   }
 
@@ -177,7 +173,17 @@ export default class Windows_NT implements IPlatform {
 
   getDeviceParser(): IDeviceParser {
     return {
-      cmd: `ffmpeg.exe -hide_banner -nostats -f dshow -list_devices true -i dummy`,
+      cmd: 'ffmpeg.exe',
+      args: [
+        '-hide_banner',
+        '-nostats',
+        '-f',
+        'dshow',
+        '-list_devices',
+        'true',
+        '-i',
+        'dummy'
+      ],
       searchPrefix: (line: string) => line.search(/\[dshow/) > -1,
       lineParser: this.lineParser.bind(this),
     }
