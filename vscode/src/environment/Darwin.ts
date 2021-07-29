@@ -1,4 +1,4 @@
-import { ChildProcess, exec } from "child_process";
+import { ChildProcess, spawn } from "child_process";
 import { homedir } from "os";
 import { join } from "path";
 import { promiseExec } from "../utils";
@@ -27,9 +27,23 @@ export default class Darwin implements IPlatform {
   }
 
   public async record(inputDevice: string, filePath: string): Promise<[ChildProcess, number]> {
-    const process = exec(`ffmpeg -hide_banner -nostats -loglevel error -f avfoundation -i :"${inputDevice}" -y ${filePath}`);
-    const pid = process ? process.pid : null;
-    return [process, pid];
+    const cp = spawn(
+      'ffmpeg',
+      [
+        '-hide_banner',
+        '-nostats',
+        '-loglevel',
+        'error',
+        '-f',
+        'avfoundation',
+        '-i',
+        `:${inputDevice}`,
+        '-y',
+        filePath,
+      ],
+    );
+    const pid = cp ? cp.pid : null;
+    return [cp, pid];
   }
 
   async pause(pid: number): Promise<void> {
