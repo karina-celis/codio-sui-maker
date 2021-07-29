@@ -1,11 +1,11 @@
 import { Uri, window } from 'vscode';
-import { unzip } from 'cross-zip';
-import { mkdir, readFile, unlink, readdir, exists, writeFile, uriSeperator } from '../utils';
-import { saveProjectFiles, reduceToRoot } from './saveProjectFiles';
 import { tmpdir } from 'os';
-import { lstatSync, statSync, PathLike, renameSync } from 'fs';
+import { lstatSync, statSync, PathLike, renameSync, readFileSync, writeFileSync, readdirSync, unlinkSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
+import { unzip } from 'cross-zip';
 import { v4 as uuid } from 'uuid';
+import { uriSeperator } from '../utils';
+import { saveProjectFiles, reduceToRoot } from './saveProjectFiles';
 import { getWorkspaceRootAndCodiosFolder } from './workspace';
 import Environment from '../environment/Environment';
 
@@ -34,7 +34,7 @@ export default class FSManager {
 
   static async saveFile(path: number | PathLike, content: unknown): Promise<void> {
     try {
-      await writeFile(path, content);
+      writeFileSync(path, content);
       console.log('The file was saved!', path);
     } catch (e) {
       console.log('save file fail', e);
@@ -62,7 +62,7 @@ export default class FSManager {
   }
 
   static async loadTimeline(codioPath: string): Promise<Timeline> {
-    const timelineContent = await readFile(this.timelinePath(codioPath));
+    const timelineContent = readFileSync(this.timelinePath(codioPath));
     const parsedTimeline = JSON.parse(timelineContent.toString());
     return parsedTimeline;
   }
@@ -131,18 +131,18 @@ export default class FSManager {
   }
 
   async folderNameExists(folderName: string): Promise<boolean> {
-    return await exists(join(EXTENSION_FOLDER, folderName));
+    return existsSync(join(EXTENSION_FOLDER, folderName));
   }
 
   async createExtensionFolders(): Promise<void> {
     try {
-      const extensionFolderExists = await exists(EXTENSION_FOLDER);
+      const extensionFolderExists = existsSync(EXTENSION_FOLDER);
       if (!extensionFolderExists) {
-        await mkdir(EXTENSION_FOLDER);
+        mkdirSync(EXTENSION_FOLDER);
       }
-      const codiosFolderExists = await exists(codiosFolder);
+      const codiosFolderExists = existsSync(codiosFolder);
       if (!codiosFolderExists) {
-        await mkdir(codiosFolder);
+        mkdirSync(codiosFolder);
       }
     } catch (e) {
       console.log('Problem creating your extension folders', e);
@@ -152,7 +152,7 @@ export default class FSManager {
   async createCodioFolder(folderName: string): Promise<string> {
     try {
       const path = join(codiosFolder, folderName);
-      await mkdir(path);
+      mkdirSync(path);
       return path;
     } catch (e) {
       console.log('Problem creating folder', e);
@@ -162,7 +162,7 @@ export default class FSManager {
   async createTempCodioFolder(codioId: string): Promise<string> {
     try {
       const path = join(this.tempFolder, codioId);
-      await mkdir(path);
+      mkdirSync(path);
       return path;
     } catch (e) {
       console.log('Problem creating folder', e);
@@ -195,7 +195,6 @@ export default class FSManager {
   async unzipCodio(srcPath: string): Promise<string> {
     const codioTempFolder = join(this.tempFolder, uuid());
     try {
-      // await promiseExec(`unzip ${srcPath} -d ${codioTempFolder}`);
       await new Promise((res, rej) =>
         unzip(srcPath, codioTempFolder, (error: Error) => (error ? rej(error) : res(''))),
       );
@@ -207,14 +206,14 @@ export default class FSManager {
 
   async deleteFilesInCodio(codioId: string): Promise<string> {
     const path = join(codiosFolder, codioId);
-    const files = await readdir(path);
+    const files = readdirSync(path);
     // currently I am assuming there won't be directories inside the directory
-    await Promise.all(files.map((f) => unlink(join(path, f))));
+    await Promise.all(files.map((f) => unlinkSync(join(path, f))));
     return path;
   }
 
   async getCodiosUnzippedFromCodioFolder(folder: PathLike): Promise<unknown[]> {
-    const folderContents = await readdir(folder);
+    const folderContents = readdirSync(folder);
     return await Promise.all(
       folderContents
         .map((file) => {
@@ -304,7 +303,7 @@ export default class FSManager {
    */
   private async getMetaData(codioFolderPath): Promise<Metadata> {
     try {
-      const metaData = await readFile(join(codioFolderPath, CODIO_META_FILE));
+      const metaData = readFileSync(join(codioFolderPath, CODIO_META_FILE));
       return JSON.parse(metaData.toString());
     } catch (e) {
       console.log(`Problem getting codio ${codioFolderPath} meta data`, e);

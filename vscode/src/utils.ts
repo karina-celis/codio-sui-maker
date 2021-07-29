@@ -1,19 +1,8 @@
 import * as vscode from 'vscode';
-import { exec, execFile } from 'child_process';
-import * as fs from 'fs';
-import * as util from 'util';
+import { execFile } from 'child_process';
 import IDeviceParser from './environment/IDeviceParser';
 
 //filesystem
-export const createReadStream = fs.createReadStream;
-export const promiseExec = util.promisify(exec);
-export const readFile = util.promisify(fs.readFile);
-export const writeFile = util.promisify(fs.writeFile);
-export const readdir = util.promisify(fs.readdir);
-export const unlink = util.promisify(fs.unlink);
-export const mkdir = util.promisify(fs.mkdir);
-export const exists = util.promisify(fs.exists);
-
 export const uriSeperator = '/';
 
 /**

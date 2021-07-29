@@ -1,9 +1,10 @@
 import { ChildProcess, execFile, spawn } from "child_process";
+import { homedir } from "os";
+import { existsSync } from "fs";
 import { join, sep } from "path";
 import { zip } from 'cross-zip';
-import { exists, getExtensionPath } from "../utils";
+import { getExtensionPath } from "../utils";
 import IPlatform from "./IPlatform";
-import { homedir } from "os";
 import IDeviceParser from "./IDeviceParser";
 
 export default class Windows_NT implements IPlatform {
@@ -15,7 +16,7 @@ export default class Windows_NT implements IPlatform {
     // TODO: ffmpeg
     // Recorder Pause/Resume
     const libPath = `${getExtensionPath()}${sep}dependencies${sep}win${sep}win32-${process.arch}_lib.node`;
-    const fileExists = await exists(libPath);
+    const fileExists = existsSync(libPath);
     if (!fileExists) {
       return await this.installWindowsPauseResume();
     }

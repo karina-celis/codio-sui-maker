@@ -1,7 +1,6 @@
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, execSync, spawn } from "child_process";
 import { homedir } from "os";
 import { join } from "path";
-import { promiseExec } from "../utils";
 import IDeviceParser from "./IDeviceParser";
 import IPlatform from "./IPlatform";
 
@@ -19,7 +18,7 @@ export default class Darwin implements IPlatform {
   }
 
   public async zip(srcPath: string, destPath: string): Promise<void> {
-    await promiseExec(`cd ${srcPath} && zip -r ${destPath} .`);
+    execSync(`cd ${srcPath} && zip -r ${destPath} .`);
   }
 
   public normalizeFilePath(filePath: string): string {
