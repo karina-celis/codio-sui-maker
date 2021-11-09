@@ -2,7 +2,6 @@ import { Uri, window } from 'vscode';
 import { tmpdir } from 'os';
 import { lstatSync, statSync, PathLike, renameSync, readFileSync, writeFileSync, readdirSync, unlinkSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
-import { unzip } from 'cross-zip';
 import { v4 as uuid } from 'uuid';
 import { uriSeperator } from '../utils';
 import { saveProjectFiles, reduceToRoot } from './saveProjectFiles';
@@ -109,9 +108,9 @@ export default class FSManager {
     const env = Environment.getInstance();
     const filesWithNormalizedCase = fullPathFiles.map((file) => env.normalizeFilePath(file));
     if (root) {
-      const normalizedFiles = filesWithNormalizedCase.map((path) =>
-        this.toRelativePath(Uri.file(path), root.path),
-      );
+      const normalizedFiles = filesWithNormalizedCase.map((path) => {
+        return this.toRelativePath(Uri.file(path), root.path);
+      });
       return { rootPath: root.path, files: normalizedFiles };
     } else if (filesWithNormalizedCase.length > 1) {
       console.log({ uriSeperator });
@@ -195,9 +194,7 @@ export default class FSManager {
   async unzipCodio(srcPath: string): Promise<string> {
     const codioTempFolder = join(this.tempFolder, uuid());
     try {
-      await new Promise((res, rej) =>
-        unzip(srcPath, codioTempFolder, (error: Error) => (error ? rej(error) : res(''))),
-      );
+      await Environment.getInstance().unzip(srcPath, codioTempFolder);
       return codioTempFolder;
     } catch (e) {
       console.log(`unzipping codio with path: ${srcPath} failed`, e);

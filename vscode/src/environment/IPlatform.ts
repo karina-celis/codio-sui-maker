@@ -17,6 +17,14 @@ export default interface IPlatform {
   zip(srcPath: string, destPath: string): Promise<void>;
 
   /**
+   * Uncompress given file to given destination.
+   * @param srcPath Path of compressed file.
+   * @param destPath Path to uncompress files to.
+   * @param cb Callback to pass error result of unzip.
+   */
+  unzip(srcPath: string, destPath: string): Promise<void>;
+
+  /**
    * Normalize for environments where case is sensitive.
    * @param filePath File path to normalize.
    * @returns Normalized given file path.

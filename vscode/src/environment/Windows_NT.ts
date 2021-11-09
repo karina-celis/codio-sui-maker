@@ -2,7 +2,7 @@ import { ChildProcess, execFile, spawn } from "child_process";
 import { homedir } from "os";
 import { existsSync } from "fs";
 import { join, sep } from "path";
-import { zip } from 'cross-zip';
+import { unzip, zip } from 'cross-zip';
 import { getExtensionPath } from "../utils";
 import IPlatform from "./IPlatform";
 import IDeviceParser from "./IDeviceParser";
@@ -57,6 +57,10 @@ export default class Windows_NT implements IPlatform {
 
   public async zip(srcPath: string, destPath: string): Promise<void> {
     await new Promise((res, rej) => zip(srcPath, destPath, (error: Error) => (error ? rej(error) : res(''))));
+  }
+
+  public async unzip(srcPath: string, destPath: string): Promise<void> {
+    await new Promise((res, rej) => unzip(srcPath, destPath, (error: Error) => (error ? rej(error) : res(''))));
   }
 
   public normalizeFilePath(filePath: string): string {

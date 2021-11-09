@@ -1,6 +1,7 @@
 import { ChildProcess, execSync, spawn } from "child_process";
 import { homedir } from "os";
 import { join } from "path";
+import { unzip } from "cross-zip";
 import IDeviceParser from "./IDeviceParser";
 import IPlatform from "./IPlatform";
 
@@ -19,6 +20,10 @@ export default class Darwin implements IPlatform {
 
   public async zip(srcPath: string, destPath: string): Promise<void> {
     execSync(`cd ${srcPath} && zip -r ${destPath} .`);
+  }
+
+  public async unzip(srcPath: string, destPath: string): Promise<void> {
+    await new Promise((res, rej) => unzip(srcPath, destPath, (error: Error) => (error ? rej(error) : res(''))));
   }
 
   public normalizeFilePath(filePath: string): string {

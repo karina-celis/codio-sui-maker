@@ -22,7 +22,8 @@ export function getDeviceList(
   // Parse
   const execute = (fulfill?: (value: unknown) => void) => {
     execFile(deviceParser.cmd, deviceParser.args, (err, stdout, stderr) => {
-      stderr
+      const output = stderr ? stderr : stdout; // stdout for Linux
+      output
         .split('\n')
         .filter(deviceParser.searchPrefix)
         .forEach((line: string) => {

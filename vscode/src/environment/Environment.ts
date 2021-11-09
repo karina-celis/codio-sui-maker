@@ -2,6 +2,7 @@
 import { type as os_type } from 'os';
 import Darwin from './Darwin';
 import IPlatform from './IPlatform';
+import Linux from './Linux';
 import Windows_NT from './Windows_NT';
 
 /*
@@ -26,6 +27,7 @@ type =
 
 const supported = {
   Darwin,
+  Linux,
   Windows_NT,
 };
 

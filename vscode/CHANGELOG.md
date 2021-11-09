@@ -1,3 +1,6 @@
+## [0.9.0]
+- Support Linux OSes.
+
 ## [0.8.0]
 - Recordings can now be paused and resumed.
 
