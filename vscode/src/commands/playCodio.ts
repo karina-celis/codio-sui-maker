@@ -13,7 +13,9 @@ export default async function playCodio(
   workspaceUri?: Uri,
 ): Promise<void> {
   if (isTreeItem(codioUri)) {
-    codioUri = codioUri['command']?.arguments[0];
+    const command = codioUri['command'];
+    codioUri = command?.arguments[0];
+    workspaceUri = command?.arguments[1];
   }
 
   try {
