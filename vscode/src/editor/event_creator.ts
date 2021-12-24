@@ -3,20 +3,44 @@ import {
   TextEditorSelectionChangeEvent,
   TextEditor,
   TextEditorVisibleRangesChangeEvent,
+  Uri,
 } from 'vscode';
 
 import {
-  CODIO_TEXT_CHANGED,
   CODIO_VISIBLE_RANGE_CHANGED,
   CODIO_SELECTION_CHANGED,
   CODIO_EXEC,
   CODIO_EDITOR_CHANGED,
+  DocumentEvents,
 } from './consts';
 
-export function createCodioTextEvent(e: TextDocumentChangeEvent): CodioTextEvent {
+export function createDocumentEvent(type: DocumentEvents, uri: Uri, content?: string): DocumentEvent {
+  return {
+    type,
+    data: {
+      uri,
+      content,
+      time: Date.now(),
+    },
+  };
+}
+
+export function createDocumentRenameEvent(oldUri: Uri, newUri: Uri, content: string): DocumentRenameEvent {
+  return {
+    type: DocumentEvents.DOCUMENT_RENAME,
+    data: {
+      oldUri,
+      newUri,
+      content,
+      time: Date.now(),
+    },
+  };
+}
+
+export function createDocumentChangeEvent(e: TextDocumentChangeEvent): DocumentChangeEvent {
   if (e.document.uri.scheme !== 'output') {
     return {
-      type: CODIO_TEXT_CHANGED,
+      type: DocumentEvents.DOCUMENT_CHANGE,
       data: {
         uri: e.document.uri,
         changes: e.contentChanges,
@@ -82,12 +106,12 @@ export function createCodioEditorEvent(
   };
 }
 
-export function isTextEvent(event: CodioEvent): event is CodioTextEvent {
-  return event.type === CODIO_TEXT_CHANGED;
+export function isTextEvent(event: CodioEvent): event is DocumentChangeEvent {
+  return event.type === DocumentEvents.DOCUMENT_CHANGE;
 }
 
 export function isSerializedTextEvent(event: CodioSerializedEvent): event is CodioSerializedTextEvent {
-  return event.type === CODIO_TEXT_CHANGED;
+  return event.type === DocumentEvents.DOCUMENT_CHANGE;
 }
 
 export function isSelectionEvent(event: CodioEvent): event is CodioSelectionEvent {

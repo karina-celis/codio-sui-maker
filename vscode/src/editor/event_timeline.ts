@@ -1,4 +1,4 @@
-import dispatchEvent from './event_dispatcher';
+import processEvent from './event_dispatcher';
 
 function createEventWithModifiedTime(event: CodioEvent, newTime: number): CodioEvent {
   return {
@@ -40,6 +40,7 @@ export function runThroughTimeline(
   setCurrentActionTimer: (...args: unknown[]) => void,
 ): void {
   if (!timeline.length) {
+    console.log('runThroughTimeline no timeline');
     return;
   }
   try {
@@ -47,7 +48,7 @@ export function runThroughTimeline(
     const sleepTime = event.data.time - Date.now();
     setCurrentActionTimer(
       setTimeout(async () => {
-        await dispatchEvent(event);
+        await processEvent(event);
         if (timeline.length !== 1) {
           runThroughTimeline(timeline.slice(1), setCurrentActionTimer);
         }

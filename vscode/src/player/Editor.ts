@@ -2,8 +2,6 @@
 import { removeSelection } from '../editor/event_dispatcher';
 import { createFrame, applyFrame } from '../editor/frame';
 import deserializeEvents from '../editor/deserialize';
-import { window } from 'vscode';
-import { overrideEditorText } from '../utils';
 import {
   createTimelineWithAbsoluteTimes,
   cutTimelineFrom,
@@ -12,8 +10,7 @@ import {
   createRelativeTimeline,
 } from '../editor/event_timeline';
 import deserializeFrame from '../editor/frame/deserialize_frame';
-import { getInitialFilePathAndContentFromFrame } from '../editor/frame/create_frame';
-import { UI } from '../user_interface/messages';
+
 export default class CodeEditorPlayer {
   currentActionTimer: NodeJS.Timer;
   events: Array<CodioEvent>;
@@ -46,20 +43,14 @@ export default class CodeEditorPlayer {
 
   play(events: Array<CodioEvent>, time: number): void {
     const timeline = createTimelineWithAbsoluteTimes(events, time);
+    console.log('play events', events);
+    console.log('play timeline', timeline.length);
     runThroughTimeline(timeline, (timer: NodeJS.Timer) => (this.currentActionTimer = timer));
   }
 
   //todo: moveToFrame should use create+applyFrame when time is 0
   async moveToFrame(time: number): Promise<void> {
-    if (time === 0) {
-      const { uri, content }: IntitialFileContent = getInitialFilePathAndContentFromFrame(this.initialFrame);
-      try {
-        await window.showTextDocument(uri);
-      } catch (e) {
-        UI.showError(e.message);
-      }
-      await overrideEditorText(window.activeTextEditor, content);
-    } else {
+    if (time > 0) {
       const initialToCurrentFrameActions = cutTimelineUntil(this.events, time);
       // const interacterContent = getInteracterContent(this.tutorial);
       const frame = createFrame(this.initialFrame, initialToCurrentFrameActions);

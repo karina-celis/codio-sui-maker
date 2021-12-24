@@ -56,9 +56,21 @@ export const checkForFfmpeg = async (): Promise<unknown> => {
 
 //editor
 export async function overrideEditorText(editor: vscode.TextEditor, newText: string): Promise<void> {
+  console.log('overrideEditorText editor', editor);
+  console.log('overrideEditorText newText', newText);
+
   const invalidRange = new vscode.Range(0, 0, editor.document.lineCount /*intentionally missing the '-1' */, 0);
+  console.log('overrideEditorText invalidRange', invalidRange);
   const fullRange = editor.document.validateRange(invalidRange);
-  await editor.edit((edit) => edit.replace(fullRange, newText));
+  console.log('overrideEditorText fullRange', fullRange);
+  console.log('overrideEditorText editor.selection', editor.selection);
+  console.log('overrideEditorText editor.selections', editor.selections);
+  await editor.edit((edit) => {
+    console.log('editor edit', edit);
+    return edit.replace(fullRange, newText);
+  });
+  console.log('overrideEditorText after editor.selection', editor.selection);
+  console.log('overrideEditorText after editor.selections', editor.selections);
 }
 
 export function getTextEditor(path: string): vscode.TextEditor {

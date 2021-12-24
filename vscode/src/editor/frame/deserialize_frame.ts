@@ -10,7 +10,7 @@ export default function deserializeFrame(frame: Array<CodioSerializedFile>, codi
 
 function deserializeFile(file: CodioSerializedFile, codioPath: string): CodioFile {
   return {
-    uri: Uri.file(FSManager.toFullPath(codioPath, file.path)),
+    uri: Uri.joinPath(Uri.file(codioPath), file.path),
     document: new ShadowDocument(file.text),
     lastAction: file.lastActionCount,
     column: file.column,

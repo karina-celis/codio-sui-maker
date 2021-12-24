@@ -96,9 +96,9 @@ export default class Recorder {
       await this.resume();
     }
 
-    this.timer.stop();
-    this.codeEditorRecorder.stopRecording();
+    await this.codeEditorRecorder.stopRecording();
     await this.audioRecorder.stopRecording();
+    this.timer.stop();
 
     // Todo: Check situation where pause time > recording time
     this.recordingLength = Math.abs(Date.now() - this.recordingStartTime - this.pauseTotalTime);
@@ -152,12 +152,13 @@ export default class Recorder {
         this.recordingStartTime,
         this.workspaceRoot,
       );
+      console.log('saveRecording codioTimelineContent', codioTimelineContent);
       const codioJsonContent = { ...codioTimelineContent, codioLength: this.recordingLength };
       const metadataJsonContent = { length: this.recordingLength, name: this.codioName, version: CODIO_FORMAT_VERSION };
       await FSManager.saveRecordingToFile(
         codioJsonContent,
         metadataJsonContent,
-        codioJsonContent.codioEditors,
+        codioJsonContent.openDocuments,
         this.codioPath,
         this.destinationFolder,
       );

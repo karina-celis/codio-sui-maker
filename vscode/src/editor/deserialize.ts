@@ -6,11 +6,22 @@ import {
   isSerializedVisibleRangeEvent,
   isSerializedEditorEvent,
 } from './event_creator';
+import { DocumentEvents } from './consts';
 
-export default function deserializeEvents(events: Array<CodioSerializedEvent>, codioPath): Array<CodioEvent> {
+/**
+ * Construct an array of codio events from given arguments.
+ * @param events An array of serialized codio events.
+ * @param codioPath Path where the codio lives.
+ * @returns An array of deserialized codio events.
+ */
+export default function deserializeEvents(events: Array<CodioSerializedEvent>, codioPath: string): Array<CodioEvent> {
   return events.map((serializedEvent) => {
     const event = deserializeFilePath(serializedEvent, codioPath);
-    if (isSerializedTextEvent(event)) {
+
+    if (event.type === DocumentEvents.DOCUMENT_RENAME) {
+      const dre = deserializeRenameEvent(event, codioPath);
+      return dre;
+    } else if (isSerializedTextEvent(event)) {
       return deserializeTextEvent(event);
     } else if (isSerializedSelectionEvent(event)) {
       return deserializeSelectionEvent(event);
@@ -27,14 +38,38 @@ export default function deserializeEvents(events: Array<CodioSerializedEvent>, c
 function deserializeFilePath(event: CodioSerializedEvent, codioPath: string) {
   if (event.data.path) {
     const { path, ...eventData } = event.data;
-    const newEvent = { ...event, data: { ...eventData, uri: Uri.file(FSManager.toFullPath(codioPath, path)) } };
+    const newEvent = { ...event, data: { ...eventData, uri: Uri.joinPath(Uri.file(codioPath), path) } };
     return newEvent;
   } else {
     return event;
   }
 }
 
-function deserializeTextEvent(event: CodioSerializedTextEvent): CodioTextEvent {
+/**
+ * Construct a DocumentRenameEvent from given arguments.
+ * @param event A serialized event to deserialize into a DocumentRenameEvent.
+ * @param codioPath Path where the codio lives.
+ * @returns A DocumentRenameEvent.
+ */
+function deserializeRenameEvent(event: CodioSerializedEvent, codioPath: string): DocumentRenameEvent {
+  const { oldPath, newPath, ...eventData } = event.data;
+  //@ts-ignore
+  return {
+    ...event,
+    data: {
+      ...eventData,
+      oldUri: Uri.joinPath(Uri.file(codioPath), oldPath),
+      newUri: Uri.joinPath(Uri.file(codioPath), newPath),
+    },
+  };
+}
+
+/**
+ * Construct a DocumentChangeEvent from given arguments.
+ * @param event A serialized event to deserialize into a DocumentChangeEvent.
+ * @returns A DocumentChangeEvent.
+ */
+function deserializeTextEvent(event: CodioSerializedTextEvent): DocumentChangeEvent {
   return {
     ...event,
     //@ts-ignore

@@ -1,3 +1,5 @@
+// import { DocumentEvents } from '../editor/consts';
+
 declare interface Metadata {
   length: number;
   name: string;
@@ -16,22 +18,44 @@ declare interface RecordProject {
 }
 
 declare interface CodioEvent {
-  type: string;
+  type: string | number;
   data: {
     uri?: Uri | undefined;
     time: number;
   };
 }
 
-declare interface CodioSerializedEvent {
-  type: string;
+declare interface DocumentEvent {
+  type: number;
   data: {
-    path?: string | undefined;
+    uri: Uri;
+    content?: string;
     time: number;
   };
 }
-declare interface CodioTextEvent extends CodioEvent {
-  type: 'text';
+
+declare interface DocumentRenameEvent extends DocumentEvent {
+  type: number;
+  data: {
+    oldUri: Uri;
+    newUri: Uri;
+    content?: string;
+    time: number;
+  };
+}
+
+declare interface CodioSerializedEvent {
+  type: string | number;
+  data: {
+    path?: string | undefined;
+    oldPath?: string | undefined;
+    newPath?: string | undefined;
+    content?: string | undefined;
+    time: number;
+  };
+}
+declare interface DocumentChangeEvent extends DocumentEvent {
+  type: number;
   data: {
     uri: Uri;
     changes: readonly TextDocumentContentChangeEvent[];
@@ -40,7 +64,7 @@ declare interface CodioTextEvent extends CodioEvent {
 }
 
 declare interface CodioSerializedTextEvent extends CodioSerializedEvent {
-  type: 'text';
+  type: number;
   data: {
     path: string;
     changes: readonly TextDocumentContentChangeEvent[];
@@ -160,7 +184,7 @@ declare interface Timeline {
 }
 
 declare interface TimelineContent {
-  codioEditors: sting[];
+  openDocuments: sting[];
   events: CodioSerializedEvent[];
   initialFrame: CodioSerializedFile[];
 }

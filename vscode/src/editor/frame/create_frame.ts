@@ -57,6 +57,6 @@ export function createFrame(initialFrame: Array<CodioFile>, timeline: Array<Codi
   const frame = Object.keys(documentsByPath)
     .map((path) => ({ ...documentsByPath[path], uri: Uri.file(path) }))
     .sort((a, b) => (a.lastAction < b.lastAction ? -1 : a.lastAction > b.lastAction ? 1 : 0));
-  console.log(frame);
+  console.log('createFrame', frame);
   return frame;
 }

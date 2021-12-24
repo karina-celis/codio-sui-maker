@@ -68,8 +68,13 @@ export default class FSManager {
 
   static toRelativePath(uri: Uri, rootPath: string): string {
     const pathSplit = uri.path.split(uriSeperator);
+    if (pathSplit.length === 1) {
+      return pathSplit[0];
+    }
+
     const rootPathSplit = rootPath.split(uriSeperator);
     const relativePath = pathSplit.slice(rootPathSplit.length).join(uriSeperator);
+
     return relativePath;
   }
 
@@ -85,6 +90,7 @@ export default class FSManager {
     await this.saveFile(join(codioPath, CODIO_CONTENT_FILE), codioContentJson);
     await this.saveFile(join(codioPath, CODIO_META_FILE), metaDataJson);
     const codioWorkspaceFolderPath = join(codioPath, CODIO_WORKSPACE_FOLDER);
+    // TODO: The workspace folder should save any files not in events.
     await saveProjectFiles(codioWorkspaceFolderPath, files);
     if (destinationFolder) {
       await this.zip(codioPath, destinationFolder.fsPath);
@@ -123,10 +129,6 @@ export default class FSManager {
       const file = fullPathSplit[fullPathSplit.length - 1];
       return { rootPath: rootPath, files: [file] };
     }
-  }
-
-  static toFullPath(codioPath: string, filePath: string): string {
-    return join(codioPath, filePath);
   }
 
   async folderNameExists(folderName: string): Promise<boolean> {

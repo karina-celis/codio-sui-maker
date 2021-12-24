@@ -1,3 +1,6 @@
+## [0.10.0]
+- Adding better file event handling and resiliency.
+
 ## [0.9.0]
 - Support Linux OSes.
 

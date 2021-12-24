@@ -1,11 +1,14 @@
 import { Position, Range } from 'vscode';
 import FSManager from '../filesystem/FSManager';
-import { isTextEvent, isSelectionEvent, isEditorEvent, isExecutionEvent, isVisibleRangeEvent } from './event_creator';
+import { DocumentEvents } from './consts';
+import { isTextEvent } from './event_creator';
 
 export default function serialize(events: Array<CodioEvent>, rootPath: string): Array<CodioSerializedEvent> {
   return events
     .map((event) => {
-      return serializeEvent(event, rootPath);
+      const se = serializeEvent(event, rootPath);
+      console.log('event serialized', event, se);
+      return se;
     })
     .filter((event) => !!event);
 }
@@ -13,15 +16,17 @@ export default function serialize(events: Array<CodioEvent>, rootPath: string): 
 function serializeEvent(event: CodioEvent, rootPath): CodioSerializedEvent {
   if (isTextEvent(event)) {
     return serializeTextEvent(event, rootPath);
-  } else if (isSelectionEvent(event) || isEditorEvent(event) || isExecutionEvent(event) || isVisibleRangeEvent(event)) {
+  } else if (event.type === DocumentEvents.DOCUMENT_RENAME) {
+    return serializeRenameEvent(event as DocumentRenameEvent, rootPath);
+  } else {  //if (isSelectionEvent(event) || isEditorEvent(event) || isExecutionEvent(event) || isVisibleRangeEvent(event)) {
     return serializeFilePath(event, rootPath);
   }
 }
 
-function serializeTextEvent(event: CodioTextEvent, rootPath): CodioSerializedTextEvent {
+function serializeTextEvent(event: DocumentChangeEvent, rootPath): CodioSerializedTextEvent {
   serializeFilePath(event, rootPath);
   if (event.data.changes.length === 0) {
-    console.log('event with 0 length', event);
+    console.log('serializeTextEvent with 0 length', event);
     //@TODO: figure out which actions do not have a change
     return undefined;
   }
@@ -54,7 +59,28 @@ function serializeFilePath(event: CodioEvent, rootPath): CodioSerializedEvent {
       ...event,
       data: {
         ...eventData,
-        path: FSManager.toRelativePath(event.data.uri, rootPath),
+        path: FSManager.toRelativePath(uri, rootPath),
+      },
+    };
+    return newEvent;
+  }
+}
+
+/**
+ * Serialize given DocumentRenameEvent.
+ * @param event DocumentRenameEvent to serialize.
+ * @param rootPath Root path of workspace.
+ * @returns A serialized codio event.
+ */
+function serializeRenameEvent(event: DocumentRenameEvent, rootPath): CodioSerializedEvent {
+  if (event.data.oldUri) {
+    const { oldUri, newUri, ...eventData } = event.data;
+    const newEvent = {
+      ...event,
+      data: {
+        ...eventData,
+        oldPath: FSManager.toRelativePath(oldUri, rootPath),
+        newPath: FSManager.toRelativePath(newUri, rootPath),
       },
     };
     return newEvent;
