@@ -1,4 +1,4 @@
-import CodeEditorPlayer from './Editor';
+import EditorPlayer from './Editor';
 import Timer from '../ProgressTimer';
 import FSManager from '../filesystem/FSManager';
 import { commands, Disposable, TextEditorSelectionChangeEvent, window } from 'vscode';
@@ -18,7 +18,7 @@ export default class Player {
   relativeActiveTime = 0;
   lastStoppedTime = 0;
 
-  codeEditorPlayer: CodeEditorPlayer;
+  editorPlayer: EditorPlayer;
   audioPlayer: AudioHandler;
   subtitlesPlayer: Subtitles;
   timer: Timer;
@@ -39,13 +39,13 @@ export default class Player {
       const timeline = await FSManager.loadTimeline(this.codioPath);
       this.codioLength = timeline.codioLength;
 
-      this.codeEditorPlayer = new CodeEditorPlayer();
-      let loaded = this.codeEditorPlayer.load(
+      this.editorPlayer = new EditorPlayer();
+      let loaded = this.editorPlayer.load(
         workspaceToPlayOn ? workspaceToPlayOn : FSManager.workspacePath(this.codioPath),
         timeline,
       );
       if (!loaded) {
-        this.codeEditorPlayer.destroy();
+        this.editorPlayer.destroy();
       }
 
       this.audioPlayer = new AudioHandler(FSManager.audioPath(this.codioPath), Environment.getInstance());
@@ -74,8 +74,8 @@ export default class Player {
 
   async startCodio(): Promise<void> {
     this.process = new Promise((resolve) => (this.closeCodioResolver = resolve));
-    await this.codeEditorPlayer.moveToFrame(0);
-    this.play(this.codeEditorPlayer.events, this.relativeActiveTime);
+    await this.editorPlayer.moveToFrame(0);
+    this.play(this.editorPlayer.events, this.relativeActiveTime);
     this.updateContext(IN_CODIO_SESSION, true);
   }
 
@@ -89,16 +89,16 @@ export default class Player {
   }
 
   /**
-   * Play actions and media from given time in seconds.
-   * @param actions An array of action objects for the CodeEditorPlayer to parse.
+   * Play given events and media from given time in seconds.
+   * @param events An array of event objects for the EditorPlayer to parse.
    * @param timeToStart Seconds to start playing media from.
    */
-  play(actions: CodioEvent[], timeToStart: number): void {
+  play(events: CodioEvent[], timeToStart: number): void {
     if (this.isPlaying) {
       this.pauseMedia();
     }
-    this.codioStartTime = Date.now();
-    this.codeEditorPlayer.play(actions, this.codioStartTime);
+    this.codioStartTime = Date.now(); // @note: Why isn't it timeToStart?
+    this.editorPlayer.play(events, this.codioStartTime);
     this.subtitlesPlayer.play(timeToStart * 1000);
     this.audioPlayer.play(timeToStart);
     this.timer.run(timeToStart);
@@ -133,7 +133,7 @@ export default class Player {
    * Pause all media types: Editor, Audio, Subtitles, and Timeline.
    */
   private pauseMedia(): void {
-    this.codeEditorPlayer.pause();
+    this.editorPlayer.pause();
     this.audioPlayer.pause();
     this.subtitlesPlayer.pause();
     this.timer.stop();
@@ -193,11 +193,11 @@ export default class Player {
       if (this.isPlaying) {
         this.pauseMedia();
       }
-      await this.codeEditorPlayer.moveToFrame(relativeTimeToStart);
+      await this.editorPlayer.moveToFrame(relativeTimeToStart);
       this.relativeActiveTime = relativeTimeToStart;
-      const relevantRelativeActions = this.codeEditorPlayer.getTimeline(relativeTimeToStart);
+      const relevantRelativeEvents = this.editorPlayer.getTimeline(relativeTimeToStart);
       const timeToStartInSeconds = relativeTimeToStart / 1000;
-      this.play(relevantRelativeActions, timeToStartInSeconds);
+      this.play(relevantRelativeEvents, timeToStartInSeconds);
       this.updateContext(IN_CODIO_SESSION, true);
     } catch (e) {
       console.log('play from fail', e);

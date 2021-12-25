@@ -1,3 +1,5 @@
+import { commands } from 'vscode';
+import { DocumentEvents } from './consts';
 import processEvent from './event_dispatcher';
 
 function createEventWithModifiedTime(event: CodioEvent, newTime: number): CodioEvent {
@@ -33,28 +35,4 @@ export function createTimelineWithAbsoluteTimes(
     const newTime = event.data.time + startTime;
     return createEventWithModifiedTime(event, newTime);
   });
-}
-
-export function runThroughTimeline(
-  timeline: Array<CodioEvent> = [],
-  setCurrentActionTimer: (...args: unknown[]) => void,
-): void {
-  if (!timeline.length) {
-    console.log('runThroughTimeline no timeline');
-    return;
-  }
-  try {
-    const event = timeline[0];
-    const sleepTime = event.data.time - Date.now();
-    setCurrentActionTimer(
-      setTimeout(async () => {
-        await processEvent(event);
-        if (timeline.length !== 1) {
-          runThroughTimeline(timeline.slice(1), setCurrentActionTimer);
-        }
-      }, Math.max(sleepTime, 0)),
-    );
-  } catch (e) {
-    console.log('timeline error', e);
-  }
 }

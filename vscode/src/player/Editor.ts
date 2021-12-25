@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { removeSelection } from '../editor/event_dispatcher';
+import { isNull } from 'util';
+import processEvent, { removeSelection } from '../editor/event_dispatcher';
 import { createFrame, applyFrame } from '../editor/frame';
 import deserializeEvents from '../editor/deserialize';
 import {
   createTimelineWithAbsoluteTimes,
   cutTimelineFrom,
-  runThroughTimeline,
   cutTimelineUntil,
   createRelativeTimeline,
 } from '../editor/event_timeline';
 import deserializeFrame from '../editor/frame/deserialize_frame';
 
-export default class CodeEditorPlayer {
-  currentActionTimer: NodeJS.Timer;
+export default class EditorPlayer {
+  currentEventTimer: NodeJS.Timer;
   events: Array<CodioEvent>;
   initialFrame: Array<CodioFile>;
   workspaceFolder: string;
@@ -45,15 +45,49 @@ export default class CodeEditorPlayer {
     const timeline = createTimelineWithAbsoluteTimes(events, time);
     console.log('play events', events);
     console.log('play timeline', timeline.length);
-    runThroughTimeline(timeline, (timer: NodeJS.Timer) => (this.currentActionTimer = timer));
+    this.playEvents(timeline);
+  }
+
+  /**
+   * Play given events with a calculated delay.
+   * @param timeline An array of events to play.
+   * @returns void.
+   */
+  private playEvents(timeline: Array<CodioEvent> = []): void {
+    if (!timeline.length) {
+      console.log('playEvents no timeline');
+      return;
+    }
+    try {
+      const event = timeline.shift();
+      const delay = event.data.time - Date.now();
+      this.currentEventTimer = setTimeout(async () => {
+        await processEvent(event);
+
+        // While timeout was executing play could have stopped.
+        if (isNull(this.currentEventTimer)) {
+          return;
+        }
+
+        if (timeline.length !== 1) {
+          this.playEvents(timeline);
+        }
+      }, Math.max(delay, 0));
+    } catch (e) {
+      console.log('timeline error', e);
+    }
   }
 
   //todo: moveToFrame should use create+applyFrame when time is 0
   async moveToFrame(time: number): Promise<void> {
     if (time > 0) {
       const initialToCurrentFrameActions = cutTimelineUntil(this.events, time);
+      console.log('moveToFrame time', time);
+      console.log('moveToFrame initialToCurrentFrameAction', initialToCurrentFrameActions);
       // const interacterContent = getInteracterContent(this.tutorial);
       const frame = createFrame(this.initialFrame, initialToCurrentFrameActions);
+      console.log('moveToFrame this.initialFrame', this.initialFrame);
+      console.log('moveToFrame frame', frame);
       // const finalFrame = addInteracterContentToFrame(frame, interacterContent);
       await applyFrame(frame);
     }
@@ -65,7 +99,8 @@ export default class CodeEditorPlayer {
   }
 
   pause(): void {
-    clearTimeout(this.currentActionTimer);
+    clearTimeout(this.currentEventTimer);
+    this.currentEventTimer = null;
     removeSelection();
   }
 }
