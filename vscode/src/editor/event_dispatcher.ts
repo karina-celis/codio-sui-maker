@@ -112,22 +112,31 @@ async function processDeleteEvent(de: DocumentEvent) {
  */
 async function processOpenEvent(de: DocumentEvent) {
   console.log(DocumentEvents[de.type], de);
+  const data = de.data;
+
+  // A document could be opened and dirty and not focused.
+  const foundTD = vscode.workspace.textDocuments.find((td) => {
+    return td.uri.path === data.uri.path;
+  });
+  if (foundTD?.isDirty) { // Force focus.
+    await vscode.window.showTextDocument(data.uri, { preview: false });
+  }
 
   // If the active editor is the document in an unsaved state then replace all.
   const ate = vscode.window.activeTextEditor;
-  if (de.data.uri.path === ate?.document.uri.path && ate?.document.isDirty) {
+  if (data.uri.path === ate?.document.uri.path && ate?.document.isDirty) {
     await ate.edit(async (tee: vscode.TextEditorEdit) => {
       const start = ate.visibleRanges[0].start as vscode.Position;
       const end = ate.visibleRanges[0].end as vscode.Position;
-      tee.replace(new vscode.Range(start, end), de.data.content);
+      tee.replace(new vscode.Range(start, end), data.content);
     });
 
     await ate.document.save();
   } else {
-    await vscode.workspace.fs.writeFile(de.data.uri, new TextEncoder().encode(de.data.content));
+    await vscode.workspace.fs.writeFile(data.uri, new TextEncoder().encode(data.content));
   }
 
-  await vscode.window.showTextDocument(de.data.uri, { preview: false });
+  await vscode.window.showTextDocument(data.uri, { preview: false });
 }
 
 /**
