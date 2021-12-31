@@ -69,17 +69,20 @@ async function processChangeEvent(dce: DocumentChangeEvent) {
 async function processCloseEvent(de: DocumentEvent) {
   console.log(DocumentEvents[de.type], de);
 
+  const data = de.data;
+  await vscode.workspace.fs.writeFile(data.uri, new TextEncoder().encode(data.content));
+
   // During a 'Save As' action the source file reverts to previous state and closes.
   // This allows the file to be saved at its previous state and close cleanly.
   const td = vscode.workspace.textDocuments.find((td) => {
-    return td.uri.path === de.data.uri.path;
+    return td.uri.path === data.uri.path;
   });
-  if (td.isDirty) {
+  if (td?.isDirty) {
     await td.save();
   }
 
   // There could be a situation where the active editor is not the given event's URI.
-  await vscode.window.showTextDocument(de.data.uri, { preview: false });
+  await vscode.window.showTextDocument(data.uri, { preview: false });
   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
 }
 
@@ -118,7 +121,8 @@ async function processOpenEvent(de: DocumentEvent) {
   const foundTD = vscode.workspace.textDocuments.find((td) => {
     return td.uri.path === data.uri.path;
   });
-  if (foundTD?.isDirty) { // Force focus.
+  if (foundTD?.isDirty) {
+    // Force focus.
     await vscode.window.showTextDocument(data.uri, { preview: false });
   }
 
@@ -277,7 +281,7 @@ async function dispatchEditorEvent(event: CodioChangeActiveEditorEvent) {
   }
 }
 
-export function removeSelection() {
+export function removeSelection(): void {
   vscode.window.visibleTextEditors.map((editor) => {
     editor.setDecorations(cursorStyle, []);
   });

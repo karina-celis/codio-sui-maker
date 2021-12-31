@@ -73,7 +73,10 @@ export default class CodeEditorRecorder {
     }
 
     // Text Editor Events
-    this.onDidChangeActiveTextEditorListener = window.onDidChangeActiveTextEditor(this.onDidChangeActiveTextEditor, this);
+    this.onDidChangeActiveTextEditorListener = window.onDidChangeActiveTextEditor(
+      this.onDidChangeActiveTextEditor,
+      this,
+    );
     this.onDidChangeTextEditorSelectionListener = window.onDidChangeTextEditorSelection(
       this.onDidChangeTextEditorSelection,
       this,
@@ -130,8 +133,8 @@ export default class CodeEditorRecorder {
   /**
    * Check opened text documents' state.
    */
-   private async syncOpenedTextDocuments(): Promise<void> {
-    for(let td of workspace.textDocuments) {
+  private async syncOpenedTextDocuments(): Promise<void> {
+    for (const td of workspace.textDocuments) {
       if (td.isDirty) {
         await td.save();
 
@@ -143,12 +146,12 @@ export default class CodeEditorRecorder {
         await workspace.fs.writeFile(newUri, new TextEncoder().encode(td.getText()));
 
         const createEvt = <FileWillCreateEvent>{
-          files: [newUri] as ReadonlyArray<Uri>
+          files: [newUri] as ReadonlyArray<Uri>,
         };
         this.onWillCreateFiles(createEvt);
         this.removePathFromProcessing(newUri.path);
 
-        const newTD = await workspace.openTextDocument(newUri)
+        const newTD = await workspace.openTextDocument(newUri);
         const saveEvt = <TextDocumentWillSaveEvent>{ document: newTD, reason: TextDocumentSaveReason.Manual };
         this.onWillSaveDocument(saveEvt);
         this.removePathFromProcessing(newUri.path);
@@ -161,7 +164,7 @@ export default class CodeEditorRecorder {
    * @param filePath File path to remove.
    * @returns True is found and removed; false otherwise.
    */
-  private removePathFromProcessing(filePath: string): Boolean {
+  private removePathFromProcessing(filePath: string): boolean {
     const processedIndex = this.processPaths.indexOf(filePath);
     if (processedIndex !== -1) {
       this.processPaths.splice(processedIndex, 1);
@@ -176,7 +179,7 @@ export default class CodeEditorRecorder {
    * @param filePath File path to check if processing.
    * @returns True if in processing array; false otherwise.
    */
-  private pathIsProcessing(filePath: string): Boolean {
+  private pathIsProcessing(filePath: string): boolean {
     const isProcessing = this.processPaths.indexOf(filePath) !== -1 ? true : false;
     console.log('Processing', this.processPaths);
     return isProcessing;
@@ -300,7 +303,7 @@ export default class CodeEditorRecorder {
    * @param td Text document that is being opened.
    * @returns
    */
-   private onOpenDocument(td: TextDocument): void {
+  private onOpenDocument(td: TextDocument): void {
     console.log('onOpenDocument td', td);
 
     // From a WillCreate or WillRename
@@ -354,17 +357,17 @@ export default class CodeEditorRecorder {
    * @param td Text Document that closed.
    * @returns void
    */
-   private onCloseDocument(td: TextDocument): void {
+  private onCloseDocument(td: TextDocument): void {
     console.log('onCloseDocument td', td);
 
     // From a WillDelete or WillRename
-    if(this.removePathFromProcessing(td.uri.path)) {
+    if (this.removePathFromProcessing(td.uri.path)) {
       console.log('Processed', td.uri.path, this.processPaths);
       return;
     }
 
     // Close already existing file
-    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_CLOSE, td.uri);
+    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_CLOSE, td.uri, td.getText());
     if (event) {
       this.events.push(event);
     }

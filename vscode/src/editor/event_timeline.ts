@@ -1,7 +1,3 @@
-import { commands } from 'vscode';
-import { DocumentEvents } from './consts';
-import processEvent from './event_dispatcher';
-
 function createEventWithModifiedTime(event: CodioEvent, newTime: number): CodioEvent {
   return {
     ...event,

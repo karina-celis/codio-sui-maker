@@ -4,6 +4,11 @@ import { isTextEvent, isEditorEvent } from '../event_creator';
 
 const INITIAL_FILE_INDEX = 0;
 
+/**
+ * Create an object containing files and their last state.
+ * @param initialFrame
+ * @returns
+ */
 function initialFrametoDocumentsByPath(initialFrame: Array<CodioFile>) {
   return initialFrame.reduce((docByPath, file) => {
     docByPath[file.uri.path] = {
@@ -22,6 +27,13 @@ export function getInitialFilePathAndContentFromFrame(initialFrame: CodioFrame):
   const { document, uri } = getInitialFileFromInitialFrame(initialFrame);
   return { content: document.text, uri };
 }
+
+/**
+ * For each event in given timeline apply changes to each document path.
+ * @param initialFrame
+ * @param timeline
+ * @returns
+ */
 export function createFrame(initialFrame: Array<CodioFile>, timeline: Array<CodioEvent>): CodioFrame {
   let actionCounter = 0;
   const documentsByPath = initialFrametoDocumentsByPath(initialFrame);

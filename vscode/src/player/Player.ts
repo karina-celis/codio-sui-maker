@@ -16,7 +16,6 @@ export default class Player {
   codioLength: number;
   codioStartTime: number;
   relativeActiveTime = 0;
-  lastStoppedTime = 0;
 
   editorPlayer: EditorPlayer;
   audioPlayer: AudioHandler;
@@ -65,7 +64,6 @@ export default class Player {
 
   setInitialState(): void {
     this.relativeActiveTime = 0;
-    this.lastStoppedTime = 0;
     this.codioStartTime = undefined;
     this.codioLength = undefined;
     this.closeCodioResolver = undefined;
@@ -74,7 +72,6 @@ export default class Player {
 
   async startCodio(): Promise<void> {
     this.process = new Promise((resolve) => (this.closeCodioResolver = resolve));
-    await this.editorPlayer.moveToFrame(0);
     this.play(this.editorPlayer.events, this.relativeActiveTime);
     this.updateContext(IN_CODIO_SESSION, true);
   }
@@ -141,9 +138,8 @@ export default class Player {
   }
 
   pause(): void {
-    this.lastStoppedTime = Date.now();
     this.pauseMedia();
-    this.relativeActiveTime = this.relativeActiveTime + (this.lastStoppedTime - this.codioStartTime);
+    this.relativeActiveTime = this.relativeActiveTime + (Date.now() - this.codioStartTime);
     this.isPlaying = false;
     this.updateContext(IS_PLAYING, this.isPlaying);
   }
@@ -193,11 +189,10 @@ export default class Player {
       if (this.isPlaying) {
         this.pauseMedia();
       }
-      await this.editorPlayer.moveToFrame(relativeTimeToStart);
+
+      const events = this.editorPlayer.getEventsFrom(relativeTimeToStart);
       this.relativeActiveTime = relativeTimeToStart;
-      const relevantRelativeEvents = this.editorPlayer.getTimeline(relativeTimeToStart);
-      const timeToStartInSeconds = relativeTimeToStart / 1000;
-      this.play(relevantRelativeEvents, timeToStartInSeconds);
+      this.play(events, relativeTimeToStart / 1000);
       this.updateContext(IN_CODIO_SESSION, true);
     } catch (e) {
       console.log('play from fail', e);
