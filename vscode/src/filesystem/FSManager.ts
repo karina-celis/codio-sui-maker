@@ -1,6 +1,17 @@
 import { Uri, window } from 'vscode';
 import { tmpdir } from 'os';
-import { lstatSync, statSync, PathLike, renameSync, readFileSync, writeFileSync, readdirSync, unlinkSync, mkdirSync, existsSync } from 'fs';
+import {
+  lstatSync,
+  statSync,
+  PathLike,
+  renameSync,
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+  unlinkSync,
+  mkdirSync,
+  existsSync,
+} from 'fs';
 import { join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { uriSeperator } from '../utils';
@@ -31,7 +42,7 @@ export default class FSManager {
     this.tempFolder = tmpdir();
   }
 
-  static async saveFile(path: number | PathLike, content: unknown): Promise<void> {
+  static async saveFile(path: number | PathLike, content: string): Promise<void> {
     try {
       writeFileSync(path, content);
       console.log('The file was saved!', path);

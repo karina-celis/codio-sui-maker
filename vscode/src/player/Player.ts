@@ -88,17 +88,17 @@ export default class Player {
   /**
    * Play given events and media from given time in seconds.
    * @param events An array of event objects for the EditorPlayer to parse.
-   * @param timeToStart Seconds to start playing media from.
+   * @param timeSecs Seconds to start playing media from.
    */
-  play(events: CodioEvent[], timeToStart: number): void {
+  play(events: CodioEvent[], timeSecs: number): void {
     if (this.isPlaying) {
       this.pauseMedia();
     }
-    this.codioStartTime = Date.now(); // @note: Why isn't it timeToStart?
+    this.codioStartTime = Date.now(); // The editor adjusts events' time.
     this.editorPlayer.play(events, this.codioStartTime);
-    this.subtitlesPlayer.play(timeToStart * 1000);
-    this.audioPlayer.play(timeToStart);
-    this.timer.run(timeToStart);
+    this.subtitlesPlayer.play(timeSecs * 1000);
+    this.audioPlayer.play(timeSecs);
+    this.timer.run(timeSecs);
     this.isPlaying = true;
     this.updateContext(IS_PLAYING, this.isPlaying);
     this.listenToInteractions();
@@ -130,15 +130,19 @@ export default class Player {
    * Pause all media types: Editor, Audio, Subtitles, and Timeline.
    */
   private pauseMedia(): void {
-    this.editorPlayer.pause();
+    this.editorPlayer.stop();
     this.audioPlayer.pause();
     this.subtitlesPlayer.pause();
     this.timer.stop();
     this.onPauseHandler?.dispose();
   }
 
+  /**
+   * Pause media, update relative active time, and update state.
+   */
   pause(): void {
     this.pauseMedia();
+    // How long has the codio been playing?
     this.relativeActiveTime = this.relativeActiveTime + (Date.now() - this.codioStartTime);
     this.isPlaying = false;
     this.updateContext(IS_PLAYING, this.isPlaying);
@@ -162,40 +166,52 @@ export default class Player {
     this.timer.onUpdate(observer);
   }
 
-  rewind(s: number): void {
+  /**
+   * Rewind codio that is playing.
+   * @param timeSecs Time in seconds.
+   */
+  rewind(timeSecs: number): void {
     if (this.isPlaying) {
       this.pause();
     }
-    let timeToRewind = this.relativeActiveTime - s * 1000;
+
+    // Get time from when/if the codio was paused.
+    let timeToRewind = this.relativeActiveTime - timeSecs * 1000;
     if (timeToRewind < 0) {
       timeToRewind = 0;
     }
     this.playFrom(timeToRewind);
   }
 
-  forward(s: number): void {
+  /**
+   * Forward codio that is playing.
+   * @param timeSecs Time in seconds.
+   */
+  forward(timeSecs: number): void {
     if (this.isPlaying) {
       this.pause();
     }
-    let timeToForward = this.relativeActiveTime + s * 1000;
+
+    // Get time from when/if the codio was paused.
+    let timeToForward = this.relativeActiveTime + timeSecs * 1000;
     if (timeToForward > this.codioLength) {
       timeToForward = this.codioLength;
     }
     this.playFrom(timeToForward);
   }
 
-  async playFrom(relativeTimeToStart: number): Promise<void> {
-    try {
-      if (this.isPlaying) {
-        this.pauseMedia();
-      }
-
-      const events = this.editorPlayer.getEventsFrom(relativeTimeToStart);
-      this.relativeActiveTime = relativeTimeToStart;
-      this.play(events, relativeTimeToStart / 1000);
-      this.updateContext(IN_CODIO_SESSION, true);
-    } catch (e) {
-      console.log('play from fail', e);
+  /**
+   * Play codio from time given.
+   * @param relativeTimeToStart Time in milliseconds.
+   */
+  playFrom(relativeTimeToStart: number): void {
+    if (this.isPlaying) {
+      this.pauseMedia();
     }
+
+    const events = this.editorPlayer.getEventsFrom(relativeTimeToStart);
+    this.relativeActiveTime = relativeTimeToStart;
+    this.play(events, relativeTimeToStart / 1000);
+    this.updateContext(IN_CODIO_SESSION, true);
   }
 }

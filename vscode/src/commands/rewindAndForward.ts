@@ -1,13 +1,23 @@
 import Player from '../player/Player';
 
-export function rewind(player: Player, time?: number) {
+/**
+ * Rewind the codio that is playing.
+ * @param player Codio player instance.
+ * @param timeSecs Time in seconds.
+ */
+export function rewind(player: Player, timeSecs?: number): void {
   if (player) {
-    typeof time === 'number' ? player.rewind(time) : player.rewind(10);
+    typeof timeSecs === 'number' ? player.rewind(timeSecs) : player.rewind(10);
   }
 }
 
-export function forward(player: Player, time?: number) {
+/**
+ * Forward the codio that is playing.
+ * @param player Codio player instance.
+ * @param timeSecs Time in seconds.
+ */
+export function forward(player: Player, timeSecs?: number): void {
   if (player) {
-    typeof time === 'number' ? player.forward(time) : player.forward(10);
+    typeof timeSecs === 'number' ? player.forward(timeSecs) : player.forward(10);
   }
 }

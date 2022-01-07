@@ -1,5 +1,4 @@
-import FSManager from '../filesystem/FSManager';
-import { Uri, Range, Position, Selection } from 'vscode';
+import { Uri, Range, Position, Selection, TextDocumentContentChangeEvent } from 'vscode';
 import {
   isSerializedTextEvent,
   isSerializedSelectionEvent,
@@ -53,7 +52,6 @@ function deserializeFilePath(event: CodioSerializedEvent, codioPath: string) {
  */
 function deserializeRenameEvent(event: CodioSerializedEvent, codioPath: string): DocumentRenameEvent {
   const { oldPath, newPath, ...eventData } = event.data;
-  //@ts-ignore
   return {
     ...event,
     data: {
@@ -61,7 +59,7 @@ function deserializeRenameEvent(event: CodioSerializedEvent, codioPath: string):
       oldUri: Uri.joinPath(Uri.file(codioPath), oldPath),
       newUri: Uri.joinPath(Uri.file(codioPath), newPath),
     },
-  };
+  } as DocumentRenameEvent;
 }
 
 /**
@@ -70,56 +68,72 @@ function deserializeRenameEvent(event: CodioSerializedEvent, codioPath: string):
  * @returns A DocumentChangeEvent.
  */
 function deserializeTextEvent(event: CodioSerializedTextEvent): DocumentChangeEvent {
+  const deserializedChanges: TextDocumentContentChangeEvent[] = event.data.changes.map((change) => {
+    if (change.range) {
+      return { ...change, range: deserializeRange(change.range) };
+    } else if (change.position) {
+      return { ...change, position: deserializePosition(change.position) };
+    }
+  });
+
   return {
     ...event,
-    //@ts-ignore
     data: {
       ...event.data,
-      changes: event.data.changes.map((change) => {
-        if (change.range) {
-          return { ...change, range: deserializeRange(change.range) };
-        } else if (change.position) {
-          return { ...change, position: deserializePosition(change.position) };
-        }
-      }),
+      changes: deserializedChanges,
     },
-  };
+  } as unknown as DocumentChangeEvent;
 }
 
+/**
+ * Construct a CodioSelectionEvent from given arguments.
+ * @param event A serialized event to deserialize into a CodioSelectionEvent.
+ * @returns A CodioSelectionEvent.
+ */
 function deserializeSelectionEvent(event: CodioSerializedSelectionEvent): CodioSelectionEvent {
+  const deserializedSelections: Selection[] = event.data.selections.map((selection) => {
+    return new Selection(deserializePosition(selection.anchor), deserializePosition(selection.active));
+  });
+
   return {
     ...event,
-    //@ts-ignore
     data: {
       ...event.data,
-      selections: event.data.selections.map((selection) => {
-        return new Selection(deserializePosition(selection.anchor), deserializePosition(selection.active));
-      }),
+      selections: deserializedSelections,
     },
-  };
+  } as unknown as CodioSelectionEvent;
 }
 
+/**
+ * Construct a CodioVisibleRangeEvent from given arguments.
+ * @param event A serialized event to deserialize into a CodioVisibleRangeEvent.
+ * @returns A CodioVisibleRangeEvent.
+ */
 function deserializeVisibleRangeEvent(event: CodioSerializedVisibleRangeEvent): CodioVisibleRangeEvent {
   return {
     ...event,
-    //@ts-ignore
     data: {
       ...event.data,
       visibleRange: deserializeRange(event.data.visibleRange),
     },
-  };
+  } as unknown as CodioVisibleRangeEvent;
 }
 
+/**
+ * Construct a CodioChangeActiveEditorEvent from given arguments.
+ * @param event A serialized event to deserialize into a CodioChangeActiveEditorEvent.
+ * @returns A CodioChangeActiveEditorEvent.
+ */
 function deserializeEditorEvent(event: CodioSerializedChangeActiveEditorEvent): CodioChangeActiveEditorEvent {
   return {
     ...event,
-    //@ts-ignore
     data: {
       ...event.data,
       visibleRange: deserializeRange(event.data.visibleRange),
     },
-  };
+  } as unknown as CodioChangeActiveEditorEvent;
 }
+
 function deserializeRange(range): Range {
   const startPosition = new Position(range[0].line, range[0].character);
   const endPosition = new Position(range[1].line, range[1].character);

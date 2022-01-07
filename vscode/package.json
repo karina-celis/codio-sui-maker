@@ -16,7 +16,7 @@
     "bugs": {
         "url": "https://github.com/rbrisita/codio-sui/projects/2"
     },
-    "version": "0.10.3",
+    "version": "0.10.4",
     "license": "MIT",
     "publisher": "rbrisita",
     "icon": "media/icon.png",
@@ -327,7 +327,7 @@
     },
     "devDependencies": {
         "@types/mocha": "^8.2.1",
-        "@types/node": "^8.10.25",
+        "@types/node": "^14.17.0",
         "@types/vscode": "^1.52.0",
         "@typescript-eslint/eslint-plugin": "^3.4.0",
         "@typescript-eslint/parser": "^3.4.0",
@@ -340,12 +340,14 @@
         "ts-loader": "^9.2.3",
         "tslint": "^5.8.0",
         "typescript": "^3.9.5",
+        "vsce": "^2.6.3",
         "vscode-test": "^1.5.1",
         "webpack": "^5.39.1",
         "webpack-cli": "^4.7.2"
     },
     "dependencies": {
         "cross-zip": "^3.0.0",
+        "node-abort-controller": "^3.0.1",
         "subtitles-parser-vtt": "rbrisita/subtitles-parser#semver:~0.0.9",
         "uuid": "^7.0.3",
         "which": "^2.0.2"

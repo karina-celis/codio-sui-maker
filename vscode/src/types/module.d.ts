@@ -77,7 +77,7 @@ declare interface CodioVisibleRangeEvent extends CodioEvent {
   data: {
     uri: Uri;
     time: number;
-    visibleRange: Range;
+    visibleRange: vscode.Range;
   };
 }
 
@@ -86,14 +86,14 @@ declare interface CodioSerializedVisibleRangeEvent extends CodioSerializedEvent 
   data: {
     path: string;
     time: number;
-    visibleRange: Range;
+    visibleRange: vscode.Range;
   };
 }
 declare interface CodioSelectionEvent extends CodioEvent {
   type: 'selection';
   data: {
     uri: Uri;
-    selections: readonly Selection[];
+    selections: readonly vscode.Selection[];
     time: number;
   };
 }
@@ -102,7 +102,7 @@ declare interface CodioSerializedSelectionEvent extends CodioSerializedEvent {
   type: 'selection';
   data: {
     path: string;
-    selections: Selection[];
+    selections: vscode.Selection[];
     time: number;
   };
 }
@@ -131,8 +131,8 @@ declare interface CodioChangeActiveEditorEvent extends CodioEvent {
     isInitial: boolean;
     content: string;
     viewColumn: ViewColumn;
-    visibleRange: Range;
-    selections: Selection[];
+    visibleRange: vscode.Range;
+    selections: readonly vscode.Selection[];
   };
 }
 
@@ -154,7 +154,7 @@ declare interface CodioSerializedChangeActiveEditorEvent {
         character: number;
       },
     ];
-    selections: Selection[];
+    selections: vscode.Selection[];
   };
 }
 

@@ -22,7 +22,7 @@ export function createDocumentEvent(type: DocumentEvents, uri: Uri, content?: st
       content,
       time: Date.now(),
     },
-  };
+  } as DocumentEvent;
 }
 
 export function createDocumentRenameEvent(oldUri: Uri, newUri: Uri, content: string): DocumentRenameEvent {
@@ -34,7 +34,7 @@ export function createDocumentRenameEvent(oldUri: Uri, newUri: Uri, content: str
       content,
       time: Date.now(),
     },
-  };
+  } as DocumentRenameEvent;
 }
 
 export function createDocumentChangeEvent(e: TextDocumentChangeEvent): DocumentChangeEvent {
@@ -46,7 +46,7 @@ export function createDocumentChangeEvent(e: TextDocumentChangeEvent): DocumentC
         changes: e.contentChanges,
         time: Date.now(),
       },
-    };
+    } as DocumentChangeEvent;
   }
 }
 
@@ -134,10 +134,10 @@ export function isExecutionEvent(event: CodioEvent): event is CodioExecutionEven
   return event.type === CODIO_EXEC;
 }
 
-export function isEditorEvent(event): event is CodioChangeActiveEditorEvent {
+export function isEditorEvent(event: CodioEvent): event is CodioChangeActiveEditorEvent {
   return event.type === CODIO_EDITOR_CHANGED;
 }
 
-export function isSerializedEditorEvent(event): event is CodioSerializedChangeActiveEditorEvent {
+export function isSerializedEditorEvent(event: CodioSerializedEvent): event is CodioSerializedChangeActiveEditorEvent {
   return event.type === CODIO_EDITOR_CHANGED;
 }
