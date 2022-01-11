@@ -366,11 +366,13 @@ export default class CodeEditorRecorder {
       return;
     }
 
-    // Close already existing file
-    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_CLOSE, td.uri, td.getText());
-    if (event) {
-      this.events.push(event);
+    let event;
+    if (td.isUntitled) {
+      event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_DELETE, td.uri);
+    } else {
+      event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_CLOSE, td.uri, td.getText());
     }
+    this.events.push(event);
   }
 
   /**
