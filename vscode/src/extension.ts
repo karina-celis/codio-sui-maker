@@ -71,7 +71,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   });
 
   const stopCodioDisposable = commands.registerCommand(CommandNames.STOP_CODIO, () => {
-    player.stop();
+    codioCommands.stopCodio(player);
   });
 
   const pauseCodioDisposable = commands.registerCommand(CommandNames.PAUSE_CODIO, () => {

@@ -5,6 +5,7 @@ import playFrom from './playFrom';
 import { forward, rewind } from './rewindAndForward';
 import resumeCodio from './resumeCodio';
 import pauseCodio from './pauseCodio';
+import stopCodio from './stopCodio';
 import pauseRecording from './pauseRecording';
 import resumeRecording from './resumeRecording';
 import saveRecording from './saveRecording';
@@ -21,6 +22,7 @@ export const codioCommands = {
   rewind,
   resumeCodio,
   pauseCodio,
+  stopCodio,
   cancelRecording,
   pauseRecording,
   resumeRecording,
