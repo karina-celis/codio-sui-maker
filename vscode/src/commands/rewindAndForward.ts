@@ -1,7 +1,7 @@
 import Player from '../player/Player';
 
 /**
- * Rewind the codio that is playing.
+ * Rewind the codio that is in session.
  * @param player Codio player instance.
  * @param timeSecs Time in seconds.
  */
@@ -12,7 +12,7 @@ export function rewind(player: Player, timeSecs?: number): void {
 }
 
 /**
- * Forward the codio that is playing.
+ * Forward the codio that is in session.
  * @param player Codio player instance.
  * @param timeSecs Time in seconds.
  */

@@ -27,6 +27,7 @@ function trimAudioFile(file: string, end: number) {
 
 function trimCodioFile(codioPath: string, end: number) {
   const jsonPath = path.join(codioPath, 'codio.json');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const json = require(jsonPath);
 
   for (let i = 0; i < json.events.length; i++) {
@@ -44,6 +45,7 @@ function trimCodioFile(codioPath: string, end: number) {
 
 function trimMetaFile(codioPath: string, end: number) {
   const jsonPath = path.join(codioPath, 'meta.json');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const json = require(jsonPath);
 
   json.length = end;
@@ -63,11 +65,11 @@ export default async function trimEnd(player: Player): Promise<void> {
 
     player.closeCodio();
 
-    const endTimeInSeconds = Math.round(player.relativeActiveTime / SECOND_IN_MS);
+    const endTimeInSeconds = Math.round(player.relativeActiveTimeMs / SECOND_IN_MS);
 
     trimAudioFile(player.audioPlayer.audioFilePath, endTimeInSeconds);
-    trimCodioFile(player.codioPath, player.relativeActiveTime);
-    trimMetaFile(player.codioPath, player.relativeActiveTime);
+    trimCodioFile(player.codioPath, player.relativeActiveTimeMs);
+    trimMetaFile(player.codioPath, player.relativeActiveTimeMs);
   } catch (e) {
     console.log('Trimming file failed', e);
   }

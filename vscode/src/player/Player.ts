@@ -11,11 +11,12 @@ const IN_CODIO_SESSION = 'inCodioSession';
 
 export default class Player {
   isPlaying = false;
+  inSession = false;
   codioPath: string;
 
   codioLength: number;
   codioStartTime: number;
-  relativeActiveTime = 0;
+  relativeActiveTimeMs = 0;
 
   editorPlayer: EditorPlayer;
   audioPlayer: AudioHandler;
@@ -63,7 +64,7 @@ export default class Player {
   }
 
   setInitialState(): void {
-    this.relativeActiveTime = 0;
+    this.relativeActiveTimeMs = 0;
     this.codioStartTime = undefined;
     this.codioLength = undefined;
     this.closeCodioResolver = undefined;
@@ -72,8 +73,9 @@ export default class Player {
 
   async startCodio(): Promise<void> {
     this.process = new Promise((resolve) => (this.closeCodioResolver = resolve));
-    this.play(this.editorPlayer.events, this.relativeActiveTime);
-    this.updateContext(IN_CODIO_SESSION, true);
+    this.play(this.editorPlayer.events, this.relativeActiveTimeMs);
+    this.inSession = true;
+    this.updateContext(IN_CODIO_SESSION, this.inSession);
   }
 
   /**
@@ -143,13 +145,14 @@ export default class Player {
   pause(): void {
     this.pauseMedia();
     // How long has the codio been playing?
-    this.relativeActiveTime = this.relativeActiveTime + (Date.now() - this.codioStartTime);
+    this.relativeActiveTimeMs = this.relativeActiveTimeMs + (Date.now() - this.codioStartTime);
     this.isPlaying = false;
     this.updateContext(IS_PLAYING, this.isPlaying);
   }
 
   resume(): void {
-    this.playFrom(this.relativeActiveTime);
+    const events = this.editorPlayer.getEventsFrom(this.relativeActiveTimeMs);
+    this.play(events, this.relativeActiveTimeMs / 1000);
   }
 
   //@TODO: should closeCodio just call pause? sometime it is called with pause before and sometime it doesn't. Probably a mistake
@@ -158,7 +161,8 @@ export default class Player {
     this.audioPlayer.pause();
     this.subtitlesPlayer.stop();
     this.closeCodioResolver();
-    this.updateContext(IN_CODIO_SESSION, false);
+    this.inSession = false;
+    this.updateContext(IN_CODIO_SESSION, this.inSession);
     this.onPauseHandler?.dispose();
   }
 
@@ -172,11 +176,11 @@ export default class Player {
    */
   rewind(timeSecs: number): void {
     if (this.isPlaying) {
-      this.pause();
+      this.relativeActiveTimeMs = this.relativeActiveTimeMs + (Date.now() - this.codioStartTime);
     }
 
     // Get time from when/if the codio was paused.
-    let timeToRewind = this.relativeActiveTime - timeSecs * 1000;
+    let timeToRewind = this.relativeActiveTimeMs - timeSecs * 1000;
     if (timeToRewind < 0) {
       timeToRewind = 0;
     }
@@ -189,11 +193,11 @@ export default class Player {
    */
   forward(timeSecs: number): void {
     if (this.isPlaying) {
-      this.pause();
+      this.relativeActiveTimeMs = this.relativeActiveTimeMs + (Date.now() - this.codioStartTime);
     }
 
     // Get time from when/if the codio was paused.
-    let timeToForward = this.relativeActiveTime + timeSecs * 1000;
+    let timeToForward = this.relativeActiveTimeMs + timeSecs * 1000;
     if (timeToForward > this.codioLength) {
       timeToForward = this.codioLength;
     }
@@ -202,16 +206,13 @@ export default class Player {
 
   /**
    * Play codio from time given.
-   * @param relativeTimeToStart Time in milliseconds.
+   * @param relativeTimeMs Time in milliseconds.
    */
-  playFrom(relativeTimeToStart: number): void {
+  playFrom(relativeTimeMs: number): void {
+    this.relativeActiveTimeMs = relativeTimeMs;
     if (this.isPlaying) {
       this.pauseMedia();
+      this.resume();
     }
-
-    const events = this.editorPlayer.getEventsFrom(relativeTimeToStart);
-    this.relativeActiveTime = relativeTimeToStart;
-    this.play(events, relativeTimeToStart / 1000);
-    this.updateContext(IN_CODIO_SESSION, true);
   }
 }
