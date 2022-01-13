@@ -1,6 +1,4 @@
 const CODIO_EDITOR_CHANGED = 'editor';
-const CODIO_SELECTION_CHANGED = 'selection';
-const CODIO_VISIBLE_RANGE_CHANGED = 'visibleRange';
 const CODIO_EXEC = 'exec';
 
 enum DocumentEvents {
@@ -12,7 +10,7 @@ enum DocumentEvents {
   DOCUMENT_RENAME,
   DOCUMENT_SAVE,
   DOCUMENT_SELECTION,
-  DOCUMENT_SCROLL,
+  DOCUMENT_VISIBLE_RANGE,
 }
 
-export { CODIO_EDITOR_CHANGED, CODIO_SELECTION_CHANGED, CODIO_VISIBLE_RANGE_CHANGED, CODIO_EXEC, DocumentEvents };
+export { CODIO_EDITOR_CHANGED, CODIO_EXEC, DocumentEvents };

@@ -1,5 +1,3 @@
-// import { DocumentEvents } from '../editor/consts';
-
 declare interface Metadata {
   length: number;
   name: string;
@@ -28,7 +26,7 @@ declare interface CodioEvent {
 declare interface DocumentEvent {
   type: number;
   data: {
-    uri: Uri;
+    uri?: Uri;
     content?: string;
     time: number;
   };
@@ -44,8 +42,8 @@ declare interface DocumentRenameEvent extends DocumentEvent {
   };
 }
 
-declare interface CodioSerializedEvent {
-  type: string | number;
+declare interface SerializedDocumentEvent {
+  type: number | string;
   data: {
     path?: string | undefined;
     oldPath?: string | undefined;
@@ -63,7 +61,7 @@ declare interface DocumentChangeEvent extends DocumentEvent {
   };
 }
 
-declare interface CodioSerializedTextEvent extends CodioSerializedEvent {
+declare interface SerializedDocumentChangeEvent extends SerializedDocumentEvent {
   type: number;
   data: {
     path: string;
@@ -72,8 +70,8 @@ declare interface CodioSerializedTextEvent extends CodioSerializedEvent {
   };
 }
 
-declare interface CodioVisibleRangeEvent extends CodioEvent {
-  type: 'visibleRange';
+declare interface DocumentVisibleRangeEvent extends DocumentEvent {
+  type: number;
   data: {
     uri: Uri;
     time: number;
@@ -81,16 +79,16 @@ declare interface CodioVisibleRangeEvent extends CodioEvent {
   };
 }
 
-declare interface CodioSerializedVisibleRangeEvent extends CodioSerializedEvent {
-  type: 'visibleRange';
+declare interface SerializedDocumentVisibleRangeEvent extends SerializedDocumentEvent {
+  type: number;
   data: {
     path: string;
     time: number;
     visibleRange: vscode.Range;
   };
 }
-declare interface CodioSelectionEvent extends CodioEvent {
-  type: 'selection';
+declare interface DocumentSelectionEvent extends DocumentEvent {
+  type: number;
   data: {
     uri: Uri;
     selections: readonly vscode.Selection[];
@@ -98,8 +96,8 @@ declare interface CodioSelectionEvent extends CodioEvent {
   };
 }
 
-declare interface CodioSerializedSelectionEvent extends CodioSerializedEvent {
-  type: 'selection';
+declare interface SerializedDocumentSelectionEvent extends SerializedDocumentEvent {
+  type: number;
   data: {
     path: string;
     selections: vscode.Selection[];
@@ -115,7 +113,7 @@ declare interface CodioExecutionEvent extends CodioEvent {
   };
 }
 
-declare interface CodioSerializedExecutionEvent extends CodioSerializedEvent {
+declare interface CodioSerializedExecutionEvent extends SerializedDocumentEvent {
   type: 'exec';
   data: {
     executionOutput: string;
@@ -179,13 +177,13 @@ declare interface CodioSerializedFile {
 
 declare interface Timeline {
   codioLength: number;
-  events: CodioSerializedEvent[];
+  events: SerializedDocumentEvent[];
   initialFrame: CodioSerializedFile[];
 }
 
 declare interface TimelineContent {
   openDocuments: sting[];
-  events: CodioSerializedEvent[];
+  events: SerializedDocumentEvent[];
   initialFrame: CodioSerializedFile[];
 }
 

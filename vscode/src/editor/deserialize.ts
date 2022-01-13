@@ -13,7 +13,10 @@ import { DocumentEvents } from './consts';
  * @param codioPath Path where the codio lives.
  * @returns An array of deserialized codio events.
  */
-export default function deserializeEvents(events: Array<CodioSerializedEvent>, codioPath: string): Array<CodioEvent> {
+export default function deserializeEvents(
+  events: SerializedDocumentEvent[],
+  codioPath: string,
+): DocumentEvent[] | CodioEvent[] {
   return events.map((serializedEvent) => {
     const event = deserializeFilePath(serializedEvent, codioPath);
 
@@ -34,7 +37,7 @@ export default function deserializeEvents(events: Array<CodioSerializedEvent>, c
   });
 }
 
-function deserializeFilePath(event: CodioSerializedEvent, codioPath: string) {
+function deserializeFilePath(event: SerializedDocumentEvent, codioPath: string) {
   if (event.data.path) {
     const { path, ...eventData } = event.data;
     const newEvent = { ...event, data: { ...eventData, uri: Uri.joinPath(Uri.file(codioPath), path) } };
@@ -50,7 +53,7 @@ function deserializeFilePath(event: CodioSerializedEvent, codioPath: string) {
  * @param codioPath Path where the codio lives.
  * @returns A DocumentRenameEvent.
  */
-function deserializeRenameEvent(event: CodioSerializedEvent, codioPath: string): DocumentRenameEvent {
+function deserializeRenameEvent(event: SerializedDocumentEvent, codioPath: string): DocumentRenameEvent {
   const { oldPath, newPath, ...eventData } = event.data;
   return {
     ...event,
@@ -67,7 +70,7 @@ function deserializeRenameEvent(event: CodioSerializedEvent, codioPath: string):
  * @param event A serialized event to deserialize into a DocumentChangeEvent.
  * @returns A DocumentChangeEvent.
  */
-function deserializeTextEvent(event: CodioSerializedTextEvent): DocumentChangeEvent {
+function deserializeTextEvent(event: SerializedDocumentChangeEvent): DocumentChangeEvent {
   const deserializedChanges: TextDocumentContentChangeEvent[] = event.data.changes.map((change) => {
     if (change.range) {
       return { ...change, range: deserializeRange(change.range) };
@@ -90,7 +93,7 @@ function deserializeTextEvent(event: CodioSerializedTextEvent): DocumentChangeEv
  * @param event A serialized event to deserialize into a CodioSelectionEvent.
  * @returns A CodioSelectionEvent.
  */
-function deserializeSelectionEvent(event: CodioSerializedSelectionEvent): CodioSelectionEvent {
+function deserializeSelectionEvent(event: SerializedDocumentSelectionEvent): DocumentSelectionEvent {
   const deserializedSelections: Selection[] = event.data.selections.map((selection) => {
     return new Selection(deserializePosition(selection.anchor), deserializePosition(selection.active));
   });
@@ -101,7 +104,7 @@ function deserializeSelectionEvent(event: CodioSerializedSelectionEvent): CodioS
       ...event.data,
       selections: deserializedSelections,
     },
-  } as unknown as CodioSelectionEvent;
+  } as unknown as DocumentSelectionEvent;
 }
 
 /**
@@ -109,14 +112,14 @@ function deserializeSelectionEvent(event: CodioSerializedSelectionEvent): CodioS
  * @param event A serialized event to deserialize into a CodioVisibleRangeEvent.
  * @returns A CodioVisibleRangeEvent.
  */
-function deserializeVisibleRangeEvent(event: CodioSerializedVisibleRangeEvent): CodioVisibleRangeEvent {
+function deserializeVisibleRangeEvent(event: SerializedDocumentVisibleRangeEvent): DocumentVisibleRangeEvent {
   return {
     ...event,
     data: {
       ...event.data,
       visibleRange: deserializeRange(event.data.visibleRange),
     },
-  } as unknown as CodioVisibleRangeEvent;
+  } as unknown as DocumentVisibleRangeEvent;
 }
 
 /**

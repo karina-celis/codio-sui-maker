@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { cursorStyle } from '../user_interface/Viewers';
 import { overrideEditorText, getTextEditor } from '../utils';
 import { DocumentEvents } from './consts';
-import { isSelectionEvent, isVisibleRangeEvent, isExecutionEvent, isEditorEvent } from './event_creator';
+import { isExecutionEvent, isEditorEvent } from './event_creator';
 
 // Map of valid events.
 const eventsToProcess = {
@@ -14,6 +14,8 @@ const eventsToProcess = {
   [DocumentEvents.DOCUMENT_OPEN]: processOpenEvent,
   [DocumentEvents.DOCUMENT_RENAME]: processRenameEvent,
   [DocumentEvents.DOCUMENT_SAVE]: processSaveEvent,
+  [DocumentEvents.DOCUMENT_SELECTION]: processSelectionEvent,
+  [DocumentEvents.DOCUMENT_VISIBLE_RANGE]: processVisibleRangeEvent,
 };
 
 /**
@@ -24,16 +26,13 @@ const eventsToProcess = {
 export default async function processEvent(event: CodioEvent | DocumentEvent): Promise<void> {
   try {
     if (event.type in eventsToProcess) {
+      console.log(DocumentEvents[event.type], event);
       await eventsToProcess[event.type](event);
       return;
     }
 
     console.log('dispatchEvent', event);
-    if (isSelectionEvent(event)) {
-      dispatchSelectionEvent(event);
-    } else if (isVisibleRangeEvent(event)) {
-      dispatchVisibleRangeEvent(event);
-    } else if (isExecutionEvent(event)) {
+    if (isExecutionEvent(event)) {
       dispatchExecutionEvent(event);
     } else if (isEditorEvent(event)) {
       await dispatchEditorEvent(event);
@@ -48,8 +47,6 @@ export default async function processEvent(event: CodioEvent | DocumentEvent): P
  * @param dce Event to process.
  */
 async function processChangeEvent(dce: DocumentChangeEvent) {
-  console.log(DocumentEvents[dce.type], dce);
-
   const actions = dce.data.changes;
   const edit = new vscode.WorkspaceEdit();
   actions.forEach((action) => {
@@ -67,8 +64,6 @@ async function processChangeEvent(dce: DocumentChangeEvent) {
  * @param de Document event to process.
  */
 async function processCloseEvent(de: DocumentEvent) {
-  console.log(DocumentEvents[de.type], de);
-
   const data = de.data;
   await vscode.workspace.fs.writeFile(data.uri, new TextEncoder().encode(data.content));
 
@@ -91,7 +86,6 @@ async function processCloseEvent(de: DocumentEvent) {
  * @param de Document event to process.
  */
 async function processCreateEvent(de: DocumentEvent) {
-  console.log(DocumentEvents[de.type], de);
   const data = de.data;
 
   // A document could be opened and dirty and not focused.
@@ -114,7 +108,9 @@ async function processCreateEvent(de: DocumentEvent) {
 
     await ate.document.save();
   } else {
-    await vscode.workspace.fs.writeFile(data.uri, new Uint8Array());
+    // @TODO: Check if encode parameter can be undefined
+    const content = data.content ? new TextEncoder().encode(data.content) : new Uint8Array();
+    await vscode.workspace.fs.writeFile(data.uri, content);
   }
 
   await vscode.window.showTextDocument(data.uri, { preview: false });
@@ -125,7 +121,6 @@ async function processCreateEvent(de: DocumentEvent) {
  * @param de Document event to process.
  */
 async function processDeleteEvent(de: DocumentEvent) {
-  console.log(DocumentEvents[de.type], de);
   try {
     await vscode.workspace.fs.delete(de.data.uri, { recursive: true, useTrash: true });
   } catch (error) {
@@ -138,7 +133,6 @@ async function processDeleteEvent(de: DocumentEvent) {
  * @param de Document event to process.
  */
 async function processOpenEvent(de: DocumentEvent) {
-  console.log(DocumentEvents[de.type], de);
   const data = de.data;
 
   // A document could be opened and dirty and not focused.
@@ -172,8 +166,6 @@ async function processOpenEvent(de: DocumentEvent) {
  * @param dre Document rename event to process.
  */
 async function processRenameEvent(dre: DocumentRenameEvent) {
-  console.log(DocumentEvents[dre.type], dre);
-
   const src = dre.data.oldUri;
   const dest = dre.data.newUri;
   const content = dre.data.content;
@@ -187,8 +179,6 @@ async function processRenameEvent(dre: DocumentRenameEvent) {
  * @param de Document event to process.
  */
 async function processSaveEvent(de: DocumentEvent) {
-  console.log(DocumentEvents[de.type], de);
-
   // Update file that could have been deleted before this event.
   const data = de.data;
   if (data.content) {
@@ -207,8 +197,8 @@ async function processSaveEvent(de: DocumentEvent) {
   await vscode.window.activeTextEditor.document.save();
 }
 
-async function dispatchSelectionEvent(event: CodioSelectionEvent) {
-  const data = event.data;
+async function processSelectionEvent(dse: DocumentSelectionEvent) {
+  const data = dse.data;
   const RangesToDecorate = data.selections.map((selection: vscode.Selection) => {
     return new vscode.Range(selection.anchor, selection.active);
   });
@@ -222,12 +212,12 @@ async function dispatchSelectionEvent(event: CodioSelectionEvent) {
   await vscode.window.showTextDocument(data.uri, { preview: false });
 }
 
-function dispatchVisibleRangeEvent(event: CodioVisibleRangeEvent) {
+function processVisibleRangeEvent(dvre: DocumentVisibleRangeEvent) {
   const textEditor: vscode.TextEditor = vscode.window.visibleTextEditors.find(
-    (editor) => editor.document.uri.path === event.data.uri.path,
+    (editor) => editor.document.uri.path === dvre.data.uri.path,
   );
   if (textEditor) {
-    textEditor.revealRange(event.data.visibleRange);
+    textEditor.revealRange(dvre.data.visibleRange);
   }
 }
 

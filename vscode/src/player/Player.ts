@@ -7,7 +7,7 @@ import Subtitles from './Subtitles';
 import Environment from '../environment/Environment';
 
 const IS_PLAYING = 'isPlaying';
-const IN_CODIO_SESSION = 'inCodioSession';
+const IN_SESSION = 'inSession';
 
 export default class Player {
   isPlaying = false;
@@ -75,7 +75,7 @@ export default class Player {
     this.process = new Promise((resolve) => (this.closeCodioResolver = resolve));
     this.play(this.editorPlayer.events, this.relativeActiveTimeMs);
     this.inSession = true;
-    this.updateContext(IN_CODIO_SESSION, this.inSession);
+    this.updateContext(IN_SESSION, this.inSession);
   }
 
   /**
@@ -92,7 +92,7 @@ export default class Player {
    * @param events An array of event objects for the EditorPlayer to parse.
    * @param timeSecs Seconds to start playing media from.
    */
-  play(events: CodioEvent[], timeSecs: number): void {
+  play(events: DocumentEvent[], timeSecs: number): void {
     if (this.isPlaying) {
       this.pauseMedia();
     }
@@ -162,7 +162,7 @@ export default class Player {
     this.subtitlesPlayer.stop();
     this.closeCodioResolver();
     this.inSession = false;
-    this.updateContext(IN_CODIO_SESSION, this.inSession);
+    this.updateContext(IN_SESSION, this.inSession);
     this.onPauseHandler?.dispose();
   }
 

@@ -16,7 +16,7 @@
     "bugs": {
         "url": "https://github.com/rbrisita/codio-sui/projects/2"
     },
-    "version": "0.10.8",
+    "version": "0.10.9",
     "license": "MIT",
     "publisher": "rbrisita",
     "icon": "media/icon.png",
@@ -186,55 +186,55 @@
                 },
                 {
                     "command": "codio.playCodio",
-                    "when": "!inCodioRecording && !inCodioSession && !isPlaying"
+                    "when": "!inCodioRecording && !inSession && !isPlaying"
                 },
                 {
                     "command": "codio.stopCodio",
-                    "when": "!inCodioRecording && inCodioSession && isPlaying"
+                    "when": "!inCodioRecording && inSession && isPlaying"
                 },
                 {
                     "command": "codio.pauseCodio",
-                    "when": "!inCodioRecording && inCodioSession && isPlaying"
+                    "when": "!inCodioRecording && inSession && isPlaying"
                 },
                 {
                     "command": "codio.resumeCodio",
-                    "when": "!inCodioRecording && inCodioSession && !isPlaying"
+                    "when": "!inCodioRecording && inSession && !isPlaying"
                 },
                 {
                     "command": "codio.pauseOrResume",
-                    "when": "!inCodioRecording && inCodioSession"
+                    "when": "!inCodioRecording && inSession"
                 },
                 {
                     "command": "codio.forward",
-                    "when": "!inCodioRecording && inCodioSession"
+                    "when": "!inCodioRecording && inSession"
                 },
                 {
                     "command": "codio.rewind",
-                    "when": "!inCodioRecording && inCodioSession"
+                    "when": "!inCodioRecording && inSession"
                 },
                 {
                     "command": "codio.recordCodio",
-                    "when": "!inCodioRecording && !inCodioSession"
+                    "when": "!inCodioRecording && !inSession"
                 },
                 {
                     "command": "codio.recordCodioToProject",
-                    "when": "!inCodioRecording && !inCodioSession"
+                    "when": "!inCodioRecording && !inSession"
                 },
                 {
                     "command": "codio.saveRecording",
-                    "when": "inCodioRecording && !inCodioSession"
+                    "when": "inCodioRecording && !inSession"
                 },
                 {
                     "command": "codio.pauseRecording",
-                    "when": "inCodioRecording && !isCodioRecordingPaused && !inCodioSession"
+                    "when": "inCodioRecording && !isCodioRecordingPaused && !inSession"
                 },
                 {
                     "command": "codio.resumeRecording",
-                    "when": "inCodioRecording && isCodioRecordingPaused && !inCodioSession"
+                    "when": "inCodioRecording && isCodioRecordingPaused && !inSession"
                 },
                 {
                     "command": "codio.cancelRecording",
-                    "when": "inCodioRecording && !inCodioSession"
+                    "when": "inCodioRecording && !inSession"
                 }
             ],
             "view/item/context": [
@@ -247,52 +247,52 @@
             "view/title": [
                 {
                     "command": "codio.recordCodioToProject",
-                    "when": "!inCodioRecording && !inCodioSession && view == codioMessages",
+                    "when": "!inCodioRecording && !inSession && view == codioMessages",
                     "group": "navigation@1"
                 },
                 {
                     "command": "codio.saveRecording",
-                    "when": "inCodioRecording && !inCodioSession && view == codioMessages",
+                    "when": "inCodioRecording && !inSession && view == codioMessages",
                     "group": "navigation@1"
                 },
                 {
                     "command": "codio.pauseRecording",
-                    "when": "inCodioRecording && !isCodioRecordingPaused && !inCodioSession && view == codioMessages",
+                    "when": "inCodioRecording && !isCodioRecordingPaused && !inSession && view == codioMessages",
                     "group": "navigation@2"
                 },
                 {
                     "command": "codio.resumeRecording",
-                    "when": "inCodioRecording && isCodioRecordingPaused && !inCodioSession && view == codioMessages",
+                    "when": "inCodioRecording && isCodioRecordingPaused && !inSession && view == codioMessages",
                     "group": "navigation@2"
                 },
                 {
                     "command": "codio.cancelRecording",
-                    "when": "inCodioRecording && !inCodioSession && view == codioMessages",
+                    "when": "inCodioRecording && !inSession && view == codioMessages",
                     "group": "navigation@3"
                 },
                 {
                     "command": "codio.rewind",
-                    "when": "inCodioSession && view == codioMessages",
+                    "when": "inSession && view == codioMessages",
                     "group": "navigation@1"
                 },
                 {
                     "command": "codio.resumeCodio",
-                    "when": "inCodioSession && !isPlaying && view == codioMessages",
+                    "when": "inSession && !isPlaying && view == codioMessages",
                     "group": "navigation@2"
                 },
                 {
                     "command": "codio.pauseCodio",
-                    "when": "inCodioSession && isPlaying && view == codioMessages",
+                    "when": "inSession && isPlaying && view == codioMessages",
                     "group": "navigation@2"
                 },
                 {
                     "command": "codio.stopCodio",
-                    "when": "inCodioSession && view == codioMessages",
+                    "when": "inSession && view == codioMessages",
                     "group": "navigation@3"
                 },
                 {
                     "command": "codio.forward",
-                    "when": "inCodioSession && view == codioMessages",
+                    "when": "inSession && view == codioMessages",
                     "group": "navigation@4"
                 }
             ]

@@ -1,4 +1,4 @@
-function createEventWithModifiedTime(event: CodioEvent, newTime: number): CodioEvent {
+export function createEventWithModifiedTime(event: DocumentEvent, newTime: number): DocumentEvent {
   return {
     ...event,
     data: {
@@ -14,18 +14,18 @@ function createEventWithModifiedTime(event: CodioEvent, newTime: number): CodioE
  * @param startTime A relative time in milliseconds.
  * @returns A new array of events with time relative to the given time.
  */
-export function createRelativeTimeline(events: Array<CodioEvent>, startTime: number): Array<CodioEvent> {
+export function createRelativeTimeline(events: DocumentEvent[], startTime: number): DocumentEvent[] {
   return events.map((event) => {
     const newTime = event.data.time - startTime;
     return createEventWithModifiedTime(event, newTime);
   });
 }
 
-export function cutTimelineFrom(events: Array<CodioEvent>, time: number): Array<CodioEvent> {
+export function cutTimelineFrom(events: DocumentEvent[], time: number): DocumentEvent[] {
   return events.filter((event) => event.data.time > time);
 }
 
-export function cutTimelineUntil(events: Array<CodioEvent>, time: number): Array<CodioEvent> {
+export function cutTimelineUntil(events: DocumentEvent[], time: number): DocumentEvent[] {
   return events.filter((event) => event.data.time < time);
 }
 
@@ -36,9 +36,9 @@ export function cutTimelineUntil(events: Array<CodioEvent>, time: number): Array
  * @returns A new array of events with time absolute to the time given.
  */
 export function createTimelineWithAbsoluteTimes(
-  eventsWithRelativeTimeline: Array<CodioEvent>,
+  eventsWithRelativeTimeline: DocumentEvent[],
   startTime: number,
-): Array<CodioEvent> {
+): DocumentEvent[] {
   return eventsWithRelativeTimeline.map((event) => {
     const newTime = event.data.time + startTime;
     return createEventWithModifiedTime(event, newTime);

@@ -1,6 +1,6 @@
 import FSManager from '../../filesystem/FSManager';
 
-export default function serializeFrame(frame: Array<CodioFile>, rootPath: string): Array<CodioSerializedFile> {
+export default function serializeFrame(frame: CodioFile[], rootPath: string): CodioSerializedFile[] {
   return frame
     .map((file) => {
       return serializeFile(file, rootPath);

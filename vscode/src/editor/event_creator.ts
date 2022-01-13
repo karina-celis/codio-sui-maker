@@ -6,13 +6,7 @@ import {
   Uri,
 } from 'vscode';
 
-import {
-  CODIO_VISIBLE_RANGE_CHANGED,
-  CODIO_SELECTION_CHANGED,
-  CODIO_EXEC,
-  CODIO_EDITOR_CHANGED,
-  DocumentEvents,
-} from './consts';
+import { CODIO_EXEC, CODIO_EDITOR_CHANGED, DocumentEvents } from './consts';
 
 export function createDocumentEvent(type: DocumentEvents, uri: Uri, content?: string): DocumentEvent {
   return {
@@ -38,43 +32,37 @@ export function createDocumentRenameEvent(oldUri: Uri, newUri: Uri, content: str
 }
 
 export function createDocumentChangeEvent(e: TextDocumentChangeEvent): DocumentChangeEvent {
-  if (e.document.uri.scheme !== 'output') {
-    return {
-      type: DocumentEvents.DOCUMENT_CHANGE,
-      data: {
-        uri: e.document.uri,
-        changes: e.contentChanges,
-        time: Date.now(),
-      },
-    } as DocumentChangeEvent;
-  }
+  return {
+    type: DocumentEvents.DOCUMENT_CHANGE,
+    data: {
+      uri: e.document.uri,
+      changes: e.contentChanges,
+      time: Date.now(),
+    },
+  } as DocumentChangeEvent;
 }
 
-export function createCodioVisibleRangeEvent(e: TextEditorVisibleRangesChangeEvent): CodioVisibleRangeEvent {
-  if (e.textEditor.document.uri.scheme !== 'output') {
-    return {
-      type: CODIO_VISIBLE_RANGE_CHANGED,
-      data: {
-        time: Date.now(),
-        uri: e.textEditor.document.uri,
-        //@TODO: Currently does not support folding.
-        visibleRange: e.visibleRanges[0],
-      },
-    };
-  }
+export function createDocumentVisibleRangeEvent(e: TextEditorVisibleRangesChangeEvent): DocumentVisibleRangeEvent {
+  return {
+    type: DocumentEvents.DOCUMENT_VISIBLE_RANGE,
+    data: {
+      time: Date.now(),
+      uri: e.textEditor.document.uri,
+      //@TODO: Currently does not support folding.
+      visibleRange: e.visibleRanges[0],
+    },
+  };
 }
 
-export function createCodioSelectionEvent(e: TextEditorSelectionChangeEvent): CodioSelectionEvent {
-  if (e.textEditor.document.uri.scheme !== 'output') {
-    return {
-      type: CODIO_SELECTION_CHANGED,
-      data: {
-        uri: e.textEditor.document.uri,
-        selections: e.selections,
-        time: Date.now(),
-      },
-    };
-  }
+export function createDocumentSelectionEvent(e: TextEditorSelectionChangeEvent): DocumentSelectionEvent {
+  return {
+    type: DocumentEvents.DOCUMENT_SELECTION,
+    data: {
+      uri: e.textEditor.document.uri,
+      selections: e.selections,
+      time: Date.now(),
+    },
+  };
 }
 
 export function createCodioExecutionEvent(output: string): CodioExecutionEvent {
@@ -110,24 +98,26 @@ export function isTextEvent(event: CodioEvent): event is DocumentChangeEvent {
   return event.type === DocumentEvents.DOCUMENT_CHANGE;
 }
 
-export function isSerializedTextEvent(event: CodioSerializedEvent): event is CodioSerializedTextEvent {
+export function isSerializedTextEvent(event: SerializedDocumentEvent): event is SerializedDocumentChangeEvent {
   return event.type === DocumentEvents.DOCUMENT_CHANGE;
 }
 
-export function isSelectionEvent(event: CodioEvent): event is CodioSelectionEvent {
-  return event.type === CODIO_SELECTION_CHANGED;
+export function isSelectionEvent(event: CodioEvent): event is DocumentSelectionEvent {
+  return event.type === DocumentEvents.DOCUMENT_SELECTION;
 }
 
-export function isSerializedSelectionEvent(event: CodioEvent): event is CodioSerializedSelectionEvent {
-  return event.type === CODIO_SELECTION_CHANGED;
+export function isSerializedSelectionEvent(event: CodioEvent): event is SerializedDocumentSelectionEvent {
+  return event.type === DocumentEvents.DOCUMENT_SELECTION;
 }
 
-export function isVisibleRangeEvent(event: CodioEvent): event is CodioVisibleRangeEvent {
-  return event.type === CODIO_VISIBLE_RANGE_CHANGED;
+export function isVisibleRangeEvent(event: CodioEvent): event is DocumentVisibleRangeEvent {
+  return event.type === DocumentEvents.DOCUMENT_VISIBLE_RANGE;
 }
 
-export function isSerializedVisibleRangeEvent(event: CodioSerializedEvent): event is CodioSerializedVisibleRangeEvent {
-  return event.type === CODIO_VISIBLE_RANGE_CHANGED;
+export function isSerializedVisibleRangeEvent(
+  event: SerializedDocumentEvent,
+): event is SerializedDocumentVisibleRangeEvent {
+  return event.type === DocumentEvents.DOCUMENT_VISIBLE_RANGE;
 }
 
 export function isExecutionEvent(event: CodioEvent): event is CodioExecutionEvent | CodioSerializedExecutionEvent {
@@ -138,6 +128,8 @@ export function isEditorEvent(event: CodioEvent): event is CodioChangeActiveEdit
   return event.type === CODIO_EDITOR_CHANGED;
 }
 
-export function isSerializedEditorEvent(event: CodioSerializedEvent): event is CodioSerializedChangeActiveEditorEvent {
+export function isSerializedEditorEvent(
+  event: SerializedDocumentEvent,
+): event is CodioSerializedChangeActiveEditorEvent {
   return event.type === CODIO_EDITOR_CHANGED;
 }

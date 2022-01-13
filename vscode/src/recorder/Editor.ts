@@ -41,7 +41,7 @@ export default class CodeEditorRecorder {
   onCloseDocumentListener: Disposable;
 
   initialFrame: Array<CodioFile> = [];
-  events: Array<CodioEvent> = [];
+  events: DocumentEvent[] = [];
   processPaths: Array<string> = [];
 
   /**
@@ -56,9 +56,7 @@ export default class CodeEditorRecorder {
       const unfocusedPaths = workspace.textDocuments.filter((td) => td.uri.path !== editor.document.uri.path);
       unfocusedPaths.forEach((td) => {
         const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_OPEN, td.uri, td.getText());
-        if (event) {
-          this.events.push(event);
-        }
+        this.events.push(event);
       });
 
       // Create active document to have focus.
@@ -67,9 +65,7 @@ export default class CodeEditorRecorder {
         editor.document.uri,
         editor.document.getText(),
       );
-      if (event) {
-        this.events.push(event);
-      }
+      this.events.push(event);
     }
 
     // Text Editor Events
@@ -189,10 +185,10 @@ export default class CodeEditorRecorder {
     const { files, rootPath } = FSManager.normalizeFilesPath([], workspaceRoot);
     console.log('getTimelineContent files', files);
     console.log('getTimelineContent rootPath', rootPath);
-    const events = serializeEvents(this.events, rootPath);
+    const eventsTimeline = createRelativeTimeline(this.events, recordingStartTime);
+    const events = serializeEvents(eventsTimeline, rootPath);
     const initialFrame = serializeFrame(this.initialFrame, rootPath);
-    const eventsTimeline = createRelativeTimeline(events, recordingStartTime);
-    return { events: eventsTimeline, initialFrame, openDocuments: files };
+    return { events, initialFrame, openDocuments: files };
   }
 
   /**
@@ -226,9 +222,7 @@ export default class CodeEditorRecorder {
 
     // Switch to document
     const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_OPEN, docUri, docContent);
-    if (event) {
-      this.events.push(event);
-    }
+    this.events.push(event);
   }
 
   /**
@@ -237,10 +231,8 @@ export default class CodeEditorRecorder {
    */
   private onDidChangeTextEditorVisibleRanges(e: TextEditorVisibleRangesChangeEvent): void {
     console.log('onDidChangeTextEditorVisibleRanges e', e);
-    const event = eventCreators.createCodioVisibleRangeEvent(e);
-    if (event) {
-      this.events.push(event);
-    }
+    const event = eventCreators.createDocumentVisibleRangeEvent(e);
+    this.events.push(event);
   }
 
   /**
@@ -249,10 +241,8 @@ export default class CodeEditorRecorder {
    */
   private onDidChangeTextEditorSelection(e: TextEditorSelectionChangeEvent): void {
     console.log('onDidChangeTextEditorSelection e', e);
-    const event = eventCreators.createCodioSelectionEvent(e);
-    if (event) {
-      this.events.push(event);
-    }
+    const event = eventCreators.createDocumentSelectionEvent(e);
+    this.events.push(event);
   }
 
   /**
@@ -268,9 +258,7 @@ export default class CodeEditorRecorder {
 
       // Creating file so no content needed.
       const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_CREATE, uri);
-      if (event) {
-        this.events.push(event);
-      }
+      this.events.push(event);
     });
   }
 
@@ -291,9 +279,7 @@ export default class CodeEditorRecorder {
         const uInt8Arr = await workspace.fs.readFile(rename.oldUri);
         const content = new TextDecoder().decode(uInt8Arr);
         const event = eventCreators.createDocumentRenameEvent(rename.oldUri, rename.newUri, content);
-        if (event) {
-          this.events.push(event);
-        }
+        this.events.push(event);
       })();
     });
   }
@@ -317,9 +303,7 @@ export default class CodeEditorRecorder {
 
     // The document that is opened could be in a different state than expected.
     const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_OPEN, td.uri, td.getText());
-    if (event) {
-      this.events.push(event);
-    }
+    this.events.push(event);
   }
 
   /**
@@ -334,9 +318,7 @@ export default class CodeEditorRecorder {
       console.log('To be processed', this.processPaths);
 
       const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_DELETE, uri);
-      if (event) {
-        this.events.push(event);
-      }
+      this.events.push(event);
     });
   }
 
@@ -392,9 +374,7 @@ export default class CodeEditorRecorder {
     }
 
     const event = eventCreators.createDocumentChangeEvent(e);
-    if (event) {
-      this.events.push(event);
-    }
+    this.events.push(event);
   }
 
   /**
@@ -408,9 +388,7 @@ export default class CodeEditorRecorder {
     console.log('To be processed', this.processPaths);
 
     const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_SAVE, e.document.uri, e.document.getText());
-    if (event) {
-      this.events.push(event);
-    }
+    this.events.push(event);
   }
 
   /**

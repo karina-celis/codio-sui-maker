@@ -3,7 +3,7 @@ import FSManager from '../filesystem/FSManager';
 import { DocumentEvents } from './consts';
 import { isTextEvent } from './event_creator';
 
-export default function serialize(events: Array<CodioEvent>, rootPath: string): Array<CodioSerializedEvent> {
+export default function serialize(events: DocumentEvent[], rootPath: string): SerializedDocumentEvent[] {
   return events
     .map((event) => {
       const se = serializeEvent(event, rootPath);
@@ -13,17 +13,18 @@ export default function serialize(events: Array<CodioEvent>, rootPath: string): 
     .filter((event) => !!event);
 }
 
-function serializeEvent(event: CodioEvent, rootPath): CodioSerializedEvent {
+function serializeEvent(event: DocumentEvent, rootPath): SerializedDocumentEvent {
   if (isTextEvent(event)) {
     return serializeTextEvent(event, rootPath);
   } else if (event.type === DocumentEvents.DOCUMENT_RENAME) {
     return serializeRenameEvent(event as DocumentRenameEvent, rootPath);
-  } else {  //if (isSelectionEvent(event) || isEditorEvent(event) || isExecutionEvent(event) || isVisibleRangeEvent(event)) {
+  } else {
+    //if (isSelectionEvent(event) || isEditorEvent(event) || isExecutionEvent(event) || isVisibleRangeEvent(event)) {
     return serializeFilePath(event, rootPath);
   }
 }
 
-function serializeTextEvent(event: DocumentChangeEvent, rootPath): CodioSerializedTextEvent {
+function serializeTextEvent(event: DocumentChangeEvent, rootPath): SerializedDocumentChangeEvent {
   serializeFilePath(event, rootPath);
   if (event.data.changes.length === 0) {
     console.log('serializeTextEvent with 0 length', event);
@@ -52,7 +53,7 @@ function serializeTextEvent(event: DocumentChangeEvent, rootPath): CodioSerializ
   return serializedEvent;
 }
 
-function serializeFilePath(event: CodioEvent, rootPath): CodioSerializedEvent {
+function serializeFilePath(event: DocumentEvent, rootPath): SerializedDocumentEvent {
   if (event.data.uri) {
     const { uri, ...eventData } = event.data;
     const newEvent = {
@@ -72,7 +73,7 @@ function serializeFilePath(event: CodioEvent, rootPath): CodioSerializedEvent {
  * @param rootPath Root path of workspace.
  * @returns A serialized codio event.
  */
-function serializeRenameEvent(event: DocumentRenameEvent, rootPath): CodioSerializedEvent {
+function serializeRenameEvent(event: DocumentRenameEvent, rootPath): SerializedDocumentEvent {
   if (event.data.oldUri) {
     const { oldUri, newUri, ...eventData } = event.data;
     const newEvent = {
