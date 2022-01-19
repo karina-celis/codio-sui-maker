@@ -16,12 +16,12 @@
     "bugs": {
         "url": "https://github.com/rbrisita/codio-sui/projects/2"
     },
-    "version": "0.10.9",
+    "version": "0.10.10",
     "license": "MIT",
     "publisher": "rbrisita",
     "icon": "media/icon.png",
     "engines": {
-        "vscode": "^1.52.0"
+        "vscode": "^1.59.0"
     },
     "preview": true,
     "categories": [
@@ -88,10 +88,7 @@
                 "command": "codio.pauseRecording",
                 "category": "Codio",
                 "title": "Pause Recording",
-                "icon": {
-                    "light": "./media/light/circle_pause.svg",
-                    "dark": "./media/dark/circle_pause.svg"
-                }
+                "icon": "$(debug-pause)"
             },
             {
                 "command": "codio.resumeRecording",
@@ -103,7 +100,7 @@
                 "command": "codio.cancelRecording",
                 "category": "Codio",
                 "title": "Cancel Recording",
-                "icon": "$(stop)"
+                "icon": "$(close)"
             },
             {
                 "command": "codio.trimEnd",
@@ -125,30 +122,24 @@
                 "command": "codio.stopCodio",
                 "category": "Codio",
                 "title": "Stop Codio",
-                "icon": "$(stop-circle)"
+                "icon": "$(debug-stop)"
             },
             {
                 "command": "codio.pauseCodio",
                 "category": "Codio",
                 "title": "Pause Codio",
-                "icon": {
-                    "light": "./media/light/circle_pause.svg",
-                    "dark": "./media/dark/circle_pause.svg"
-                }
+                "icon": "$(debug-pause)"
             },
             {
                 "command": "codio.resumeCodio",
                 "category": "Codio",
                 "title": "Resume Codio",
-                "icon": {
-                    "light": "./media/light/circle_play.svg",
-                    "dark": "./media/dark/circle_play.svg"
-                }
+                "icon": "$(debug-start)"
             },
             {
                 "command": "codio.playFrom",
                 "category": "Codio",
-                "title": "Play from.."
+                "title": "Play from..."
             },
             {
                 "command": "codio.pauseOrResume",
@@ -163,19 +154,13 @@
                 "command": "codio.forward",
                 "category": "Codio",
                 "title": "Forward 10 seconds",
-                "icon": {
-                    "light": "./media/light/circle_forward.svg",
-                    "dark": "./media/dark/circle_forward.svg"
-                }
+                "icon": "$(debug-continue)"
             },
             {
                 "command": "codio.rewind",
                 "category": "Codio",
                 "title": "Rewind 10 seconds",
-                "icon": {
-                    "light": "./media/light/circle_backward.svg",
-                    "dark": "./media/dark/circle_backward.svg"
-                }
+                "icon": "$(debug-reverse-continue)"
             }
         ],
         "menus": {
@@ -286,12 +271,12 @@
                     "group": "navigation@2"
                 },
                 {
-                    "command": "codio.stopCodio",
+                    "command": "codio.forward",
                     "when": "inSession && view == codioMessages",
                     "group": "navigation@3"
                 },
                 {
-                    "command": "codio.forward",
+                    "command": "codio.stopCodio",
                     "when": "inSession && view == codioMessages",
                     "group": "navigation@4"
                 }

@@ -13,6 +13,7 @@ export default class Player {
   isPlaying = false;
   inSession = false;
   codioPath: string;
+  codioName: string;
 
   codioLength: number;
   codioStartTime: number;
@@ -35,6 +36,7 @@ export default class Player {
   async loadCodio(codioPath: string, workspaceToPlayOn?: string): Promise<void> {
     try {
       this.setInitialState();
+      this.codioName = FSManager.getMetaData(codioPath).name;
       this.codioPath = codioPath;
       const timeline = await FSManager.loadTimeline(this.codioPath);
       this.codioLength = timeline.codioLength;

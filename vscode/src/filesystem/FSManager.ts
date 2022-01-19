@@ -252,7 +252,7 @@ export default class FSManager {
       await Promise.all(
         directories.map(async (dir: string) => {
           codios.push({
-            ...(await this.getMetaData(dir)),
+            ...FSManager.getMetaData(dir),
             uri: Uri.file(dir),
             workspaceRoot,
           });
@@ -311,7 +311,7 @@ export default class FSManager {
    * @param codioFolderPath Path to codio zip file containing metadata file.
    * @returns Metadata object.
    */
-  private async getMetaData(codioFolderPath): Promise<Metadata> {
+  static getMetaData(codioFolderPath: string): Metadata {
     try {
       const metaData = readFileSync(join(codioFolderPath, CODIO_META_FILE));
       return JSON.parse(metaData.toString());
