@@ -1,4 +1,4 @@
-import { UI, MESSAGES } from '../user_interface/messages';
+import { UI, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
 import Recorder from '../recorder/Recorder';
 
 export default async function saveRecording(recorder: Recorder): Promise<void> {
@@ -6,7 +6,7 @@ export default async function saveRecording(recorder: Recorder): Promise<void> {
     if (recorder && recorder.isRecording) {
       await recorder.stopRecording();
       recorder.saveRecording();
-      UI.showMessage(MESSAGES.recordingSaved);
+      UI.showModalMessage(MODAL_MESSAGE_OBJS.recordingSaved);
     }
   } catch (e) {
     UI.showMessage(`Recording failed: ${e}`);

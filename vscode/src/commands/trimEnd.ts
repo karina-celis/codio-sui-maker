@@ -1,7 +1,7 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { UI, MESSAGES } from '../user_interface/messages';
+import { UI, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
 import Player from '../player/Player';
 import { checkForFfmpeg } from '../utils';
 
@@ -59,7 +59,7 @@ export default async function trimEnd(player: Player): Promise<void> {
     const hasFfmpeg = await checkForFfmpeg();
 
     if (!hasFfmpeg) {
-      UI.showMessage(MESSAGES.ffmpegNotAvailable);
+      UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
       return;
     }
 

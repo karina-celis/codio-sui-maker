@@ -1,5 +1,5 @@
 import { Uri } from 'vscode';
-import { UI, MESSAGES } from '../user_interface/messages';
+import { UI, MESSAGES, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
 import Player from '../player/Player';
 import Recorder from '../recorder/Recorder';
 import FSManager from '../filesystem/FSManager';
@@ -21,7 +21,7 @@ export default async function playCodio(
   try {
     const hasFfmpeg = await checkForFfmpeg();
     if (!hasFfmpeg) {
-      UI.showMessage(MESSAGES.ffmpegNotAvailable);
+      UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
       return;
     }
 

@@ -1,6 +1,6 @@
 import Player from '../player/Player';
 import FSManager from '../filesystem/FSManager';
-import { showPlayFromInputBox, UI, MESSAGES } from '../user_interface/messages';
+import { showPlayFromInputBox, UI, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
 
 /**
  * Play codio from given milliseconds time.
@@ -13,7 +13,7 @@ export default async function playFrom(fsManager: FSManager, player: Player, tim
   if (!player?.codioLength) {
     const itemSelected = await fsManager.chooseCodio();
     if (!itemSelected?.path) {
-      UI.showMessage(MESSAGES.noActiveCodio);
+      UI.showModalMessage(MODAL_MESSAGE_OBJS.noActiveCodio);
       return;
     }
 
@@ -26,7 +26,7 @@ export default async function playFrom(fsManager: FSManager, player: Player, tim
 
     // Validate input
     if (isNaN(timeInSeconds)) {
-      UI.showMessage(MESSAGES.noStartTime);
+      UI.showModalMessage(MODAL_MESSAGE_OBJS.noStartTime);
       return;
     } else if (timeInSeconds < 0) {
       timeInSeconds = 0;

@@ -198,4 +198,9 @@ declare interface DeviceList {
   audioDevices: Device[];
 }
 
+declare interface ModalMessage {
+  msg: string;
+  detail?: string;
+}
+
 declare type CodioFrame = Array<CodioFile>;

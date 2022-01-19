@@ -1,4 +1,4 @@
-import { window, StatusBarItem, StatusBarAlignment, ExtensionContext, MarkdownString } from 'vscode';
+import { window, StatusBarItem, StatusBarAlignment, ExtensionContext, MarkdownString, commands } from 'vscode';
 import Player from '../player/Player';
 import Recorder from '../recorder/Recorder';
 import { playerUI, recorderUI } from './popups';
@@ -20,19 +20,30 @@ export const showPlayFromInputBox = async (player: Player): Promise<string> => {
 
 export const MESSAGES = {
   startingToRecord: 'Starting to record.',
-  recordingSaved: 'Recording saved.',
   recordingPaused: 'Recording paused.',
   recordingResumed: 'Recording resumed.',
-  recordingCanceled: 'Recording canceled.',
-  cantPlayWhileRecording: "Can't play Codio while recording.",
-  alreadyPlaying: 'You already have a Codio playing.',
-  noActiveCodio: "You don't have an active Codio.",
-  noStartTime: 'No start time entered.',
-  ffmpegNotAvailable: `Looks like you haven't installed ffmpeg, which is required for Codio to work.
-     You can install it with brew: "brew install ffmpeg".`,
-  emptyCodioNameInvalid: 'Filename needed to save Codio to.',
-  noRecordingDeviceAvailable: 'Codio could not find an audio recording device.',
-  noActiveWorkspace: 'You need to have an active workspace to record a Codio.',
+  cantPlayWhileRecording: "Can't play codio while recording.",
+  alreadyPlaying: 'Codio already playing.',
+};
+
+export const MODAL_MESSAGE_OBJS = {
+  recordingSaved: { msg: 'Recording saved.' },
+  recordingCanceled: { msg: 'Recording canceled.' },
+  noActiveCodio: { msg: 'No codio playing.', detail: 'Please select a codio from the list.' },
+  noStartTime: { msg: 'No start time entered.', detail: 'Please enter a time is seconds to start from.' },
+  ffmpegNotAvailable: {
+    msg: 'Codio requires FFmpeg to work.',
+    detail: 'Please install FFmpeg: https://www.ffmpeg.org/download.html',
+  },
+  emptyCodioNameInvalid: { msg: 'Filename needed to save codio to.', detail: 'Enter a filename to save to.' },
+  noRecordingDeviceAvailable: {
+    msg: 'Codio could not find an audio recording device.',
+    detail: 'Make sure a microphone is active.',
+  },
+  noActiveWorkspace: {
+    msg: 'Active workspace needed to record a codio.',
+    detail: 'Open a folder from the File menu option.',
+  },
 };
 class UIController {
   shouldDisplayMessages: boolean;
@@ -63,6 +74,30 @@ class UIController {
   showMessage(message): void {
     if (this.shouldDisplayMessages) {
       window.showInformationMessage(message);
+
+      // Best case effort to clear or hide notification.
+      const validMsgs = Object.values(MESSAGES);
+      setTimeout(() => {
+        commands.executeCommand('notifications.focusLastToast').then((msg: string) => {
+          if (validMsgs.indexOf(msg)) {
+            commands.executeCommand('notification.clear');
+          } else {
+            commands.executeCommand('notifications.focusPreviousToast').then((msg: string) => {
+              if (validMsgs.indexOf(msg)) {
+                commands.executeCommand('notification.clear');
+              } else {
+                commands.executeCommand('notifications.hideToasts');
+              }
+            });
+          }
+        });
+      }, 3000);
+    }
+  }
+
+  showModalMessage(mm: ModalMessage): void {
+    if (this.shouldDisplayMessages) {
+      window.showInformationMessage(mm.msg, { modal: true, detail: mm.detail });
     }
   }
 

@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { UI, MESSAGES, showChooseAudioDevice } from '../user_interface/messages';
+import { UI, MESSAGES, showChooseAudioDevice, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
 import Recorder from '../recorder/Recorder';
 import Player from '../player/Player';
 import FSManager from '../filesystem/FSManager';
@@ -16,7 +16,7 @@ export default async function recordCodio(
 ): Promise<void> {
   const hasFfmpeg = await checkForFfmpeg();
   if (!hasFfmpeg) {
-    UI.showMessage(MESSAGES.ffmpegNotAvailable);
+    UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
     return;
   }
 
@@ -31,7 +31,7 @@ export default async function recordCodio(
 
   codioName = codioName?.trim();
   if (!codioName) {
-    UI.showMessage(MESSAGES.emptyCodioNameInvalid);
+    UI.showModalMessage(MODAL_MESSAGE_OBJS.emptyCodioNameInvalid);
     return;
   }
 
@@ -39,7 +39,7 @@ export default async function recordCodio(
   await recorder.loadCodio(path, codioName, destUri, workspaceRoot);
   const isDeviceAvailable = await recorder.setRecordingDevice(showChooseAudioDevice);
   if (!isDeviceAvailable) {
-    UI.showMessage(MESSAGES.noRecordingDeviceAvailable);
+    UI.showModalMessage(MODAL_MESSAGE_OBJS.noRecordingDeviceAvailable);
     return;
   }
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { workspace, Uri } from 'vscode';
-import { showCodioNameInputBox, UI, MESSAGES } from '../user_interface/messages';
+import { showCodioNameInputBox, UI, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
 import { basename, join } from 'path';
 import { ensureDir } from './saveProjectFiles';
 import { existsSync } from 'fs';
@@ -15,7 +15,7 @@ export const getWorkspaceUriAndCodioDestinationUri = async (): Promise<RecordPro
   const rp: RecordProject = {
     codioUri: null,
     workspaceUri: null,
-    getCodioName: null
+    getCodioName: null,
   };
 
   if (workspace.workspaceFolders) {
@@ -27,7 +27,7 @@ export const getWorkspaceUriAndCodioDestinationUri = async (): Promise<RecordPro
       rp.getCodioName = async () => name;
     }
   } else {
-    UI.showMessage(MESSAGES.noActiveWorkspace);
+    UI.showModalMessage(MODAL_MESSAGE_OBJS.noActiveWorkspace);
   }
 
   return rp;
@@ -56,13 +56,14 @@ const getAvailableUri = async (name: string, workspaceUri: Uri): Promise<vscode.
         count++;
         append = `_${count.toString().padStart(2, '0')}`;
       }
-    } catch (e) { // File doesn't exist and available to write to.
+    } catch (e) {
+      // File doesn't exist and available to write to.
       fileStat = null;
     }
   } while (fileStat);
 
   return uri;
-}
+};
 
 export const getWorkspaceRootAndCodiosFolder = ():
   | { workspaceRootUri: Uri; workspaceCodiosFolder: string }
