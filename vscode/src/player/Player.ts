@@ -7,13 +7,14 @@ import Subtitles from './Subtitles';
 import Environment from '../environment/Environment';
 
 const IS_PLAYING = 'isPlaying';
-const IN_SESSION = 'inSession';
+const IS_PAUSED = 'isPlayerPaused';
 
 export default class Player {
+  isPaused = false;
   isPlaying = false;
-  inSession = false;
   codioPath: string;
   codioName: string;
+  stateObservers: Array<(isPlaying: boolean, isPaused: boolean) => void>;
 
   codioLength: number;
   codioStartTime: number;
@@ -59,34 +60,41 @@ export default class Player {
       }
 
       this.timer = new Timer(this.codioLength);
-      this.timer.onFinish(() => this.stop());
+      this.timer.onFinish(() => {
+        this.stop();
+        FSManager.update();
+      });
     } catch (e) {
       console.log('loadCodio failed', e);
     }
   }
 
-  setInitialState(): void {
+  private setInitialState(): void {
     this.relativeActiveTimeMs = 0;
     this.codioStartTime = undefined;
     this.codioLength = undefined;
     this.closeCodioResolver = undefined;
     this.process = undefined;
+    this.stateObservers = [];
   }
 
   async startCodio(): Promise<void> {
     this.process = new Promise((resolve) => (this.closeCodioResolver = resolve));
     this.play(this.editorPlayer.events, this.relativeActiveTimeMs);
-    this.inSession = true;
-    this.updateContext(IN_SESSION, this.inSession);
+    this.isPaused = false;
+    this.updateContext(IS_PAUSED, this.isPaused);
   }
 
   /**
-   * Update given context to given value and update manager.
+   * Update given context to given value and update observers.
    * @param context String representing context to update.
    * @param value Value to set given context string to.
    */
   private updateContext(context: string, value: unknown): void {
     commands.executeCommand('setContext', context, value);
+    this.stateObservers.forEach((obs) => {
+      obs(this.isPlaying, this.isPaused);
+    });
   }
 
   /**
@@ -124,9 +132,8 @@ export default class Player {
    * Stop the currently playing codio.
    */
   stop(): void {
-    if (this.isPlaying) {
-      this.pause();
-    }
+    this.isPlaying = false;
+    this.updateContext(IS_PLAYING, this.isPlaying);
     this.closeCodio();
   }
 
@@ -148,28 +155,48 @@ export default class Player {
     this.pauseMedia();
     // How long has the codio been playing?
     this.relativeActiveTimeMs = this.relativeActiveTimeMs + (Date.now() - this.codioStartTime);
-    this.isPlaying = false;
-    this.updateContext(IS_PLAYING, this.isPlaying);
+    this.isPaused = true;
+    this.updateContext(IS_PAUSED, this.isPaused);
   }
 
+  /**
+   * Resume playing of loaded codio.
+   */
   resume(): void {
+    this.isPaused = false;
+    this.updateContext(IS_PAUSED, this.isPaused);
+
     const events = this.editorPlayer.getEventsFrom(this.relativeActiveTimeMs);
     this.play(events, this.relativeActiveTimeMs / 1000);
   }
 
-  //@TODO: should closeCodio just call pause? sometime it is called with pause before and sometime it doesn't. Probably a mistake
-  closeCodio(): void {
+  /**
+   * Stop all media.
+   * @todo Add stop method to audioPlayer.
+   */
+  private closeCodio(): void {
     this.timer.stop();
+    this.editorPlayer.stop();
     this.audioPlayer.pause();
     this.subtitlesPlayer.stop();
     this.closeCodioResolver();
-    this.inSession = false;
-    this.updateContext(IN_SESSION, this.inSession);
     this.onPauseHandler?.dispose();
   }
 
+  /**
+   * Add observer to be notified on timer update.
+   * @param observer Observer to add to timer onUpdate array.
+   */
   onTimerUpdate(observer: (currentSecond: number, totalSeconds: number) => void): void {
     this.timer.onUpdate(observer);
+  }
+
+  /**
+   * Add observer to be notified when state updates.
+   * @param observer Observer to add to state update array.
+   */
+  onStateUpdate(observer: (isPlaying: boolean, isPaused: boolean) => void): void {
+    this.stateObservers.push(observer);
   }
 
   /**
@@ -177,7 +204,7 @@ export default class Player {
    * @param timeSecs Time in seconds.
    */
   rewind(timeSecs: number): void {
-    if (this.isPlaying) {
+    if (!this.isPaused) {
       this.relativeActiveTimeMs = this.relativeActiveTimeMs + (Date.now() - this.codioStartTime);
     }
 
@@ -194,7 +221,7 @@ export default class Player {
    * @param timeSecs Time in seconds.
    */
   forward(timeSecs: number): void {
-    if (this.isPlaying) {
+    if (!this.isPaused) {
       this.relativeActiveTimeMs = this.relativeActiveTimeMs + (Date.now() - this.codioStartTime);
     }
 
@@ -212,9 +239,10 @@ export default class Player {
    */
   playFrom(relativeTimeMs: number): void {
     this.relativeActiveTimeMs = relativeTimeMs;
-    if (this.isPlaying) {
+    if (!this.isPaused) {
       this.pauseMedia();
       this.resume();
     }
+    // TODO: Add goto methods to media.
   }
 }

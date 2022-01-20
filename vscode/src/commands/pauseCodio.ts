@@ -3,7 +3,7 @@ import Player from '../player/Player';
 import FSManager from '../filesystem/FSManager';
 
 export default function pauseCodio(player: Player): void {
-  if (player && player.isPlaying) {
+  if (player && player.isPlaying && !player.isPaused) {
     player.pause();
     FSManager.update();
   } else {

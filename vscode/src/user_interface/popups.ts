@@ -1,24 +1,38 @@
+import Recorder from 'src/recorder/Recorder';
+import Player from '../player/Player';
+
 /**
  * Get player UI to display.
- * @param codioName Name of codio to display.
+ * @param player Player instance.
  * @returns A table UI to display name and controls.
  */
-export function playerUI(codioName: string): string {
-  const title = getHeader(codioName);
-  const primary =
-    '# [$(debug-reverse-continue)](command:codio.rewind) [$(debug-pause)](command:codio.pauseCodio) [$(debug-continue)](command:codio.forward)';
+export function playerUI(player: Player): string {
+  const title = getHeader(player.codioName);
+  let primary;
+  if (player.isPaused) {
+    primary =
+      '# [$(debug-reverse-continue)](command:codio.rewind) [$(debug-start)](command:codio.resumeCodio) [$(debug-continue)](command:codio.forward)';
+  } else {
+    primary =
+      '# [$(debug-reverse-continue)](command:codio.rewind) [$(debug-pause)](command:codio.pauseCodio) [$(debug-continue)](command:codio.forward)';
+  }
   const secondary = '# [$(debug-stop)](command:codio.stopCodio)';
   return tableTmpl(title, primary, secondary);
 }
 
 /**
  * Get recorder UI to display.
- * @param codioName Name of codio to display.
+ * @param recorder Recorder instance.
  * @returns A table UI to display name and controls.
  */
-export function recorderUI(codioName: string): string {
-  const title = getHeader(codioName);
-  const primary = '# [$(save)](command:codio.saveRecording) [$(debug-pause)](command:codio.pauseRecording)';
+export function recorderUI(recorder: Recorder): string {
+  const title = getHeader(recorder.codioName);
+  let primary;
+  if (recorder.isPaused) {
+    primary = '# [$(save)](command:codio.saveRecording) [$(record)](command:codio.resumeRecording)';
+  } else {
+    primary = '# [$(save)](command:codio.saveRecording) [$(debug-pause)](command:codio.pauseRecording)';
+  }
   const secondary = '# [$(close)](command:codio.cancelRecording)';
   return tableTmpl(title, primary, secondary);
 }

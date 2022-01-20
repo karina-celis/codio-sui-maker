@@ -16,7 +16,7 @@
     "bugs": {
         "url": "https://github.com/rbrisita/codio-sui/projects/2"
     },
-    "version": "0.10.12",
+    "version": "0.10.13",
     "license": "MIT",
     "publisher": "rbrisita",
     "icon": "media/icon.png",
@@ -167,127 +167,127 @@
             "commandPalette": [
                 {
                     "command": "codio.playFrom",
-                    "when": "!inCodioRecording"
+                    "when": "!isRecording"
                 },
                 {
                     "command": "codio.playCodio",
-                    "when": "!inCodioRecording && !inSession && !isPlaying"
+                    "when": "!isRecording && !isPlaying"
                 },
                 {
                     "command": "codio.stopCodio",
-                    "when": "!inCodioRecording && inSession && isPlaying"
+                    "when": "!isRecording && isPlaying"
                 },
                 {
                     "command": "codio.pauseCodio",
-                    "when": "!inCodioRecording && inSession && isPlaying"
+                    "when": "!isRecording && isPlaying && !isPlayerPaused"
                 },
                 {
                     "command": "codio.resumeCodio",
-                    "when": "!inCodioRecording && inSession && !isPlaying"
+                    "when": "!isRecording && isPlaying && isPlayerPaused"
                 },
                 {
                     "command": "codio.pauseOrResume",
-                    "when": "!inCodioRecording && inSession"
+                    "when": "!isRecording && isPlaying"
                 },
                 {
                     "command": "codio.forward",
-                    "when": "!inCodioRecording && inSession"
+                    "when": "!isRecording && isPlaying"
                 },
                 {
                     "command": "codio.rewind",
-                    "when": "!inCodioRecording && inSession"
+                    "when": "!isRecording && isPlaying"
                 },
                 {
                     "command": "codio.recordCodio",
-                    "when": "!inCodioRecording && !inSession"
+                    "when": "!isRecording && !isPlaying"
                 },
                 {
                     "command": "codio.recordCodioToProject",
-                    "when": "!inCodioRecording && !inSession"
+                    "when": "!isRecording && !isPlaying"
                 },
                 {
                     "command": "codio.saveRecording",
-                    "when": "inCodioRecording && !inSession"
+                    "when": "isRecording && !isPlaying"
                 },
                 {
                     "command": "codio.pauseRecording",
-                    "when": "inCodioRecording && !isCodioRecordingPaused && !inSession"
+                    "when": "isRecording && !isRecordingPaused && !isPlaying"
                 },
                 {
                     "command": "codio.resumeRecording",
-                    "when": "inCodioRecording && isCodioRecordingPaused && !inSession"
+                    "when": "isRecording && isRecordingPaused && !isPlaying"
                 },
                 {
                     "command": "codio.cancelRecording",
-                    "when": "inCodioRecording && !inSession"
+                    "when": "isRecording && !isPlaying"
                 }
             ],
             "view/item/context": [
                 {
                     "command": "codio.playCodio",
-                    "when": "viewItem == codio && !inSession",
+                    "when": "viewItem == codio && !isPlaying",
                     "group": "inline"
                 },
                 {
                     "command": "codio.pauseCodio",
-                    "when": "viewItem == codio && !inCodioRecording && inSession && isPlaying",
+                    "when": "viewItem == codio && !isRecording && isPlaying && !isPlayerPaused",
                     "group": "inline"
                 },
                 {
                     "command": "codio.resumeCodio",
-                    "when": "viewItem == codio && !inCodioRecording && inSession && !isPlaying",
+                    "when": "viewItem == codio && !isRecording && isPlaying && isPlayerPaused",
                     "group": "inline"
                 }
             ],
             "view/title": [
                 {
                     "command": "codio.recordCodioToProject",
-                    "when": "!inCodioRecording && !inSession && view == codioMessages",
+                    "when": "!isRecording && !isPlaying && view == codioMessages",
                     "group": "navigation@1"
                 },
                 {
                     "command": "codio.saveRecording",
-                    "when": "inCodioRecording && !inSession && view == codioMessages",
+                    "when": "isRecording && !isPlaying && view == codioMessages",
                     "group": "navigation@1"
                 },
                 {
                     "command": "codio.pauseRecording",
-                    "when": "inCodioRecording && !isCodioRecordingPaused && !inSession && view == codioMessages",
+                    "when": "isRecording && !isRecordingPaused && !isPlaying && view == codioMessages",
                     "group": "navigation@2"
                 },
                 {
                     "command": "codio.resumeRecording",
-                    "when": "inCodioRecording && isCodioRecordingPaused && !inSession && view == codioMessages",
+                    "when": "isRecording && isRecordingPaused && !isPlaying && view == codioMessages",
                     "group": "navigation@2"
                 },
                 {
                     "command": "codio.cancelRecording",
-                    "when": "inCodioRecording && !inSession && view == codioMessages",
+                    "when": "isRecording && !isPlaying && view == codioMessages",
                     "group": "navigation@3"
                 },
                 {
                     "command": "codio.rewind",
-                    "when": "inSession && view == codioMessages",
+                    "when": "isPlaying && view == codioMessages",
                     "group": "navigation@1"
                 },
                 {
                     "command": "codio.resumeCodio",
-                    "when": "inSession && !isPlaying && view == codioMessages",
+                    "when": "isPlaying && isPlayerPaused && view == codioMessages",
                     "group": "navigation@2"
                 },
                 {
                     "command": "codio.pauseCodio",
-                    "when": "inSession && isPlaying && view == codioMessages",
+                    "when": "isPlaying && !isPlayerPaused && view == codioMessages",
                     "group": "navigation@2"
                 },
                 {
                     "command": "codio.forward",
-                    "when": "inSession && view == codioMessages",
+                    "when": "isPlaying && view == codioMessages",
                     "group": "navigation@3"
                 },
                 {
                     "command": "codio.stopCodio",
-                    "when": "inSession && view == codioMessages",
+                    "when": "isPlaying && view == codioMessages",
                     "group": "navigation@4"
                 }
             ]

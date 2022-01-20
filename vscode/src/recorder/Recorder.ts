@@ -6,6 +6,8 @@ import AudioHandler from '../audio/Audio';
 import Environment from '../environment/Environment';
 
 const CODIO_FORMAT_VERSION = '0.1.0';
+const IS_RECORDING = 'isRecording';
+const IS_PAUSED = 'isRecordingPaused';
 
 /**
  * Manage media to record, cancel, stop, and save recordings.
@@ -27,6 +29,7 @@ export default class Recorder {
   pauseTotalTime: number;
   isPaused = false;
 
+  stateObservers: Array<(isRecording: boolean, isPaused: boolean) => void>;
   recordingSavedObservers: Array<() => void> = [];
   process: Promise<unknown>;
   stopRecordingResolver: (value?: unknown) => void;
@@ -48,16 +51,33 @@ export default class Recorder {
     this.destinationFolder = destinationFolder;
     this.workspaceRoot = workspaceRoot;
     this.process = undefined;
+    this.stateObservers = [];
     this.recordingSavedObservers = [];
     this.pauseStartTime = 0;
     this.pauseTotalTime = 0;
     this.timer.setInitialState();
   }
 
+  /**
+   * Add observer to be notified on timer update.
+   * @param observer Observer to add to timer onUpdate array.
+   */
   onTimerUpdate(observer: (currentSecond: number, totalSeconds: number) => void): void {
     this.timer.onUpdate(observer);
   }
 
+  /**
+   * Add observer to be notified when state updates.
+   * @param observer Observer to add to state update array.
+   */
+  onStateUpdate(observer: (isRecording: boolean, isPaused: boolean) => void): void {
+    this.stateObservers.push(observer);
+  }
+
+  /**
+   * Add observer to be notified when recording is saved.
+   * @param observer Observer to add to recording saved array.
+   */
   onRecordingSaved(observer: () => void): void {
     this.recordingSavedObservers.push(observer);
   }
@@ -77,7 +97,19 @@ export default class Recorder {
     this.recordingStartTime = Date.now() + 300;
 
     this.isRecording = true;
-    commands.executeCommand('setContext', 'inCodioRecording', true);
+    this.updateContext(IS_RECORDING, this.isRecording);
+  }
+
+  /**
+   * Update given context to given value and update observers.
+   * @param context String representing context to update.
+   * @param value Value to set given context string to.
+   */
+  private updateContext(context: string, value: unknown): void {
+    commands.executeCommand('setContext', context, value);
+    this.stateObservers.forEach((obs) => {
+      obs(this.isRecording, this.isPaused);
+    });
   }
 
   /**
@@ -105,10 +137,10 @@ export default class Recorder {
     this.stopRecordingResolver();
 
     this.isPaused = false;
-    commands.executeCommand('setContext', 'isCodioRecordingPaused', false);
+    this.updateContext(IS_PAUSED, this.isPaused);
 
     this.isRecording = false;
-    commands.executeCommand('setContext', 'inCodioRecording', false);
+    this.updateContext(IS_RECORDING, this.isRecording);
   }
 
   /**
@@ -121,7 +153,7 @@ export default class Recorder {
     this.timer.stop();
 
     this.isPaused = true;
-    commands.executeCommand('setContext', 'isCodioRecordingPaused', true);
+    this.updateContext(IS_PAUSED, this.isPaused);
   }
 
   /**
@@ -139,7 +171,7 @@ export default class Recorder {
     await this.audioRecorder.resume();
 
     this.isPaused = false;
-    commands.executeCommand('setContext', 'isCodioRecordingPaused', false);
+    this.updateContext(IS_PAUSED, this.isPaused);
   }
 
   /**

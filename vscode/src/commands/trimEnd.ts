@@ -63,7 +63,7 @@ export default async function trimEnd(player: Player): Promise<void> {
       return;
     }
 
-    player.closeCodio();
+    player.stop();
 
     const endTimeInSeconds = Math.round(player.relativeActiveTimeMs / SECOND_IN_MS);
 

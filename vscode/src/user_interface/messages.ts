@@ -29,7 +29,7 @@ export const MESSAGES = {
 export const MODAL_MESSAGE_OBJS = {
   recordingSaved: { msg: 'Recording saved.' },
   recordingCanceled: { msg: 'Recording canceled.' },
-  noActiveCodio: { msg: 'No codio playing.', detail: 'Please select a codio from the list.' },
+  noActiveCodio: { msg: 'No codio playing.', detail: 'Please resume or select a codio from the list.' },
   noStartTime: { msg: 'No start time entered.', detail: 'Please enter a time is seconds to start from.' },
   ffmpegNotAvailable: {
     msg: 'Codio requires FFmpeg to work.',
@@ -114,8 +114,13 @@ class UIController {
    * @param player Player to get updates from.
    */
   showPlayerStatusBar(player: Player): void {
-    this.mds.value = playerUI(player.codioName);
+    this.mds.value = playerUI(player);
     this.statusBar.tooltip = this.mds;
+
+    player.onStateUpdate(() => {
+      this.mds.value = playerUI(player);
+      this.statusBar.tooltip = this.mds;
+    });
 
     this.statusBar.name = 'Codio Player';
     this.statusBar.text = '$(megaphone) Playing...';
@@ -139,8 +144,13 @@ class UIController {
    * @param recorder Recorder to get updatess from.
    */
   showRecorderStatusBar(recorder: Recorder): void {
-    this.mds.value = recorderUI(recorder.codioName);
+    this.mds.value = recorderUI(recorder);
     this.statusBar.tooltip = this.mds;
+
+    recorder.onStateUpdate(() => {
+      this.mds.value = recorderUI(recorder);
+      this.statusBar.tooltip = this.mds;
+    });
 
     this.statusBar.name = 'Codio Recorder';
     this.statusBar.text = '$(pulse) Recording...';
