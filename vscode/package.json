@@ -16,7 +16,7 @@
     "bugs": {
         "url": "https://github.com/rbrisita/codio-sui/projects/2"
     },
-    "version": "0.10.11",
+    "version": "0.10.12",
     "license": "MIT",
     "publisher": "rbrisita",
     "icon": "media/icon.png",
@@ -225,7 +225,17 @@
             "view/item/context": [
                 {
                     "command": "codio.playCodio",
-                    "when": "viewItem == codio",
+                    "when": "viewItem == codio && !inSession",
+                    "group": "inline"
+                },
+                {
+                    "command": "codio.pauseCodio",
+                    "when": "viewItem == codio && !inCodioRecording && inSession && isPlaying",
+                    "group": "inline"
+                },
+                {
+                    "command": "codio.resumeCodio",
+                    "when": "viewItem == codio && !inCodioRecording && inSession && !isPlaying",
                     "group": "inline"
                 }
             ],

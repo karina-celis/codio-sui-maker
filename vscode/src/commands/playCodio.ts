@@ -53,4 +53,5 @@ async function loadAndPlay(player: Player, path: string, workspacePath: string) 
   await player.loadCodio(path, workspacePath);
   await player.startCodio();
   UI.showPlayerStatusBar(player);
+  FSManager.update();
 }

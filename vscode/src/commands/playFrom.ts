@@ -39,4 +39,5 @@ export default async function playFrom(fsManager: FSManager, player: Player, tim
 
   player.playFrom(time);
   UI.showPlayerStatusBar(player);
+  FSManager.update();
 }
