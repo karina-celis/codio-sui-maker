@@ -1,4 +1,4 @@
-import { Uri, window } from 'vscode';
+import { Uri } from 'vscode';
 import { tmpdir } from 'os';
 import {
   lstatSync,
@@ -18,6 +18,7 @@ import { uriSeperator } from '../utils';
 import { saveProjectFiles, reduceToRoot } from './saveProjectFiles';
 import { getWorkspaceRootAndCodiosFolder } from './workspace';
 import Environment from '../environment/Environment';
+import { choose } from '../user_interface/messages';
 
 const onCodiosChangedSubscribers = [];
 const EXTENSION_FOLDER = Environment.getInstance().getExtensionFolder();
@@ -320,35 +321,7 @@ export default class FSManager {
     }
   }
 
-  async choose(codiosMetadata: Array<Codio>): Promise<{ path: string; workspaceRoot: Uri } | undefined> {
-    let unlock;
-    let itemSelected;
-    const quickPickItems = codiosMetadata.map((item) => ({
-      label: item.name,
-      details: { path: item.uri.fsPath, workspaceRoot: item.workspaceRoot },
-    }));
-    const quickPick = window.createQuickPick();
-    quickPick.items = quickPickItems;
-    quickPick.onDidChangeSelection((e) => {
-      itemSelected = e[0];
-      unlock();
-      quickPick.hide();
-    });
-    quickPick.onDidHide(() => {
-      quickPick.dispose();
-      unlock();
-    });
-    quickPick.show();
-    await new Promise((res) => (unlock = res));
-    console.log('itemSelected', itemSelected);
-    if (itemSelected) {
-      return itemSelected.details; // details is the codio path. This due to vscode api being weird here, refactor needed...
-    } else {
-      return undefined;
-    }
-  }
-
   async chooseCodio(): Promise<{ path: string; workspaceRoot?: Uri } | undefined> {
-    return this.choose(await this.getAllCodiosMetadata());
+    return choose(await this.getAllCodiosMetadata());
   }
 }

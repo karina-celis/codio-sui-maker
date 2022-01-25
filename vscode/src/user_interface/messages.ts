@@ -1,22 +1,95 @@
-import { window, StatusBarItem, StatusBarAlignment, ExtensionContext, MarkdownString, commands } from 'vscode';
+import {
+  window,
+  StatusBarItem,
+  StatusBarAlignment,
+  ExtensionContext,
+  MarkdownString,
+  commands,
+  QuickPickItem,
+  QuickInputButtons,
+  ThemeIcon,
+  Uri
+} from 'vscode';
 import Player from '../player/Player';
 import Recorder from '../recorder/Recorder';
 import { playerUI, recorderUI } from './popups';
 
 export const showCodioNameInputBox = async (): Promise<string> => {
-  return await window.showInputBox({ prompt: 'Give your codio a name:' });
-};
-
-export const showChooseAudioDevice = async (items: string[]): Promise<string | undefined> => {
-  const audioDevice = await window.showQuickPick(items, { placeHolder: 'Choose an Audio Device to record from' });
-  return audioDevice;
+  return await window.showInputBox({
+    ignoreFocusOut: true,
+    placeHolder: 'New Filename',
+    prompt: 'Use the same filename to create a series.',
+    title: 'Record Codio',
+  });
 };
 
 export const showPlayFromInputBox = async (player: Player): Promise<string> => {
   return await window.showInputBox({
-    prompt: `Choose a starting time from 0 to ${player.codioLength / 1000} seconds.`,
+    ignoreFocusOut: true,
+    placeHolder: 'Seconds',
+    prompt: `Valid entry from 0 to ${player.codioLength / 1000} seconds.`,
+    title: 'Starting Time',
   });
 };
+
+export const showChooseAudioDevice = async (items: string[]): Promise<string | undefined> => {
+  const audioDevice = await window.showQuickPick(items, {
+    ignoreFocusOut: true,
+    placeHolder: 'Choose an audio device to record from',
+    title: 'Recording Audio Devices'
+  });
+  return audioDevice;
+};
+
+/**
+ * Allow user to choose from given codios.
+ * @param codiosMetadata An array of codio interface objects.
+ * @returns An object containg the path and root of chosen codio or undefined.
+ */
+export const choose = async (codiosMetadata: Codio[]): Promise<{ path: string; workspaceRoot: Uri } | undefined> => {
+  let unlock: (value?: unknown) => void;
+  let codioSelected: QuickPickItem;
+
+  const quickPick = window.createQuickPick();
+  quickPick.ignoreFocusOut = true;
+  quickPick.placeholder = 'Type or select codio name';
+  quickPick.title = 'Play Codio';
+
+  quickPick.buttons = [QuickInputButtons.Back];
+  quickPick.onDidTriggerButton(() => {
+    unlock();
+    quickPick.hide();
+  });
+
+  const quickPickItems = codiosMetadata.map((codio) => ({
+    label: codio.name,
+    buttons: [{ iconPath: new ThemeIcon('play'), tooltip: 'Play Codio' }],
+  }));
+  quickPick.items = quickPickItems;
+
+  quickPick.onDidTriggerItemButton((e) => {
+    codioSelected = e.item;
+    unlock();
+    quickPick.hide();
+  });
+  quickPick.onDidChangeSelection((e) => {
+    codioSelected = e[0];
+    unlock();
+    quickPick.hide();
+  });
+  quickPick.onDidHide(() => {
+    quickPick.dispose();
+    unlock();
+  });
+
+  quickPick.show();
+  await new Promise((res) => (unlock = res));
+
+  const codio: Codio = codiosMetadata.find((codio) => {
+    return codio.name === codioSelected?.label;
+  });
+  return codio ? { path: codio.uri.fsPath, workspaceRoot: codio.workspaceRoot } : undefined;
+}
 
 export const MESSAGES = {
   startingToRecord: 'Starting to record.',
@@ -45,6 +118,7 @@ export const MODAL_MESSAGE_OBJS = {
     detail: 'Open a folder from the File menu option.',
   },
 };
+
 class UIController {
   shouldDisplayMessages: boolean;
   private statusBar: StatusBarItem;

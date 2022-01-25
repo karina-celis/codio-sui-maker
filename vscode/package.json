@@ -16,12 +16,12 @@
     "bugs": {
         "url": "https://github.com/rbrisita/codio-sui/projects/2"
     },
-    "version": "0.10.13",
+    "version": "0.10.14",
     "license": "MIT",
     "publisher": "rbrisita",
     "icon": "media/icon.png",
     "engines": {
-        "vscode": "^1.59.0"
+        "vscode": "^1.63.0"
     },
     "preview": true,
     "categories": [
@@ -167,7 +167,7 @@
             "commandPalette": [
                 {
                     "command": "codio.playFrom",
-                    "when": "!isRecording"
+                    "when": "!isRecording && isPlaying"
                 },
                 {
                     "command": "codio.playCodio",
