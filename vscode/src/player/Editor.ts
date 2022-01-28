@@ -13,8 +13,8 @@ import { Position } from 'vscode';
 
 export default class EditorPlayer {
   currentEventTimer: NodeJS.Timer;
-  events: DocumentEvent[];
   workspaceFolder: string;
+  private events: DocumentEvent[];
   private ac: AbortController;
   private abortHandler: () => void;
 
@@ -119,6 +119,10 @@ export default class EditorPlayer {
    * @returns Events that have been reconciled and adjusted for play.
    */
   getEventsFrom(timeMs: number): DocumentEvent[] {
+    if (!timeMs) {
+      return this.events;
+    }
+
     const vitalEvents = [];
 
     const [pastEvts, futureEvts] = this.getPastAndFutureEvents(this.events, timeMs);

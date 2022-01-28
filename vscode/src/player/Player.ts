@@ -64,6 +64,8 @@ export default class Player {
         this.stop();
         FSManager.update();
       });
+
+      this.process = new Promise((resolve) => (this.closeCodioResolver = resolve));
     } catch (e) {
       console.log('loadCodio failed', e);
     }
@@ -76,13 +78,6 @@ export default class Player {
     this.closeCodioResolver = undefined;
     this.process = undefined;
     this.stateObservers = [];
-  }
-
-  async startCodio(): Promise<void> {
-    this.process = new Promise((resolve) => (this.closeCodioResolver = resolve));
-    this.play(this.editorPlayer.events, this.relativeActiveTimeMs);
-    this.isPaused = false;
-    this.updateContext(IS_PAUSED, this.isPaused);
   }
 
   /**
@@ -98,21 +93,27 @@ export default class Player {
   }
 
   /**
-   * Play given events and media from given time in seconds.
-   * @param events An array of event objects for the EditorPlayer to parse.
+   * Play media from given time in seconds.
    * @param timeSecs Seconds to start playing media from.
    */
-  play(events: DocumentEvent[], timeSecs: number): void {
+  play(timeSecs: number): void {
     if (this.isPlaying) {
       this.pauseMedia();
     }
+
+    this.isPaused = false;
+    this.updateContext(IS_PAUSED, this.isPaused);
+
+    const events = this.editorPlayer.getEventsFrom(this.relativeActiveTimeMs);
     this.codioStartTime = Date.now(); // The editor adjusts events' time.
     this.editorPlayer.play(events, this.codioStartTime);
     this.subtitlesPlayer.play(timeSecs * 1000);
     this.audioPlayer.play(timeSecs);
     this.timer.run(timeSecs);
+
     this.isPlaying = true;
     this.updateContext(IS_PLAYING, this.isPlaying);
+
     this.listenToInteractions();
   }
 
@@ -163,11 +164,7 @@ export default class Player {
    * Resume playing of loaded codio.
    */
   resume(): void {
-    this.isPaused = false;
-    this.updateContext(IS_PAUSED, this.isPaused);
-
-    const events = this.editorPlayer.getEventsFrom(this.relativeActiveTimeMs);
-    this.play(events, this.relativeActiveTimeMs / 1000);
+    this.play(this.relativeActiveTimeMs / 1000);
   }
 
   /**
@@ -213,7 +210,7 @@ export default class Player {
     if (timeToRewind < 0) {
       timeToRewind = 0;
     }
-    this.playFrom(timeToRewind);
+    this.goto(timeToRewind);
   }
 
   /**
@@ -230,14 +227,14 @@ export default class Player {
     if (timeToForward > this.codioLength) {
       timeToForward = this.codioLength;
     }
-    this.playFrom(timeToForward);
+    this.goto(timeToForward);
   }
 
   /**
-   * Play codio from time given.
+   * Move current loaded codio to given time.
    * @param relativeTimeMs Time in milliseconds.
    */
-  playFrom(relativeTimeMs: number): void {
+  goto(relativeTimeMs: number): void {
     this.relativeActiveTimeMs = relativeTimeMs;
     if (!this.isPaused) {
       this.pauseMedia();

@@ -16,7 +16,7 @@
     "bugs": {
         "url": "https://github.com/rbrisita/codio-sui/projects/2"
     },
-    "version": "0.10.14",
+    "version": "0.10.15",
     "license": "MIT",
     "publisher": "rbrisita",
     "icon": "media/icon.png",
@@ -45,7 +45,7 @@
         "onCommand:codio.playCodioTask",
         "onCommand:codio.stopCodio",
         "onCommand:codio.resumeCodio",
-        "onCommand:codio.playFrom"
+        "onCommand:codio.goto"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -137,9 +137,9 @@
                 "icon": "$(debug-start)"
             },
             {
-                "command": "codio.playFrom",
+                "command": "codio.goto",
                 "category": "Codio",
-                "title": "Play from..."
+                "title": "Player Go To..."
             },
             {
                 "command": "codio.pauseOrResume",
@@ -166,7 +166,7 @@
         "menus": {
             "commandPalette": [
                 {
-                    "command": "codio.playFrom",
+                    "command": "codio.goto",
                     "when": "!isRecording && isPlaying"
                 },
                 {

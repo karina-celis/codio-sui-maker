@@ -1,14 +1,12 @@
 import { Uri } from 'vscode';
 import { UI, MESSAGES, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
 import Player from '../player/Player';
-import Recorder from '../recorder/Recorder';
 import FSManager from '../filesystem/FSManager';
-import { checkForFfmpeg, isTreeItem } from '../utils';
+import { isTreeItem } from '../utils';
 
 export default async function playCodio(
   fsManager: FSManager,
   player: Player,
-  recorder: Recorder,
   codioUri?: Uri,
   workspaceUri?: Uri,
 ): Promise<void> {
@@ -19,17 +17,6 @@ export default async function playCodio(
   }
 
   try {
-    const hasFfmpeg = await checkForFfmpeg();
-    if (!hasFfmpeg) {
-      UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
-      return;
-    }
-
-    if (recorder && recorder.isRecording) {
-      UI.showMessage(MESSAGES.cantPlayWhileRecording);
-      return;
-    }
-
     if (player && player.isPlaying) {
       player.stop();
     }
@@ -39,10 +26,12 @@ export default async function playCodio(
       await loadAndPlay(player, codioUnzippedFolder, workspaceUri?.fsPath);
     } else {
       const itemSelected = await fsManager.chooseCodio();
-      if (itemSelected?.path) {
-        //@TODO: add an if to check that the folder contains audio.mp3 and actions.json
-        await loadAndPlay(player, itemSelected.path, itemSelected.workspaceRoot?.fsPath);
+      if (!itemSelected?.path) {
+        UI.showModalMessage(MODAL_MESSAGE_OBJS.noActiveCodio);
+        return;
       }
+      //@TODO: add an if to check that the folder contains audio.mp3 and actions.json
+      await loadAndPlay(player, itemSelected.path, itemSelected.workspaceRoot?.fsPath);
     }
   } catch (e) {
     console.log('Play codio failed', e);
@@ -51,7 +40,6 @@ export default async function playCodio(
 
 async function loadAndPlay(player: Player, path: string, workspacePath: string) {
   await player.loadCodio(path, workspacePath);
-  await player.startCodio();
+  player.play(0);
   UI.showPlayerStatusBar(player);
-  FSManager.update();
 }

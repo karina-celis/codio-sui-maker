@@ -1,7 +1,7 @@
 import pauseOrResume from './pauseOrResume';
 import playCodio from './playCodio';
 import playCodioTask from './playCodioTask';
-import playFrom from './playFrom';
+import goto from './goto';
 import { forward, rewind } from './rewindAndForward';
 import resumeCodio from './resumeCodio';
 import pauseCodio from './pauseCodio';
@@ -17,7 +17,7 @@ export const codioCommands = {
   pauseOrResume,
   playCodio,
   playCodioTask,
-  playFrom,
+  goto,
   forward,
   rewind,
   resumeCodio,
@@ -31,6 +31,8 @@ export const codioCommands = {
   trimEnd,
 };
 
+// @TODO RECORDER_ACTION, PLAYER_ACTION
+// @TODO codio.recorder.action, codio.player.action
 export class CommandNames {
   public static readonly PLAY_CODIO = 'codio.playCodio';
   public static readonly PLAY_CODIO_TASK = 'codio.playCodioTask';
@@ -42,7 +44,7 @@ export class CommandNames {
   public static readonly CANCEL_RECORDING = 'codio.cancelRecording';
   public static readonly PAUSE_CODIO = 'codio.pauseCodio';
   public static readonly RESUME_CODIO = 'codio.resumeCodio';
-  public static readonly PLAY_FROM = 'codio.playFrom';
+  public static readonly PLAY_GOTO = 'codio.goto';
   public static readonly UPLOAD_CODIO = 'codio.uploadCodio';
   public static readonly DOWNLOAD_CODIO = 'codio.downloadCodio';
   public static readonly SEND_MESSAGE = 'codio.sendMessage';

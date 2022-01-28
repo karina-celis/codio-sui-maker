@@ -17,5 +17,5 @@ export default async function playCodioTask(
     const codios = await fsManager.getAllCodiosMetadata();
     codioUri = codios.length === 1 ? codios[0].uri : '';
   }
-  playCodio(fsManager, player, recorder, codioUri, workspaceUri);
+  playCodio(fsManager, player, codioUri, workspaceUri);
 }
