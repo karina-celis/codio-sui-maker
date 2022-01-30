@@ -1,5 +1,16 @@
 import { TextEncoder } from 'util';
-import * as vscode from 'vscode';
+import {
+  commands,
+  Position,
+  Range,
+  Selection,
+  TextEditor,
+  TextEditorEdit,
+  TextDocument,
+  window,
+  workspace,
+  WorkspaceEdit,
+} from 'vscode';
 import { cursorStyle } from '../user_interface/Viewers';
 import { overrideEditorText, getTextEditor } from '../utils';
 import { DocumentEvents } from './consts';
@@ -48,15 +59,15 @@ export default async function processEvent(event: CodioEvent | DocumentEvent): P
  */
 async function processChangeEvent(dce: DocumentChangeEvent) {
   const actions = dce.data.changes;
-  const edit = new vscode.WorkspaceEdit();
+  const edit = new WorkspaceEdit();
   actions.forEach((action) => {
     if (action.position) {
-      edit.replace(dce.data.uri, new vscode.Range(action.position, action.position), action.value);
+      edit.replace(dce.data.uri, new Range(action.position, action.position), action.value);
     } else if (action.range) {
       edit.replace(dce.data.uri, action.range, action.value);
     }
   });
-  await vscode.workspace.applyEdit(edit);
+  await workspace.applyEdit(edit);
 }
 
 /**
@@ -65,20 +76,29 @@ async function processChangeEvent(dce: DocumentChangeEvent) {
  */
 async function processCloseEvent(de: DocumentEvent) {
   const data = de.data;
-  await vscode.workspace.fs.writeFile(data.uri, new TextEncoder().encode(data.content));
+  await workspace.fs.writeFile(data.uri, new TextEncoder().encode(data.content));
 
   // During a 'Save As' action the source file reverts to previous state and closes.
   // This allows the file to be saved at its previous state and close cleanly.
-  const td = vscode.workspace.textDocuments.find((td) => {
-    return td.uri.path === data.uri.path;
-  });
+  const td = getTextDocument(data.uri.path);
   if (td?.isDirty) {
     await td.save();
   }
 
   // There could be a situation where the active editor is not the given event's URI.
-  await vscode.window.showTextDocument(data.uri, { preview: false });
-  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  await window.showTextDocument(data.uri, { preview: false });
+  await commands.executeCommand('workbench.action.closeActiveEditor');
+}
+
+/**
+ * Find given path in the workspace's text documents.
+ * @param path Path to find in workspace text documents.
+ * @returns Found text document or undefined.
+ */
+function getTextDocument(path: string): TextDocument | undefined {
+  return workspace.textDocuments.find((td) => {
+    return td.uri.path === path;
+  });
 }
 
 /**
@@ -89,31 +109,29 @@ async function processCreateEvent(de: DocumentEvent) {
   const data = de.data;
 
   // A document could be opened and dirty and not focused.
-  const foundTD = vscode.workspace.textDocuments.find((td) => {
-    return td.uri.path === data.uri.path;
-  });
-  if (foundTD?.isDirty) {
+  const td = getTextDocument(data.uri.path);
+  if (td?.isDirty) {
     // Force focus.
-    await vscode.window.showTextDocument(data.uri, { preview: false });
+    await window.showTextDocument(data.uri, { preview: false });
   }
 
   // If the active editor is the document in an unsaved state then replace all.
-  const ate = vscode.window.activeTextEditor;
+  const ate = window.activeTextEditor;
   if (data.uri.path === ate?.document.uri.path && ate?.document.isDirty) {
-    await ate.edit(async (tee: vscode.TextEditorEdit) => {
-      const start = ate.visibleRanges[0].start as vscode.Position;
-      const end = ate.visibleRanges[0].end as vscode.Position;
-      tee.replace(new vscode.Range(start, end), data.content);
+    await ate.edit(async (tee: TextEditorEdit) => {
+      const start = ate.visibleRanges[0].start as Position;
+      const end = ate.visibleRanges[0].end as Position;
+      tee.replace(new Range(start, end), data.content);
     });
 
     await ate.document.save();
   } else {
     // @TODO: Check if encode parameter can be undefined
     const content = data.content ? new TextEncoder().encode(data.content) : new Uint8Array();
-    await vscode.workspace.fs.writeFile(data.uri, content);
+    await workspace.fs.writeFile(data.uri, content);
   }
 
-  await vscode.window.showTextDocument(data.uri, { preview: false });
+  await window.showTextDocument(data.uri, { preview: false });
 }
 
 /**
@@ -122,7 +140,17 @@ async function processCreateEvent(de: DocumentEvent) {
  */
 async function processDeleteEvent(de: DocumentEvent) {
   try {
-    await vscode.workspace.fs.delete(de.data.uri, { recursive: true, useTrash: true });
+    const data = de.data;
+
+    // Closing an unsaved document will pop-up a dialog.
+    const td = getTextDocument(data.uri.path);
+    if (td?.isDirty) {
+      await td.save();
+    }
+
+    await window.showTextDocument(data.uri, { preview: false });
+    await commands.executeCommand('workbench.action.closeActiveEditor');
+    await workspace.fs.delete(data.uri, { recursive: true, useTrash: true });
   } catch (error) {
     console.warn(error.message);
   }
@@ -136,29 +164,27 @@ async function processOpenEvent(de: DocumentEvent) {
   const data = de.data;
 
   // A document could be opened and dirty and not focused.
-  const foundTD = vscode.workspace.textDocuments.find((td) => {
-    return td.uri.path === data.uri.path;
-  });
-  if (foundTD?.isDirty) {
+  const td = getTextDocument(data.uri.path);
+  if (td?.isDirty) {
     // Force focus.
-    await vscode.window.showTextDocument(data.uri, { preview: false });
+    await window.showTextDocument(data.uri, { preview: false });
   }
 
   // If the active editor is the document in an unsaved state then replace all.
-  const ate = vscode.window.activeTextEditor;
+  const ate = window.activeTextEditor;
   if (data.uri.path === ate?.document.uri.path && ate?.document.isDirty) {
-    await ate.edit(async (tee: vscode.TextEditorEdit) => {
-      const start = ate.visibleRanges[0].start as vscode.Position;
-      const end = ate.visibleRanges[0].end as vscode.Position;
-      tee.replace(new vscode.Range(start, end), data.content);
+    await ate.edit(async (tee: TextEditorEdit) => {
+      const start = ate.visibleRanges[0].start as Position;
+      const end = ate.visibleRanges[0].end as Position;
+      tee.replace(new Range(start, end), data.content);
     });
 
     await ate.document.save();
   } else {
-    await vscode.workspace.fs.writeFile(data.uri, new TextEncoder().encode(data.content));
+    await workspace.fs.writeFile(data.uri, new TextEncoder().encode(data.content));
   }
 
-  await vscode.window.showTextDocument(data.uri, { preview: false });
+  await window.showTextDocument(data.uri, { preview: false });
 }
 
 /**
@@ -170,8 +196,8 @@ async function processRenameEvent(dre: DocumentRenameEvent) {
   const dest = dre.data.newUri;
   const content = dre.data.content;
 
-  await vscode.workspace.fs.writeFile(src, new TextEncoder().encode(content));
-  await vscode.workspace.fs.rename(src, dest, { overwrite: true });
+  await workspace.fs.writeFile(src, new TextEncoder().encode(content));
+  await workspace.fs.rename(src, dest, { overwrite: true });
 }
 
 /**
@@ -190,30 +216,30 @@ async function processSaveEvent(de: DocumentEvent) {
      * The content of the file is newer.
      * @note https://github.com/microsoft/vscode/issues/77387
      **/
-    await vscode.workspace.fs.writeFile(data.uri, new TextEncoder().encode(data.content));
+    await workspace.fs.writeFile(data.uri, new TextEncoder().encode(data.content));
   }
 
-  await vscode.window.showTextDocument(data.uri, { preview: false });
-  await vscode.window.activeTextEditor.document.save();
+  await window.showTextDocument(data.uri, { preview: false });
+  await window.activeTextEditor.document.save();
 }
 
 async function processSelectionEvent(dse: DocumentSelectionEvent) {
   const data = dse.data;
-  const RangesToDecorate = data.selections.map((selection: vscode.Selection) => {
-    return new vscode.Range(selection.anchor, selection.active);
+  const RangesToDecorate = data.selections.map((selection: Selection) => {
+    return new Range(selection.anchor, selection.active);
   });
-  const textDocumentToDecorate: vscode.TextEditor = vscode.window.visibleTextEditors.find(
+  const textDocumentToDecorate: TextEditor = window.visibleTextEditors.find(
     (editor) => editor.document.uri.path === data.uri.path,
   );
   if (textDocumentToDecorate) {
     textDocumentToDecorate.setDecorations(cursorStyle, RangesToDecorate);
   }
 
-  await vscode.window.showTextDocument(data.uri, { preview: false });
+  await window.showTextDocument(data.uri, { preview: false });
 }
 
 function processVisibleRangeEvent(dvre: DocumentVisibleRangeEvent) {
-  const textEditor: vscode.TextEditor = vscode.window.visibleTextEditors.find(
+  const textEditor: TextEditor = window.visibleTextEditors.find(
     (editor) => editor.document.uri.path === dvre.data.uri.path,
   );
   if (textEditor) {
@@ -225,7 +251,7 @@ function processVisibleRangeEvent(dvre: DocumentVisibleRangeEvent) {
 function dispatchExecutionEvent(event: CodioExecutionEvent) {
   console.log('dispatchExecutionEvent DEPRECATED');
   try {
-    const outputChannel = vscode.window.createOutputChannel('codioReplay');
+    const outputChannel = window.createOutputChannel('codioReplay');
     outputChannel.show(true);
     outputChannel.append(event.data.executionOutput);
   } catch (e) {
@@ -242,11 +268,11 @@ function isEditorShownForFirstTime(event: CodioChangeActiveEditorEvent) {
 // DEPRECATED
 async function dispatchEditorShownFirstTime(event: CodioChangeActiveEditorEvent) {
   console.log('dispatchEditorShownFirstTime DEPRECATED');
-  await vscode.window.showTextDocument(event.data.uri, {
+  await window.showTextDocument(event.data.uri, {
     viewColumn: event.data.viewColumn,
     preview: true,
   });
-  const textEditor: vscode.TextEditor = vscode.window.visibleTextEditors.find(
+  const textEditor: TextEditor = window.visibleTextEditors.find(
     (editor) => editor.document.uri.path === event.data.uri.path,
   );
   console.log(textEditor);
@@ -261,21 +287,21 @@ async function dispatchEditorEvent(event: CodioChangeActiveEditorEvent) {
   if (isEditorShownForFirstTime(event)) {
     dispatchEditorShownFirstTime(event);
   } else {
-    const textEditor: vscode.TextEditor = getTextEditor(event.data.uri.path);
+    const textEditor: TextEditor = getTextEditor(event.data.uri.path);
     if (textEditor) {
       try {
         if (textEditor.viewColumn === event.data.viewColumn) {
-          await vscode.window.showTextDocument(textEditor.document, {
+          await window.showTextDocument(textEditor.document, {
             viewColumn: event.data.viewColumn,
             preview: true,
           });
         } else {
-          await vscode.workspace.saveAll();
-          await vscode.window.showTextDocument(textEditor.document, {
+          await workspace.saveAll();
+          await window.showTextDocument(textEditor.document, {
             viewColumn: textEditor.viewColumn,
           });
-          await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-          await vscode.window.showTextDocument(textEditor.document, {
+          await commands.executeCommand('workbench.action.closeActiveEditor');
+          await window.showTextDocument(textEditor.document, {
             viewColumn: event.data.viewColumn,
             preview: true,
           });
@@ -285,7 +311,7 @@ async function dispatchEditorEvent(event: CodioChangeActiveEditorEvent) {
         console.log('bagabaga faillll', { e, event });
       }
     } else {
-      await vscode.window.showTextDocument(event.data.uri, {
+      await window.showTextDocument(event.data.uri, {
         viewColumn: event.data.viewColumn,
         preview: true,
       });
@@ -296,7 +322,7 @@ async function dispatchEditorEvent(event: CodioChangeActiveEditorEvent) {
 }
 
 export function removeSelection(): void {
-  vscode.window.visibleTextEditors.map((editor) => {
+  window.visibleTextEditors.map((editor) => {
     editor.setDecorations(cursorStyle, []);
   });
 }
