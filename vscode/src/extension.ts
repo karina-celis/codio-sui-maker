@@ -25,14 +25,32 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const recordCodioDisposable = commands.registerCommand(
     CommandNames.RECORD_CODIO,
     async (destination?: Uri, workspaceRoot?: Uri) => {
-      codioCommands.recordCodio(fsManager, player, recorder, destination, workspaceRoot, showCodioNameInputBox);
+      const hasFfmpeg = await checkForFfmpeg();
+      if (!hasFfmpeg) {
+        UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
+        return;
+      }
+
+      if (player.isPlaying) {
+        player.stop();
+      }
+
+      let codioName = await showCodioNameInputBox();
+      codioName = codioName?.trim();
+      if (!codioName) {
+        UI.showModalMessage(MODAL_MESSAGE_OBJS.emptyCodioNameInvalid);
+        return;
+      }
+
+      codioCommands.recordCodio(fsManager, recorder, destination, workspaceRoot, codioName);
     },
   );
 
   const recordCodioToProjectDisposable = commands.registerCommand(CommandNames.RECORD_CODIO_TO_PROJECT, async () => {
     const rp: RecordProject = await getWorkspaceUriAndCodioDestinationUri();
     if (rp.workspaceUri && rp.codioUri && rp.getCodioName) {
-      codioCommands.recordCodio(fsManager, player, recorder, rp.codioUri, rp.workspaceUri, rp.getCodioName);
+      const codioName = await rp.getCodioName();
+      codioCommands.recordCodio(fsManager, recorder, rp.codioUri, rp.workspaceUri, codioName);
     }
   });
 
@@ -74,7 +92,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const playCodioTaskDisposable = commands.registerCommand(
     CommandNames.PLAY_CODIO_TASK,
     async (source: Uri, workspaceUri?: Uri) => {
-      codioCommands.playCodioTask(fsManager, player, recorder, source, workspaceUri);
+      codioCommands.playCodioTask(fsManager, player, source, workspaceUri);
     },
   );
 
@@ -91,10 +109,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const pauseCodioDisposable = commands.registerCommand(CommandNames.PAUSE_CODIO, () => {
     codioCommands.pauseCodio(player);
     FSManager.update();
-  });
-
-  const pauseOrResumeDisposable = commands.registerCommand(CommandNames.PAUSE_OR_RESUME, () => {
-    codioCommands.pauseOrResume(player);
   });
 
   const resumeCodioDisposable = commands.registerCommand(CommandNames.RESUME_CODIO, () => {
@@ -128,7 +142,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   context.subscriptions.push(gotoDisposable);
   context.subscriptions.push(rewindDisposable);
   context.subscriptions.push(forwardDisposable);
-  context.subscriptions.push(pauseOrResumeDisposable);
   context.subscriptions.push(trimEnd);
 }
 

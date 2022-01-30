@@ -16,7 +16,7 @@
     "bugs": {
         "url": "https://github.com/rbrisita/codio-sui/projects/2"
     },
-    "version": "0.10.22",
+    "version": "0.10.23",
     "license": "MIT",
     "publisher": "rbrisita",
     "icon": "media/icon.png",
@@ -142,15 +142,6 @@
                 "title": "Player Go To..."
             },
             {
-                "command": "codio.pauseOrResume",
-                "category": "Codio",
-                "title": "Pause/Resume",
-                "icon": {
-                    "light": "./media/light/pauseOrResume.svg",
-                    "dark": "./media/dark/pauseOrResume.svg"
-                }
-            },
-            {
                 "command": "codio.forward",
                 "category": "Codio",
                 "title": "Forward 10 seconds",
@@ -184,10 +175,6 @@
                 {
                     "command": "codio.resumeCodio",
                     "when": "!isRecording && isPlaying && isPlayerPaused"
-                },
-                {
-                    "command": "codio.pauseOrResume",
-                    "when": "!isRecording && isPlaying"
                 },
                 {
                     "command": "codio.forward",

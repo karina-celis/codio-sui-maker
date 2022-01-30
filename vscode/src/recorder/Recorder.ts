@@ -35,10 +35,6 @@ export default class Recorder {
   stopRecordingResolver: (value?: unknown) => void;
 
   async loadCodio(codioPath: string, codioName: string, destinationFolder?: Uri, workspaceRoot?: Uri): Promise<void> {
-    if (this.isRecording) {
-      await this.stopRecording();
-      this.saveRecording();
-    }
     this.timer = new Timer();
     this.audioRecorder = new AudioHandler(FSManager.audioPath(codioPath), Environment.getInstance());
     this.codeEditorRecorder = new CodeEditorRecorder();
