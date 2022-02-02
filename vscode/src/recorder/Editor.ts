@@ -13,10 +13,8 @@ import {
   FileWillCreateEvent,
   TextDocumentWillSaveEvent,
   FileDeleteEvent,
-  TextDocumentSaveReason,
 } from 'vscode';
-import { TextDecoder, TextEncoder } from 'util';
-import { basename } from 'path';
+import { TextDecoder } from 'util';
 import serializeEvents from '../editor/serialize';
 import * as eventCreators from '../editor/event_creator';
 import FSManager from '../filesystem/FSManager';
@@ -55,7 +53,12 @@ export default class CodeEditorRecorder {
       // Filter out active document.
       const unfocusedPaths = workspace.textDocuments.filter((td) => td.uri.path !== editor.document.uri.path);
       unfocusedPaths.forEach((td) => {
-        const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_OPEN, td.uri, td.getText());
+        const event = eventCreators.createDocumentEvent(
+          DocumentEvents.DOCUMENT_OPEN,
+          td.uri,
+          td.getText(),
+          td.isUntitled,
+        );
         this.events.push(event);
       });
 
@@ -64,6 +67,7 @@ export default class CodeEditorRecorder {
         DocumentEvents.DOCUMENT_OPEN,
         editor.document.uri,
         editor.document.getText(),
+        editor.document.isUntitled,
       );
       this.events.push(event);
     }
@@ -108,8 +112,6 @@ export default class CodeEditorRecorder {
    * Clean up after recording.
    */
   async stopRecording(): Promise<void> {
-    await this.syncOpenedTextDocuments();
-
     this.onDidChangeActiveTextEditorListener.dispose();
     this.onDidChangeTextEditorSelectionListener.dispose();
     this.onDidChangeTextEditorVisibleRangesListener.dispose();
@@ -124,35 +126,6 @@ export default class CodeEditorRecorder {
     this.onChangeDocumentListener.dispose();
     this.onSaveDocumentListener.dispose();
     this.onCloseDocumentListener.dispose();
-  }
-
-  /**
-   * Check opened text documents' state.
-   */
-  private async syncOpenedTextDocuments(): Promise<void> {
-    for (const td of workspace.textDocuments) {
-      if (td.isDirty) {
-        await td.save();
-
-        const evt = <TextDocumentWillSaveEvent>{ document: td, reason: TextDocumentSaveReason.Manual };
-        this.onWillSaveDocument(evt);
-        this.removePathFromProcessing(td.uri.path);
-      } else if (td.isUntitled) {
-        const newUri = Uri.joinPath(workspace.workspaceFolders[0].uri, basename(td.uri.path));
-        await workspace.fs.writeFile(newUri, new TextEncoder().encode(td.getText()));
-
-        const createEvt = <FileWillCreateEvent>{
-          files: [newUri] as ReadonlyArray<Uri>,
-        };
-        this.onWillCreateFiles(createEvt);
-        this.removePathFromProcessing(newUri.path);
-
-        const newTD = await workspace.openTextDocument(newUri);
-        const saveEvt = <TextDocumentWillSaveEvent>{ document: newTD, reason: TextDocumentSaveReason.Manual };
-        this.onWillSaveDocument(saveEvt);
-        this.removePathFromProcessing(newUri.path);
-      }
-    }
   }
 
   /**
@@ -204,24 +177,24 @@ export default class CodeEditorRecorder {
     }
 
     const document: TextDocument = te.document;
-    const docUri = document.uri;
-    const uriPath = docUri.path;
-    const docContent = document.getText();
+    const uri = document.uri;
+    const path = uri.path;
+    const content = document.getText();
 
     // From an onOpenDocument.
-    if (this.removePathFromProcessing(uriPath)) {
-      console.log('Processed', uriPath, this.processPaths);
+    if (this.removePathFromProcessing(path)) {
+      console.log('Processed', path, this.processPaths);
 
       // Save active text editor if it wasn't available when record started.
       if (this.events.length === 1) {
-        this.addCodioFileToInitialFrame(new ShadowDocument(docContent), 1, docUri, 0);
+        this.addCodioFileToInitialFrame(new ShadowDocument(content), 1, uri, 0);
       }
 
       return;
     }
 
     // Switch to document
-    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_OPEN, docUri, docContent);
+    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_OPEN, uri, content, document.isUntitled);
     this.events.push(event);
   }
 
@@ -302,7 +275,7 @@ export default class CodeEditorRecorder {
     console.log('To be processed', this.processPaths);
 
     // The document that is opened could be in a different state than expected.
-    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_OPEN, td.uri, td.getText());
+    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_OPEN, td.uri, td.getText(), td.isUntitled);
     this.events.push(event);
   }
 
@@ -350,7 +323,7 @@ export default class CodeEditorRecorder {
 
     let event;
     if (td.isUntitled) {
-      event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_DELETE, td.uri);
+      event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_DELETE, td.uri, td.getText(), td.isUntitled);
     } else {
       event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_CLOSE, td.uri, td.getText());
     }

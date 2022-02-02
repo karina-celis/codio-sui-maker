@@ -142,6 +142,12 @@ async function processDeleteEvent(de: DocumentEvent) {
   try {
     const data = de.data;
 
+    if (data.isUntitled) {
+      await window.showTextDocument(data.uri, { preview: false });
+      await commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+      return;
+    }
+
     // Closing an unsaved document will pop-up a dialog.
     const td = getTextDocument(data.uri.path);
     if (td?.isDirty) {
@@ -162,6 +168,12 @@ async function processDeleteEvent(de: DocumentEvent) {
  */
 async function processOpenEvent(de: DocumentEvent) {
   const data = de.data;
+
+  if (data.isUntitled) {
+    // https://github.com/microsoft/vscode/issues/142112
+    await commands.executeCommand('workbench.action.files.newUntitledFile');
+    return;
+  }
 
   // A document could be opened and dirty and not focused.
   const td = getTextDocument(data.uri.path);

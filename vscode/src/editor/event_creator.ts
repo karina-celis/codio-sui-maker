@@ -8,10 +8,16 @@ import {
 
 import { CODIO_EXEC, CODIO_EDITOR_CHANGED, DocumentEvents } from './consts';
 
-export function createDocumentEvent(type: DocumentEvents, uri: Uri, content?: string): DocumentEvent {
+export function createDocumentEvent(
+  type: DocumentEvents,
+  uri: Uri,
+  content?: string,
+  isUntitled?: boolean,
+): DocumentEvent {
   return {
     type,
     data: {
+      isUntitled,
       uri,
       content,
       time: Date.now(),
@@ -35,6 +41,7 @@ export function createDocumentChangeEvent(e: TextDocumentChangeEvent): DocumentC
   return {
     type: DocumentEvents.DOCUMENT_CHANGE,
     data: {
+      isUntitled: e.document.isUntitled,
       uri: e.document.uri,
       changes: e.contentChanges,
       time: Date.now(),
@@ -46,23 +53,25 @@ export function createDocumentVisibleRangeEvent(e: TextEditorVisibleRangesChange
   return {
     type: DocumentEvents.DOCUMENT_VISIBLE_RANGE,
     data: {
+      isUntitled: e.textEditor.document.isUntitled,
       time: Date.now(),
       uri: e.textEditor.document.uri,
       //@TODO: Currently does not support folding.
       visibleRange: e.visibleRanges[0],
     },
-  };
+  } as DocumentVisibleRangeEvent;
 }
 
 export function createDocumentSelectionEvent(e: TextEditorSelectionChangeEvent): DocumentSelectionEvent {
   return {
     type: DocumentEvents.DOCUMENT_SELECTION,
     data: {
+      isUntitled: e.textEditor.document.isUntitled,
       uri: e.textEditor.document.uri,
       selections: e.selections,
       time: Date.now(),
     },
-  };
+  } as DocumentSelectionEvent;
 }
 
 export function createCodioExecutionEvent(output: string): CodioExecutionEvent {

@@ -26,6 +26,7 @@ declare interface CodioEvent {
 declare interface DocumentEvent {
   type: number;
   data: {
+    isUntitled?: boolean;
     uri?: Uri;
     content?: string;
     time: number;
@@ -45,6 +46,7 @@ declare interface DocumentRenameEvent extends DocumentEvent {
 declare interface SerializedDocumentEvent {
   type: number | string;
   data: {
+    isUntitled?: boolean;
     path?: string | undefined;
     oldPath?: string | undefined;
     newPath?: string | undefined;

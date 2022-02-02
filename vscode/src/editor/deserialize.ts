@@ -40,7 +40,21 @@ export default function deserializeEvents(
 function deserializeFilePath(event: SerializedDocumentEvent, codioPath: string) {
   if (event.data.path) {
     const { path, ...eventData } = event.data;
-    const newEvent = { ...event, data: { ...eventData, uri: Uri.joinPath(Uri.file(codioPath), path) } };
+
+    let uri;
+    if (event.data.isUntitled) {
+      uri = Uri.parse('untitled:' + path);
+    } else {
+      uri = Uri.joinPath(Uri.file(codioPath), path);
+    }
+
+    const newEvent = {
+      ...event,
+      data: {
+        ...eventData,
+        uri,
+      },
+    };
     return newEvent;
   } else {
     return event;
