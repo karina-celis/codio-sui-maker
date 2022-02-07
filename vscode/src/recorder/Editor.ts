@@ -41,6 +41,7 @@ export default class CodeEditorRecorder {
   initialFrame: Array<CodioFile> = [];
   events: DocumentEvent[] = [];
   processPaths: Array<string> = [];
+  onLanguageIdChange: Record<string, string> = {};
 
   /**
    * Save active text editor and listen to change events.
@@ -137,6 +138,7 @@ export default class CodeEditorRecorder {
     const processedIndex = this.processPaths.indexOf(filePath);
     if (processedIndex !== -1) {
       this.processPaths.splice(processedIndex, 1);
+      console.log('Processed', filePath, this.processPaths);
       return true;
     }
 
@@ -183,8 +185,6 @@ export default class CodeEditorRecorder {
 
     // From an onOpenDocument.
     if (this.removePathFromProcessing(path)) {
-      console.log('Processed', path, this.processPaths);
-
       // Save active text editor if it wasn't available when record started.
       if (this.events.length === 1) {
         this.addCodioFileToInitialFrame(new ShadowDocument(content), 1, uri, 0);
@@ -270,9 +270,12 @@ export default class CodeEditorRecorder {
       return;
     }
 
-    // Already existing path
-    this.processPaths.push(td.uri.path);
-    console.log('To be processed', this.processPaths);
+    // Add to processing queue?
+    if (!this.onLanguageIdChange[td.uri.path] || this.onLanguageIdChange[td.uri.path] === td.languageId) {
+      this.processPaths.push(td.uri.path);
+      console.log('To be processed', this.processPaths);
+    }
+    delete this.onLanguageIdChange[td.uri.path];
 
     // The document that is opened could be in a different state than expected.
     const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_OPEN, td.uri, td.getText(), td.isUntitled);
@@ -303,7 +306,6 @@ export default class CodeEditorRecorder {
     console.log('onDeleteDocument e', e);
     e.files.forEach((uri) => {
       this.removePathFromProcessing(uri.path);
-      console.log('Processed', uri.path, this.processPaths);
     });
   }
 
@@ -317,9 +319,11 @@ export default class CodeEditorRecorder {
 
     // From a WillDelete or WillRename
     if (this.removePathFromProcessing(td.uri.path)) {
-      console.log('Processed', td.uri.path, this.processPaths);
       return;
     }
+
+    // Possible language Id change
+    this.onLanguageIdChange[td.uri.path] = td.languageId;
 
     let event;
     if (td.isUntitled) {
@@ -371,6 +375,5 @@ export default class CodeEditorRecorder {
   private onSaveDocument(td: TextDocument): void {
     console.log('onSaveDocument td', td);
     this.removePathFromProcessing(td.uri.path);
-    console.log('Processed', td.uri.path, this.processPaths);
   }
 }

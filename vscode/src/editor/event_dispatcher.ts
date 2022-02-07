@@ -10,11 +10,13 @@ import {
   window,
   workspace,
   WorkspaceEdit,
+  TextDocumentContentChangeEvent,
+  TextDocumentChangeEvent,
 } from 'vscode';
 import { cursorStyle } from '../user_interface/Viewers';
 import { overrideEditorText, getTextEditor } from '../utils';
 import { DocumentEvents } from './consts';
-import { isExecutionEvent, isEditorEvent } from './event_creator';
+import { isExecutionEvent, isEditorEvent, createDocumentChangeEvent } from './event_creator';
 
 // Map of valid events.
 const eventsToProcess = {
@@ -61,13 +63,14 @@ async function processChangeEvent(dce: DocumentChangeEvent) {
   const actions = dce.data.changes;
   const edit = new WorkspaceEdit();
   actions.forEach((action) => {
+    let range = action.range;
     if (action.position) {
-      edit.replace(dce.data.uri, new Range(action.position, action.position), action.value);
-    } else if (action.range) {
-      edit.replace(dce.data.uri, action.range, action.value);
+      range = new Range(action.position, action.position);
     }
+    edit.replace(dce.data.uri, range, action.text);
   });
   await workspace.applyEdit(edit);
+  removeSelection();
 }
 
 /**
@@ -168,35 +171,59 @@ async function processDeleteEvent(de: DocumentEvent) {
  */
 async function processOpenEvent(de: DocumentEvent) {
   const data = de.data;
+  const td = getTextDocument(data.uri.path);
 
-  if (data.isUntitled) {
+  if (data.isUntitled && !td) {
     // https://github.com/microsoft/vscode/issues/142112
-    await commands.executeCommand('workbench.action.files.newUntitledFile');
+    await commands.executeCommand('workbench.action.files.newUntitledFile'); // Should really return the filename created.
+    // Assuming here that the file going to be worked on is created.
+
+    if (!data.content.length) {
+      return;
+    }
+
+    const position = new Position(0, 0);
+    const contentChanges = [
+      <TextDocumentContentChangeEvent>{
+        text: data.content,
+        range: new Range(position, position),
+        rangeLength: 0,
+        rangeOffset: 0,
+      },
+    ];
+    const newTD = workspace.textDocuments.find((td) => {
+      return td.uri.path === data.uri.path;
+    });
+    const tdce = <TextDocumentChangeEvent>{
+      document: newTD,
+      contentChanges,
+      reason: undefined,
+    };
+    const evt = createDocumentChangeEvent(tdce);
+    await processChangeEvent(evt);
     return;
   }
 
-  // A document could be opened and dirty and not focused.
-  const td = getTextDocument(data.uri.path);
-  if (td?.isDirty) {
-    // Force focus.
-    await window.showTextDocument(data.uri, { preview: false });
-  }
+  // A document could be opened but not focused.
+  await window.showTextDocument(data.uri, { preview: false });
 
-  // If the active editor is the document in an unsaved state then replace all.
+  // If the active editor is the document in an unsaved state or untitled then replace all.
   const ate = window.activeTextEditor;
-  if (data.uri.path === ate?.document.uri.path && ate?.document.isDirty) {
+  if (ate?.document.isDirty || ate?.document.isUntitled) {
     await ate.edit(async (tee: TextEditorEdit) => {
       const start = ate.visibleRanges[0].start as Position;
       const end = ate.visibleRanges[0].end as Position;
       tee.replace(new Range(start, end), data.content);
     });
 
-    await ate.document.save();
+    if (!ate.document.isUntitled) {
+      await ate.document.save();
+    }
   } else {
     await workspace.fs.writeFile(data.uri, new TextEncoder().encode(data.content));
   }
 
-  await window.showTextDocument(data.uri, { preview: false });
+  removeSelection();
 }
 
 /**
@@ -334,7 +361,8 @@ async function dispatchEditorEvent(event: CodioChangeActiveEditorEvent) {
 }
 
 export function removeSelection(): void {
-  window.visibleTextEditors.map((editor) => {
+  console.log('removeSelection', window.visibleTextEditors);
+  window.visibleTextEditors.map((editor: TextEditor) => {
     editor.setDecorations(cursorStyle, []);
   });
 }

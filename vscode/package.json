@@ -16,7 +16,7 @@
     "bugs": {
         "url": "https://github.com/rbrisita/codio-sui/projects/2"
     },
-    "version": "0.10.17",
+    "version": "0.10.18",
     "license": "MIT",
     "publisher": "rbrisita",
     "icon": "media/icon.png",
@@ -56,12 +56,12 @@
                 "codio.cursorColorDarkTheme": {
                     "type": "string",
                     "default": "rgb(81,80,82)",
-                    "description": "The color of the cursor in a Codio in a dark theme"
+                    "description": "Codio dark theme cursor color."
                 },
                 "codio.cursorColorLightTheme": {
                     "type": "string",
                     "default": "rgb(255, 255, 255)",
-                    "description": "The color of the cursor in a Codio in a light theme"
+                    "description": "Codio light theme cursor color."
                 }
             }
         },

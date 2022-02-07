@@ -9,7 +9,7 @@ import {
 } from '../editor/event_timeline';
 import { DocumentEvents } from '../editor/consts';
 import { nthIndex, replaceRange } from '../utils';
-import { Position } from 'vscode';
+import { Position, Range } from 'vscode';
 
 export default class EditorPlayer {
   currentEventTimer: NodeJS.Timer;
@@ -296,12 +296,12 @@ export default class EditorPlayer {
       e.data.changes.forEach((change) => {
         if (change.position) {
           const index = this.getTextPositionIndex(text, change.position);
-          text = replaceRange(text, index, index, change.value);
+          text = replaceRange(text, index, index, change.text);
         } else if (change.range) {
-          const range = change.range;
-          const startIndex = this.getTextPositionIndex(text, range[0]);
-          const endIndex = this.getTextPositionIndex(text, range[1]);
-          text = replaceRange(text, startIndex, endIndex, change.value);
+          const range = change.range as Range;
+          const startIndex = this.getTextPositionIndex(text, range.start);
+          const endIndex = this.getTextPositionIndex(text, range.end);
+          text = replaceRange(text, startIndex, endIndex, change.text);
         }
       });
     });

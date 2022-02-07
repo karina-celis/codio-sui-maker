@@ -7,7 +7,6 @@ export default function serialize(events: DocumentEvent[], rootPath: string): Se
   return events
     .map((event) => {
       const se = serializeEvent(event, rootPath);
-      console.log('event serialized', event, se);
       return se;
     })
     .filter((event) => !!event);
@@ -46,9 +45,9 @@ function serializeTextEvent(event: DocumentChangeEvent, rootPath): SerializedDoc
     const startPosition = new Position(range.start.line, range.start.character);
     const endPosition = new Position(range.end.line, range.end.character);
     if (rangeLength === 0) {
-      return { position: startPosition, value: change.text };
+      return { position: startPosition, text: change.text };
     }
-    return { range: new Range(startPosition, endPosition), value: change.text };
+    return { range: new Range(startPosition, endPosition), text: change.text };
   });
   return serializedEvent;
 }
