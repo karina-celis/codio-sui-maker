@@ -209,10 +209,10 @@ async function processOpenEvent(de: DocumentEvent) {
 
   // A document could be opened but not focused.
   await window.showTextDocument(data.uri, { preview: false });
-  await languages.setTextDocumentLanguage(td, de.data.languageId);
+  const ate = window.activeTextEditor;
+  await languages.setTextDocumentLanguage(ate.document, de.data.languageId);
 
   // If the active editor is the document in an unsaved state or untitled then replace all.
-  const ate = window.activeTextEditor;
   if (ate?.document.isDirty || ate?.document.isUntitled) {
     await ate.edit(async (tee: TextEditorEdit) => {
       const start = ate.visibleRanges[0].start as Position;
