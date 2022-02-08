@@ -2,7 +2,7 @@ import { commands, Uri, window, workspace } from 'vscode';
 import { UI, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
 import Player from '../player/Player';
 import FSManager from '../filesystem/FSManager';
-import { isTreeItem } from '../utils';
+import { isTreeItem, schemeSupported } from '../utils';
 
 export default async function playCodio(
   fsManager: FSManager,
@@ -43,6 +43,10 @@ async function loadAndPlay(player: Player, path: string, workspacePath: string) 
   await commands.executeCommand('workbench.action.closeUnmodifiedEditors');
   for (let i = 0; i < workspace.textDocuments.length; i++) {
     const td = workspace.textDocuments[i];
+    if (!schemeSupported(td.uri.scheme)) {
+      continue;
+    }
+
     await window.showTextDocument(td.uri, { preview: false });
     const saved = await td.save();
     if (saved) {

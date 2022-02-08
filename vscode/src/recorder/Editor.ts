@@ -22,6 +22,7 @@ import { createRelativeTimeline } from '../editor/event_timeline';
 import ShadowDocument from '../editor/frame/ShadowDocument';
 import serializeFrame from '../editor/frame/serialize_frame';
 import { DocumentEvents } from '../editor/consts';
+import { schemeSupported } from '../utils';
 
 export default class CodeEditorRecorder {
   onDidChangeActiveTextEditorListener: Disposable;
@@ -54,11 +55,16 @@ export default class CodeEditorRecorder {
       // Filter out active document.
       const unfocusedPaths = workspace.textDocuments.filter((td) => td.uri.path !== editor.document.uri.path);
       unfocusedPaths.forEach((td) => {
+        if (!schemeSupported(td.uri.scheme)) {
+          return;
+        }
+
         const event = eventCreators.createDocumentEvent(
           DocumentEvents.DOCUMENT_OPEN,
           td.uri,
           td.getText(),
           td.isUntitled,
+          td.languageId
         );
         this.events.push(event);
       });
@@ -69,6 +75,7 @@ export default class CodeEditorRecorder {
         editor.document.uri,
         editor.document.getText(),
         editor.document.isUntitled,
+        editor.document.languageId,
       );
       this.events.push(event);
     }
@@ -194,7 +201,13 @@ export default class CodeEditorRecorder {
     }
 
     // Switch to document
-    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_OPEN, uri, content, document.isUntitled);
+    const event = eventCreators.createDocumentEvent(
+      DocumentEvents.DOCUMENT_OPEN,
+      uri,
+      content,
+      document.isUntitled,
+      document.languageId
+    );
     this.events.push(event);
   }
 
@@ -265,6 +278,10 @@ export default class CodeEditorRecorder {
   private onOpenDocument(td: TextDocument): void {
     console.log('onOpenDocument td', td);
 
+    if (!schemeSupported(td.uri.scheme)) {
+      return;
+    }
+
     // From a WillCreate or WillRename
     if (this.pathIsProcessing(td.uri.path)) {
       return;
@@ -322,6 +339,10 @@ export default class CodeEditorRecorder {
    */
   private onCloseDocument(td: TextDocument): void {
     console.log('onCloseDocument td', td);
+
+    if (!schemeSupported(td.uri.scheme)) {
+      return;
+    }
 
     // From a WillDelete or WillRename
     if (this.removePathFromProcessing(td.uri.path)) {

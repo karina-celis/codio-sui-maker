@@ -6,6 +6,14 @@ import IDeviceParser from './environment/IDeviceParser';
 export const uriSeperator = '/';
 
 /**
+ * VS Code schemes supported by software.
+ */
+const supportedSchemeTypes = ['file', 'untitled'];
+export function schemeSupported(scheme: string): boolean {
+  return supportedSchemeTypes.includes(scheme);
+}
+
+/**
  * Get a list of input (audio and video) devices found.
  * @note Heavily based on: https://github.com/syumai/ffmpeg-device-list-parser
  * @param deviceParser A device parser to help parsing OS specific output.
