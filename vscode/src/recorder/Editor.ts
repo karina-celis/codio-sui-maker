@@ -278,7 +278,13 @@ export default class CodeEditorRecorder {
     delete this.onLanguageIdChange[td.uri.path];
 
     // The document that is opened could be in a different state than expected.
-    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_OPEN, td.uri, td.getText(), td.isUntitled);
+    const event = eventCreators.createDocumentEvent(
+      DocumentEvents.DOCUMENT_OPEN,
+        td.uri,
+        td.getText(),
+        td.isUntitled,
+        td.languageId
+    );
     this.events.push(event);
   }
 

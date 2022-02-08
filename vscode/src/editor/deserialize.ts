@@ -1,6 +1,6 @@
 import { Uri, Range, Position, Selection, TextDocumentContentChangeEvent } from 'vscode';
 import {
-  isSerializedTextEvent,
+  isSerializedDocumentChangeEvent,
   isSerializedSelectionEvent,
   isSerializedVisibleRangeEvent,
   isSerializedEditorEvent,
@@ -23,7 +23,7 @@ export default function deserializeEvents(
     if (event.type === DocumentEvents.DOCUMENT_RENAME) {
       const dre = deserializeRenameEvent(event, codioPath);
       return dre;
-    } else if (isSerializedTextEvent(event)) {
+    } else if (isSerializedDocumentChangeEvent(event)) {
       return deserializeTextEvent(event);
     } else if (isSerializedSelectionEvent(event)) {
       return deserializeSelectionEvent(event);

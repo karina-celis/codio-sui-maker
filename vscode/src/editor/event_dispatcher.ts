@@ -12,6 +12,7 @@ import {
   WorkspaceEdit,
   TextDocumentContentChangeEvent,
   TextDocumentChangeEvent,
+  languages,
 } from 'vscode';
 import { cursorStyle } from '../user_interface/Viewers';
 import { overrideEditorText, getTextEditor } from '../utils';
@@ -178,6 +179,11 @@ async function processOpenEvent(de: DocumentEvent) {
     await commands.executeCommand('workbench.action.files.newUntitledFile'); // Should really return the filename created.
     // Assuming here that the file going to be worked on is created.
 
+    const newTD = workspace.textDocuments.find((td) => {
+      return td.uri.path === data.uri.path;
+    });
+    await languages.setTextDocumentLanguage(newTD, de.data.languageId);
+
     if (!data.content.length) {
       return;
     }
@@ -191,9 +197,6 @@ async function processOpenEvent(de: DocumentEvent) {
         rangeOffset: 0,
       },
     ];
-    const newTD = workspace.textDocuments.find((td) => {
-      return td.uri.path === data.uri.path;
-    });
     const tdce = <TextDocumentChangeEvent>{
       document: newTD,
       contentChanges,
@@ -206,6 +209,7 @@ async function processOpenEvent(de: DocumentEvent) {
 
   // A document could be opened but not focused.
   await window.showTextDocument(data.uri, { preview: false });
+  await languages.setTextDocumentLanguage(td, de.data.languageId);
 
   // If the active editor is the document in an unsaved state or untitled then replace all.
   const ate = window.activeTextEditor;

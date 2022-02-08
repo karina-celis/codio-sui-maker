@@ -13,10 +13,12 @@ export function createDocumentEvent(
   uri: Uri,
   content?: string,
   isUntitled?: boolean,
+  languageId?: string,
 ): DocumentEvent {
   return {
     type,
     data: {
+      languageId,
       isUntitled,
       uri,
       content,
@@ -103,11 +105,11 @@ export function createCodioEditorEvent(
   };
 }
 
-export function isTextEvent(event: CodioEvent): event is DocumentChangeEvent {
+export function isDocumentChangeEvent(event: CodioEvent): event is DocumentChangeEvent {
   return event.type === DocumentEvents.DOCUMENT_CHANGE;
 }
 
-export function isSerializedTextEvent(event: SerializedDocumentEvent): event is SerializedDocumentChangeEvent {
+export function isSerializedDocumentChangeEvent(event: SerializedDocumentEvent): event is SerializedDocumentChangeEvent {
   return event.type === DocumentEvents.DOCUMENT_CHANGE;
 }
 

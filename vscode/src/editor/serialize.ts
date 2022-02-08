@@ -1,19 +1,16 @@
 import { Position, Range } from 'vscode';
 import FSManager from '../filesystem/FSManager';
 import { DocumentEvents } from './consts';
-import { isTextEvent } from './event_creator';
+import { isDocumentChangeEvent } from './event_creator';
 
 export default function serialize(events: DocumentEvent[], rootPath: string): SerializedDocumentEvent[] {
   return events
-    .map((event) => {
-      const se = serializeEvent(event, rootPath);
-      return se;
-    })
+    .map((event) => serializeEvent(event, rootPath))
     .filter((event) => !!event);
 }
 
 function serializeEvent(event: DocumentEvent, rootPath): SerializedDocumentEvent {
-  if (isTextEvent(event)) {
+  if (isDocumentChangeEvent(event)) {
     return serializeTextEvent(event, rootPath);
   } else if (event.type === DocumentEvents.DOCUMENT_RENAME) {
     return serializeRenameEvent(event as DocumentRenameEvent, rootPath);

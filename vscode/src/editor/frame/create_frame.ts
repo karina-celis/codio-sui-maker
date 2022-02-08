@@ -1,6 +1,6 @@
 import { Uri } from 'vscode';
 import ShadowDocument from './ShadowDocument';
-import { isTextEvent, isEditorEvent } from '../event_creator';
+import { isDocumentChangeEvent, isEditorEvent } from '../event_creator';
 
 const INITIAL_FILE_INDEX = 0;
 
@@ -39,7 +39,7 @@ export function createFrame(initialFrame: Array<CodioFile>, timeline: Array<Codi
   const documentsByPath = initialFrametoDocumentsByPath(initialFrame);
 
   timeline.forEach((event) => {
-    if (isTextEvent(event) && event.data.uri) {
+    if (isDocumentChangeEvent(event) && event.data.uri) {
       const document: ShadowDocument = documentsByPath[event.data.uri.path].document;
       event.data.changes.forEach((change) => {
         if (change.position) {
