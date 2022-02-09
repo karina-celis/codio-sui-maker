@@ -15,7 +15,7 @@ import {
   languages,
 } from 'vscode';
 import { cursorStyle } from '../user_interface/Viewers';
-import { overrideEditorText, getTextEditor } from '../utils';
+import { overrideEditorText, getTextEditor, schemeSupported } from '../utils';
 import { DocumentEvents } from './consts';
 import { isExecutionEvent, isEditorEvent, createDocumentChangeEvent } from './event_creator';
 
@@ -52,7 +52,8 @@ export default async function processEvent(event: CodioEvent | DocumentEvent): P
       await dispatchEditorEvent(event);
     }
   } catch (e) {
-    console.log('Failed to dispatch codio action', e);
+    console.log('Failed to dispatch codio action', event);
+    console.log('Error', e);
   }
 }
 
@@ -100,8 +101,11 @@ async function processCloseEvent(de: DocumentEvent) {
  * @returns Found text document or undefined.
  */
 function getTextDocument(path: string): TextDocument | undefined {
-  return workspace.textDocuments.find((td) => {
-    return td.uri.path === path;
+  return workspace.textDocuments.find((td, index) => {
+    console.log('workspace.textDocuments', index, td);
+    if (schemeSupported(td.uri.scheme)) {
+      return td.uri.path === path;
+    }
   });
 }
 
@@ -175,33 +179,14 @@ async function processOpenEvent(de: DocumentEvent) {
   const td = getTextDocument(data.uri.path);
 
   if (data.isUntitled && !td) {
-    // https://github.com/microsoft/vscode/issues/142112
-    await commands.executeCommand('workbench.action.files.newUntitledFile'); // Should really return the filename created.
-    // Assuming here that the file going to be worked on is created.
-
-    const newTD = workspace.textDocuments.find((td) => {
-      return td.uri.path === data.uri.path;
-    });
-    await languages.setTextDocumentLanguage(newTD, de.data.languageId);
+    const untitledTD = await resolveUntitledTD(data.uri.path);
+    await languages.setTextDocumentLanguage(untitledTD, de.data.languageId);
 
     if (!data.content.length) {
       return;
     }
 
-    const position = new Position(0, 0);
-    const contentChanges = [
-      <TextDocumentContentChangeEvent>{
-        text: data.content,
-        range: new Range(position, position),
-        rangeLength: 0,
-        rangeOffset: 0,
-      },
-    ];
-    const tdce = <TextDocumentChangeEvent>{
-      document: newTD,
-      contentChanges,
-      reason: undefined,
-    };
+    const tdce = createTextDocumentChangeEvent(untitledTD, data.content);
     const evt = createDocumentChangeEvent(tdce);
     await processChangeEvent(evt);
     return;
@@ -228,6 +213,47 @@ async function processOpenEvent(de: DocumentEvent) {
   }
 
   removeSelection();
+}
+
+/**
+ * Create or find untitled text document.
+ * @note A user before recording created multiple untitled files that are now out of numerical order.
+ * @example Unititled-2 is created before Untitled-1.
+ * @param path Untitled file path to create or find.
+ * @returns Created or found text document.
+ */
+async function resolveUntitledTD(path: string): Promise<TextDocument> {
+  console.log('resolveUntitledTD', path);
+  let td;
+  while (!td) {
+    // https://github.com/microsoft/vscode/issues/142112
+    await commands.executeCommand('workbench.action.files.newUntitledFile'); // Should really return the filename created.
+    td = getTextDocument(path);
+  }
+  return td;
+}
+
+/**
+ * Create an event that conveys text document content changes.
+ * @param td Text document to use in document property.
+ * @param content Content to use in content changes.
+ * @returns The created event.
+ */
+function createTextDocumentChangeEvent(td: TextDocument, content: string): TextDocumentChangeEvent {
+  const position = new Position(0, 0);
+  const contentChanges = [
+    <TextDocumentContentChangeEvent>{
+      text: content,
+      range: new Range(position, position),
+      rangeLength: 0,
+      rangeOffset: 0,
+    },
+  ];
+  return <TextDocumentChangeEvent>{
+    document: td,
+    contentChanges,
+    reason: undefined,
+  };
 }
 
 /**
