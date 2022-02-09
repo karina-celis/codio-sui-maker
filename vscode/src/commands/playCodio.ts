@@ -41,8 +41,9 @@ export default async function playCodio(
 async function loadAndPlay(player: Player, path: string, workspacePath: string) {
   // Start with a clean workbench
   await commands.executeCommand('workbench.action.closeUnmodifiedEditors');
-  for (let i = 0; i < workspace.textDocuments.length; i++) {
-    const td = workspace.textDocuments[i];
+  let total = workspace.textDocuments.length;
+  while (total--) {
+    const td = workspace.textDocuments[total];
     if (!schemeSupported(td.uri.scheme)) {
       continue;
     }
