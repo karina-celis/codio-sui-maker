@@ -17,8 +17,14 @@
         "url": "https://github.com/rbrisita/codio-sui/projects/2"
     },
     "version": "0.10.25",
-    "license": "MIT",
-    "publisher": "rbrisita",
+    "license": "AGPL-3.0-only",
+    "author": {
+        "name": "Robert Brisita"
+    },
+    "contributors": [
+        "Elad Bogomolny",
+        "Brady Dowling"
+    ],
     "icon": "media/icon.png",
     "engines": {
         "vscode": "^1.63.0"
