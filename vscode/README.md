@@ -1,5 +1,29 @@
 # Codio Format
 
+> This fork is working towards `v1.0.0` that supports Linux, OS X, and Windows. These VSCode updates are not yet found in the marketplace.
+
+> ## Build
+> ```shell
+> git clone git@github.com:rbrisita/codio-sui.git
+> cd codio-sui/vscode
+> npm install
+> npx vsce package
+> ```
+> ## Install
+> In a working folder:
+> 
+> `code --extensions-dir .\.vscode\extensions --install-extension codio-sui-0.10.25.vsix --force`
+>
+> ## Run
+> In the same working folder:
+> 
+> `code --extensions-dir .\.vscode\extensions .`
+> 
+> Enjoy!
+
+
+
+
 ## About
 Codio Format is an open source media format for developers to record and playback the process of programming. It combines code editor operations and audio.
 

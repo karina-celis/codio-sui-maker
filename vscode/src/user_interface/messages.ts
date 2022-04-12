@@ -8,7 +8,7 @@ import {
   QuickPickItem,
   QuickInputButtons,
   ThemeIcon,
-  Uri
+  Uri,
 } from 'vscode';
 import Player from '../player/Player';
 import Recorder from '../recorder/Recorder';
@@ -36,7 +36,7 @@ export const showChooseAudioDevice = async (items: string[]): Promise<string | u
   const audioDevice = await window.showQuickPick(items, {
     ignoreFocusOut: true,
     placeHolder: 'Choose an audio device to record from',
-    title: 'Recording Audio Devices'
+    title: 'Recording Audio Devices',
   });
   return audioDevice;
 };
@@ -89,7 +89,7 @@ export const choose = async (codiosMetadata: Codio[]): Promise<{ path: string; w
     return codio.name === codioSelected?.label;
   });
   return codio ? { path: codio.uri.fsPath, workspaceRoot: codio.workspaceRoot } : undefined;
-}
+};
 
 export const MESSAGES = {
   startingToRecord: 'Starting to record.',
