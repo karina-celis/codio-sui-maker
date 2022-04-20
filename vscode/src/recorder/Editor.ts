@@ -279,6 +279,7 @@ export default class CodeEditorRecorder {
     console.log('onOpenDocument td', td);
 
     if (!schemeSupported(td.uri.scheme)) {
+      console.log('Not supporting', td.uri.scheme);
       return;
     }
 
@@ -341,6 +342,7 @@ export default class CodeEditorRecorder {
     console.log('onCloseDocument td', td);
 
     if (!schemeSupported(td.uri.scheme)) {
+      console.log('Not supporting', td.uri.scheme);
       return;
     }
 
@@ -387,11 +389,17 @@ export default class CodeEditorRecorder {
    */
   private onWillSaveDocument(e: TextDocumentWillSaveEvent): void {
     console.log('onWillSaveDocument e', e);
+    const td = e.document;
 
-    this.processPaths.push(e.document.uri.path);
+    if (!schemeSupported(td.uri.scheme)) {
+      console.log('Not supporting', td.uri.scheme);
+      return;
+    }
+
+    this.processPaths.push(td.uri.path);
     console.log('To be processed', this.processPaths);
 
-    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_SAVE, e.document.uri, e.document.getText());
+    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_SAVE, td.uri, td.getText());
     this.events.push(event);
   }
 
@@ -401,6 +409,10 @@ export default class CodeEditorRecorder {
    */
   private onSaveDocument(td: TextDocument): void {
     console.log('onSaveDocument td', td);
+    if (!schemeSupported(td.uri.scheme)) {
+      console.log('Not supporting', td.uri.scheme);
+      return;
+    }
     this.removePathFromProcessing(td.uri.path);
   }
 }
