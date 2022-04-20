@@ -86,19 +86,26 @@ export default class Subtitles {
   play(timeMs = 0): void {
     this.stop();
 
-    if (!timeMs) {
-      this.oc.clear();
-      this.display('Codio Subtitles Starting...');
-    }
+    this.oc.clear();
 
-    const cue = this.cues.find((cue) => {
+    const cueIndex = this.cues.findIndex((cue) => {
       return cue.startTime >= timeMs;
     });
-    if (!cue) {
+    if (cueIndex === -1) {
       return;
     }
 
+    // Build previous cues to display.
+    let cueOutput = 'Codio Subtitles Starting...\n';
+    const prevCues = this.cues.slice(0, cueIndex);
+    prevCues.forEach((cue, index) => {
+      cueOutput += this.getCueStr(cue) + '\n';
+    });
+    cueOutput = cueOutput.slice(0, cueOutput.length - 1); // remove last newline
+    this.display(cueOutput);
+    
     this.startMS = Date.now() - timeMs;
+    const cue = this.cues[cueIndex];
     this.showCue(cue, cue.startTime - timeMs);
   }
 
@@ -119,6 +126,10 @@ export default class Subtitles {
       const elapsed = Date.now() - this.startMS;
       const delay = cue?.startTime - elapsed; // optional because we could have processed the last cue.
 
+      if (!this.timerRef) {
+        return;
+      }
+
       this.showCue(cue, delay);
     }, delay);
   }
@@ -135,5 +146,6 @@ export default class Subtitles {
    */
   stop(): void {
     clearTimeout(this.timerRef);
+    this.timerRef = null;
   }
 }
