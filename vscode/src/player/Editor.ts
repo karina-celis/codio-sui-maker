@@ -230,7 +230,7 @@ export default class EditorPlayer {
       // Check for Rename events.
       const path =
         e.type === DocumentEvents.DOCUMENT_RENAME
-          ? (e as unknown as DocumentRenameEvent)?.data.oldUri.path
+          ? ((e as unknown) as DocumentRenameEvent)?.data.oldUri.path
           : e.data.uri.path;
 
       if (!paths[path]) {

@@ -74,6 +74,16 @@ declare interface SerializedDocumentChangeEvent extends SerializedDocumentEvent 
   };
 }
 
+declare interface DocumentFoldEvent extends DocumentEvent {
+  type: number;
+  data: {
+    uri: Uri;
+    time: number;
+    startLine: number;
+    direction: string;
+  };
+}
+
 declare interface DocumentVisibleRangeEvent extends DocumentEvent {
   type: number;
   data: {
@@ -125,6 +135,7 @@ declare interface CodioSerializedExecutionEvent extends SerializedDocumentEvent 
   };
 }
 
+// @Note Deprecated
 declare interface CodioChangeActiveEditorEvent extends CodioEvent {
   type: 'editor';
   data: {
@@ -138,6 +149,7 @@ declare interface CodioChangeActiveEditorEvent extends CodioEvent {
   };
 }
 
+// @Note Deprecated
 declare interface CodioSerializedChangeActiveEditorEvent {
   type: 'editor';
   data: {
@@ -146,16 +158,7 @@ declare interface CodioSerializedChangeActiveEditorEvent {
     isInitial: boolean;
     content: string;
     viewColumn: ViewColumn;
-    visibleRange: [
-      {
-        line: number;
-        character: number;
-      },
-      {
-        line: number;
-        character: number;
-      },
-    ];
+    visibleRange: vscode.Range;
     selections: vscode.Selection[];
   };
 }

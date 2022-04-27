@@ -43,6 +43,7 @@ export default class CodeEditorRecorder {
   events: DocumentEvent[] = [];
   processPaths: Array<string> = [];
   onLanguageIdChange: Record<string, string> = {};
+  foldStartLinesDict = {};
 
   /**
    * Save active text editor and listen to change events.
@@ -64,7 +65,7 @@ export default class CodeEditorRecorder {
           td.uri,
           td.getText(),
           td.isUntitled,
-          td.languageId
+          td.languageId,
         );
         this.events.push(event);
       });
@@ -206,18 +207,64 @@ export default class CodeEditorRecorder {
       uri,
       content,
       document.isUntitled,
-      document.languageId
+      document.languageId,
     );
     this.events.push(event);
   }
 
   /**
-   * Handle when user is scrolling through a text editor.
-   * @param e Scroll Event to handle.
+   * Handle when user is scrolling through a text editor or folding ranges.
+   * @param e Visible range event to handle.
    */
   private onDidChangeTextEditorVisibleRanges(e: TextEditorVisibleRangesChangeEvent): void {
     console.log('onDidChangeTextEditorVisibleRanges e', e);
-    const event = eventCreators.createDocumentVisibleRangeEvent(e);
+
+    // Scrolled to the end of file with no content.
+    if (!e.visibleRanges.length) {
+      return;
+    }
+
+    let event: DocumentFoldEvent | DocumentVisibleRangeEvent;
+
+    // Check for any unfold events
+    const startLines = Object.keys(this.foldStartLinesDict);
+    for (let i = 0; i < startLines.length; i++) {
+      const startLine = parseInt(startLines[i]);
+      for (let j = 0; j < e.visibleRanges.length; j++) {
+        // Is current folded start line between visible ranges?
+        const range = e.visibleRanges[j];
+        if (startLine < range.end.line) {
+          if (startLine >= range.start.line) {
+            delete this.foldStartLinesDict[startLine];
+            event = eventCreators.createDocumentFoldEvent(e, startLine, 'down');
+            this.events.push(event);
+          }
+        }
+      }
+    }
+    if (event) {
+      // No need to process further.
+      return;
+    }
+
+    // Create fold start lines before last visible range (aka EOF).
+    event = null;
+    for (let i = 0; i < e.visibleRanges.length - 1; i++) {
+      const range = e.visibleRanges[i];
+      const curLine = range.end.line;
+      if (!this.foldStartLinesDict[curLine]) {
+        this.foldStartLinesDict[curLine] = 1;
+        event = eventCreators.createDocumentFoldEvent(e, curLine, 'up');
+        this.events.push(event);
+      }
+    }
+    if (event) {
+      // No need to process further.
+      return;
+    }
+
+    // Create scroll event
+    event = eventCreators.createDocumentVisibleRangeEvent(e);
     this.events.push(event);
   }
 
@@ -298,10 +345,10 @@ export default class CodeEditorRecorder {
     // The document that is opened could be in a different state than expected.
     const event = eventCreators.createDocumentEvent(
       DocumentEvents.DOCUMENT_OPEN,
-        td.uri,
-        td.getText(),
-        td.isUntitled,
-        td.languageId
+      td.uri,
+      td.getText(),
+      td.isUntitled,
+      td.languageId,
     );
     this.events.push(event);
   }

@@ -58,10 +58,26 @@ export function createDocumentVisibleRangeEvent(e: TextEditorVisibleRangesChange
       isUntitled: e.textEditor.document.isUntitled,
       time: Date.now(),
       uri: e.textEditor.document.uri,
-      //@TODO: Currently does not support folding.
       visibleRange: e.visibleRanges[0],
     },
   } as DocumentVisibleRangeEvent;
+}
+
+export function createDocumentFoldEvent(
+  e: TextEditorVisibleRangesChangeEvent,
+  startLine: number,
+  direction: string,
+): DocumentFoldEvent {
+  return {
+    type: DocumentEvents.DOCUMENT_FOLD,
+    data: {
+      isUntitled: e.textEditor.document.isUntitled,
+      time: Date.now(),
+      uri: e.textEditor.document.uri,
+      startLine,
+      direction,
+    },
+  } as DocumentFoldEvent;
 }
 
 export function createDocumentSelectionEvent(e: TextEditorSelectionChangeEvent): DocumentSelectionEvent {
@@ -86,6 +102,7 @@ export function createCodioExecutionEvent(output: string): CodioExecutionEvent {
   };
 }
 
+// @Note Deprecated
 export function createCodioEditorEvent(
   e: TextEditor,
   content: string,
@@ -109,7 +126,9 @@ export function isDocumentChangeEvent(event: CodioEvent): event is DocumentChang
   return event.type === DocumentEvents.DOCUMENT_CHANGE;
 }
 
-export function isSerializedDocumentChangeEvent(event: SerializedDocumentEvent): event is SerializedDocumentChangeEvent {
+export function isSerializedDocumentChangeEvent(
+  event: SerializedDocumentEvent,
+): event is SerializedDocumentChangeEvent {
   return event.type === DocumentEvents.DOCUMENT_CHANGE;
 }
 
@@ -135,10 +154,12 @@ export function isExecutionEvent(event: CodioEvent): event is CodioExecutionEven
   return event.type === CODIO_EXEC;
 }
 
+// @Note Deprecated
 export function isEditorEvent(event: CodioEvent): event is CodioChangeActiveEditorEvent {
   return event.type === CODIO_EDITOR_CHANGED;
 }
 
+// @Note Deprecated
 export function isSerializedEditorEvent(
   event: SerializedDocumentEvent,
 ): event is CodioSerializedChangeActiveEditorEvent {

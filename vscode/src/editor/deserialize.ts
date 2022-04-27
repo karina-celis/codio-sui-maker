@@ -85,21 +85,22 @@ function deserializeRenameEvent(event: SerializedDocumentEvent, codioPath: strin
  * @returns A DocumentChangeEvent.
  */
 function deserializeTextEvent(event: SerializedDocumentChangeEvent): DocumentChangeEvent {
-  const deserializedChanges: TextDocumentContentChangeEvent[] = event.data.changes.map((change) => {
+  const changes: TextDocumentContentChangeEvent[] = event.data.changes.map((change) => {
     if (change.range) {
+      console.log('deserializeTextEvent change.range', change.range);
       return { ...change, range: deserializeRange(change.range) };
     } else if (change.position) {
       return { ...change, position: deserializePosition(change.position) };
     }
   });
 
-  return {
+  return ({
     ...event,
     data: {
       ...event.data,
-      changes: deserializedChanges,
+      changes,
     },
-  } as unknown as DocumentChangeEvent;
+  } as unknown) as DocumentChangeEvent;
 }
 
 /**
@@ -108,17 +109,17 @@ function deserializeTextEvent(event: SerializedDocumentChangeEvent): DocumentCha
  * @returns A CodioSelectionEvent.
  */
 function deserializeSelectionEvent(event: SerializedDocumentSelectionEvent): DocumentSelectionEvent {
-  const deserializedSelections: Selection[] = event.data.selections.map((selection) => {
+  const selections: Selection[] = event.data.selections.map((selection) => {
     return new Selection(deserializePosition(selection.anchor), deserializePosition(selection.active));
   });
 
-  return {
+  return ({
     ...event,
     data: {
       ...event.data,
-      selections: deserializedSelections,
+      selections,
     },
-  } as unknown as DocumentSelectionEvent;
+  } as unknown) as DocumentSelectionEvent;
 }
 
 /**
@@ -127,31 +128,33 @@ function deserializeSelectionEvent(event: SerializedDocumentSelectionEvent): Doc
  * @returns A CodioVisibleRangeEvent.
  */
 function deserializeVisibleRangeEvent(event: SerializedDocumentVisibleRangeEvent): DocumentVisibleRangeEvent {
-  return {
+  console.log('deserializeVisibleRangeEvent', event.data);
+  return ({
     ...event,
     data: {
       ...event.data,
       visibleRange: deserializeRange(event.data.visibleRange),
     },
-  } as unknown as DocumentVisibleRangeEvent;
+  } as unknown) as DocumentVisibleRangeEvent;
 }
 
 /**
+ * @note Deprecated
  * Construct a CodioChangeActiveEditorEvent from given arguments.
  * @param event A serialized event to deserialize into a CodioChangeActiveEditorEvent.
  * @returns A CodioChangeActiveEditorEvent.
  */
 function deserializeEditorEvent(event: CodioSerializedChangeActiveEditorEvent): CodioChangeActiveEditorEvent {
-  return {
+  return ({
     ...event,
     data: {
       ...event.data,
       visibleRange: deserializeRange(event.data.visibleRange),
     },
-  } as unknown as CodioChangeActiveEditorEvent;
+  } as unknown) as CodioChangeActiveEditorEvent;
 }
 
-function deserializeRange(range): Range {
+function deserializeRange(range: Range): Range {
   const startPosition = new Position(range[0].line, range[0].character);
   const endPosition = new Position(range[1].line, range[1].character);
   return new Range(startPosition, endPosition);

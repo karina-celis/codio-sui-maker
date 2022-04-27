@@ -13,6 +13,7 @@ import {
   TextDocumentContentChangeEvent,
   TextDocumentChangeEvent,
   languages,
+  TextEditorRevealType,
 } from 'vscode';
 import { cursorStyle } from '../user_interface/Viewers';
 import { overrideEditorText, getTextEditor, schemeSupported } from '../utils';
@@ -30,6 +31,7 @@ const eventsToProcess = {
   [DocumentEvents.DOCUMENT_SAVE]: processSaveEvent,
   [DocumentEvents.DOCUMENT_SELECTION]: processSelectionEvent,
   [DocumentEvents.DOCUMENT_VISIBLE_RANGE]: processVisibleRangeEvent,
+  [DocumentEvents.DOCUMENT_FOLD]: processFoldEvent,
 };
 
 /**
@@ -45,6 +47,7 @@ export default async function processEvent(event: CodioEvent | DocumentEvent): P
       return;
     }
 
+    // @note Deprecated
     console.log('dispatchEvent', event);
     if (isExecutionEvent(event)) {
       dispatchExecutionEvent(event);
@@ -307,13 +310,53 @@ async function processSelectionEvent(dse: DocumentSelectionEvent) {
   await window.showTextDocument(data.uri, { preview: false });
 }
 
+/**
+ * Process the scrolling of a document.
+ * @param dvre Document visible range event to process.
+ */
 function processVisibleRangeEvent(dvre: DocumentVisibleRangeEvent) {
+  console.log('processVisibleRangeEvent', dvre.data);
+
   const textEditor: TextEditor = window.visibleTextEditors.find(
     (editor) => editor.document.uri.path === dvre.data.uri.path,
   );
   if (textEditor) {
-    textEditor.revealRange(dvre.data.visibleRange);
+    textEditor.revealRange(dvre.data.visibleRange, TextEditorRevealType.AtTop);
   }
+}
+
+/**
+ * Process the folding of ranges in a document.
+ * @param dfe Document fold event to process.
+ */
+function processFoldEvent(dfe: DocumentFoldEvent) {
+  console.log('processFoldEvent', dfe.data);
+
+  const textEditor: TextEditor = window.visibleTextEditors.find(
+    (editor) => editor.document.uri.path === dfe.data.uri.path,
+  );
+  if (!textEditor) {
+    return;
+  }
+
+  // Create valid start position for selection
+  const startLine = dfe.data.startLine;
+  const pos = new Position(startLine, 0);
+  const selection = new Selection(pos, pos);
+  textEditor.selections = [selection]; // Place cursor
+  console.log(`selection:`, selection);
+
+  // Fold region
+  const direction = dfe.data.direction;
+  (async () => {
+    const schema = {
+      levels: 1,
+      direction,
+      selectionLines: [startLine],
+    };
+    const command = direction === 'up' ? 'editor.fold' : 'editor.unfold';
+    await commands.executeCommand(command, textEditor, schema);
+  })();
 }
 
 // DEPRECATED
@@ -350,7 +393,7 @@ async function dispatchEditorShownFirstTime(event: CodioChangeActiveEditorEvent)
   }
 }
 
-// DEPRECATED
+// @Note DEPRECATED
 async function dispatchEditorEvent(event: CodioChangeActiveEditorEvent) {
   console.log('dispatchEditorEvent DEPRECATED');
   if (isEditorShownForFirstTime(event)) {

@@ -29,6 +29,7 @@ export function getInitialFilePathAndContentFromFrame(initialFrame: CodioFrame):
 }
 
 /**
+ * @note Deprecated
  * For each event in given timeline apply changes to each document path.
  * @param initialFrame
  * @param timeline

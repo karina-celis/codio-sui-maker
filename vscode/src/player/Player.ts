@@ -1,7 +1,7 @@
 import EditorPlayer from './Editor';
 import Timer from '../ProgressTimer';
 import FSManager from '../filesystem/FSManager';
-import { commands, Disposable, TextEditorSelectionChangeEvent, window } from 'vscode';
+import { commands, Disposable, TextEditorSelectionChangeEvent, TextEditorSelectionChangeKind, window } from 'vscode';
 import AudioHandler from '../audio/Audio';
 import Subtitles from './Subtitles';
 import Environment from '../environment/Environment';
@@ -122,7 +122,7 @@ export default class Player {
    */
   private listenToInteractions(): void {
     this.onPauseHandler = window.onDidChangeTextEditorSelection((e: TextEditorSelectionChangeEvent) => {
-      if (e.kind) {
+      if (e.kind && e.kind !== TextEditorSelectionChangeKind.Command) {
         this.onPauseHandler.dispose();
         this.pause();
       }

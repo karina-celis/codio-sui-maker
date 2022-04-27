@@ -1,3 +1,6 @@
+## [0.11.0]
+- Adding code folding inside documents.
+
 ## [0.10.0]
 - Adding better file event handling and resiliency.
 
