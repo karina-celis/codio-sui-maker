@@ -4,6 +4,7 @@ import {
   TextEditor,
   TextEditorVisibleRangesChangeEvent,
   Uri,
+  TextDocument,
 } from 'vscode';
 
 import { CODIO_EXEC, CODIO_EDITOR_CHANGED, DocumentEvents } from './consts';
@@ -14,6 +15,7 @@ export function createDocumentEvent(
   content?: string,
   isUntitled?: boolean,
   languageId?: string,
+  viewColumn?: number,
 ): DocumentEvent {
   return {
     type,
@@ -23,6 +25,7 @@ export function createDocumentEvent(
       uri,
       content,
       time: Date.now(),
+      viewColumn,
     },
   } as DocumentEvent;
 }
@@ -59,8 +62,46 @@ export function createDocumentVisibleRangeEvent(e: TextEditorVisibleRangesChange
       time: Date.now(),
       uri: e.textEditor.document.uri,
       visibleRange: e.visibleRanges[0],
+      viewColumn: e.textEditor.viewColumn,
     },
   } as DocumentVisibleRangeEvent;
+}
+
+/**
+ * Create event when a text document is visible.
+ * @param td Text document that is visible.
+ * @param viewColumn The view column in which given text document is visible.
+ * @returns New event with given data.
+ */
+export function createDocumentVisibleEvent(td: TextDocument, viewColumn: number): DocumentVisibleEvent {
+  return {
+    type: DocumentEvents.DOCUMENT_VISIBLE,
+    data: {
+      isUntitled: td.isUntitled,
+      time: Date.now(),
+      uri: td.uri,
+      viewColumn,
+    },
+  } as DocumentVisibleEvent;
+}
+
+/**
+ * Create event when a text editor's viewColumn changes to or from 3.
+ * @note Processed differently than createDocumentVisibleEvent.
+ * @param td Text document that changed.
+ * @param viewColumn New view column number.
+ * @returns New event with given data.
+ */
+export function createDocumentViewColumnEvent(td: TextDocument, viewColumn: number): DocumentViewColumnEvent {
+  return {
+    type: DocumentEvents.DOCUMENT_VIEW_COLUMN,
+    data: {
+      isUntitled: td.isUntitled,
+      time: Date.now(),
+      uri: td.uri,
+      viewColumn,
+    },
+  } as DocumentViewColumnEvent;
 }
 
 export function createDocumentFoldEvent(
@@ -76,6 +117,7 @@ export function createDocumentFoldEvent(
       uri: e.textEditor.document.uri,
       startLine,
       direction,
+      viewColumn: e.textEditor.viewColumn,
     },
   } as DocumentFoldEvent;
 }
@@ -88,6 +130,7 @@ export function createDocumentSelectionEvent(e: TextEditorSelectionChangeEvent):
       uri: e.textEditor.document.uri,
       selections: e.selections,
       time: Date.now(),
+      viewColumn: e.textEditor.viewColumn,
     },
   } as DocumentSelectionEvent;
 }

@@ -13,6 +13,7 @@ import {
   FileWillCreateEvent,
   TextDocumentWillSaveEvent,
   FileDeleteEvent,
+  TextEditorViewColumnChangeEvent,
 } from 'vscode';
 import { TextDecoder } from 'util';
 import serializeEvents from '../editor/serialize';
@@ -28,6 +29,8 @@ export default class CodeEditorRecorder {
   onDidChangeActiveTextEditorListener: Disposable;
   onDidChangeTextEditorSelectionListener: Disposable;
   onDidChangeTextEditorVisibleRangesListener: Disposable;
+  onDidChangeVisibleTextEditorListener: Disposable;
+  onDidChangeTextEditorViewColumnListener: Disposable;
 
   onWillCreateFilesListener: Disposable;
   onWillRenameFilesListener: Disposable;
@@ -60,6 +63,7 @@ export default class CodeEditorRecorder {
           return;
         }
 
+        // These events don't have a viewColumn because they aren't viewable yet.
         const event = eventCreators.createDocumentEvent(
           DocumentEvents.DOCUMENT_OPEN,
           td.uri,
@@ -77,6 +81,7 @@ export default class CodeEditorRecorder {
         editor.document.getText(),
         editor.document.isUntitled,
         editor.document.languageId,
+        editor.viewColumn,
       );
       this.events.push(event);
     }
@@ -92,6 +97,14 @@ export default class CodeEditorRecorder {
     );
     this.onDidChangeTextEditorVisibleRangesListener = window.onDidChangeTextEditorVisibleRanges(
       this.onDidChangeTextEditorVisibleRanges,
+      this,
+    );
+    this.onDidChangeVisibleTextEditorListener = window.onDidChangeVisibleTextEditors(
+      this.onDidChangeVisibleTextEditor,
+      this,
+    );
+    this.onDidChangeTextEditorViewColumnListener = window.onDidChangeTextEditorViewColumn(
+      this.onDidChangeTextEditorViewColumn,
       this,
     );
 
@@ -124,6 +137,8 @@ export default class CodeEditorRecorder {
     this.onDidChangeActiveTextEditorListener.dispose();
     this.onDidChangeTextEditorSelectionListener.dispose();
     this.onDidChangeTextEditorVisibleRangesListener.dispose();
+    this.onDidChangeVisibleTextEditorListener.dispose();
+    this.onDidChangeTextEditorViewColumnListener.dispose();
 
     this.onWillCreateFilesListener.dispose();
     this.onWillRenameFilesListener.dispose();
@@ -188,11 +203,10 @@ export default class CodeEditorRecorder {
 
     const document: TextDocument = te.document;
     const uri = document.uri;
-    const path = uri.path;
     const content = document.getText();
 
     // From an onOpenDocument.
-    if (this.removePathFromProcessing(path)) {
+    if (this.removePathFromProcessing(uri.path)) {
       // Save active text editor if it wasn't available when record started.
       if (this.events.length === 1) {
         this.addCodioFileToInitialFrame(new ShadowDocument(content), 1, uri, 0);
@@ -208,6 +222,7 @@ export default class CodeEditorRecorder {
       content,
       document.isUntitled,
       document.languageId,
+      te.viewColumn,
     );
     this.events.push(event);
   }
@@ -279,6 +294,44 @@ export default class CodeEditorRecorder {
   }
 
   /**
+   * Handle the user splitting or drag and dropping of a text editor into a new view column.
+   * @param tes An array of text editors that are visible.
+   */
+  private onDidChangeVisibleTextEditor(tes: readonly TextEditor[]): void {
+    console.log('onDidChangeVisibleTextEditor tes', tes);
+    if (!tes.length) {
+      return;
+    }
+
+    const viewColumns = {};
+    for (let i = 0; i < tes.length; i++) {
+      const te = tes[i];
+      if (!viewColumns[te.viewColumn]) {
+        viewColumns[te.viewColumn] = [];
+      }
+
+      // Multiples of the same file merge when they have the same viewColumn.
+      if (viewColumns[te.viewColumn].includes(te.document.uri.path)) {
+        continue;
+      }
+
+      viewColumns[te.viewColumn].push(te.document.uri.path);
+      const event = eventCreators.createDocumentVisibleEvent(te.document, te.viewColumn);
+      this.events.push(event);
+    }
+  }
+
+  /**
+   * Handle the VSCode changing the column of a text editor.
+   * @param e View column event to handle.
+   */
+  private onDidChangeTextEditorViewColumn(e: TextEditorViewColumnChangeEvent): void {
+    console.log('onDidChangeTextEditorViewColumn e', e);
+    const event = eventCreators.createDocumentViewColumnEvent(e.textEditor.document, e.viewColumn);
+    this.events.push(event);
+  }
+
+  /**
    * Handle file creation from workspace.
    * @param e File creation event to handle.
    */
@@ -343,6 +396,7 @@ export default class CodeEditorRecorder {
     delete this.onLanguageIdChange[td.uri.path];
 
     // The document that is opened could be in a different state than expected.
+    // No viewColumn because it is not viewable yet.
     const event = eventCreators.createDocumentEvent(
       DocumentEvents.DOCUMENT_OPEN,
       td.uri,

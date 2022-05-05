@@ -26,6 +26,7 @@ declare interface CodioEvent {
 declare interface DocumentEvent {
   type: number;
   data: {
+    viewColumn?: number;
     languageId?: string;
     isUntitled?: boolean;
     uri?: Uri;
@@ -74,6 +75,27 @@ declare interface SerializedDocumentChangeEvent extends SerializedDocumentEvent 
   };
 }
 
+declare interface DocumentVisibleEvent extends DocumentEvent {
+  type: number;
+  data: {
+    uri: Uri;
+    time: number;
+    viewColumn: number;
+  };
+}
+
+/**
+ * Handled differently than DocumentVisibleEvent when processed.
+ */
+declare interface DocumentViewColumnEvent extends DocumentEvent {
+  type: number;
+  data: {
+    uri: Uri;
+    time: number;
+    viewColumn: number;
+  };
+}
+
 declare interface DocumentFoldEvent extends DocumentEvent {
   type: number;
   data: {
@@ -81,6 +103,7 @@ declare interface DocumentFoldEvent extends DocumentEvent {
     time: number;
     startLine: number;
     direction: string;
+    viewColumn: number;
   };
 }
 
@@ -90,6 +113,7 @@ declare interface DocumentVisibleRangeEvent extends DocumentEvent {
     uri: Uri;
     time: number;
     visibleRange: vscode.Range;
+    viewColumn: number;
   };
 }
 
@@ -99,6 +123,7 @@ declare interface SerializedDocumentVisibleRangeEvent extends SerializedDocument
     path: string;
     time: number;
     visibleRange: vscode.Range;
+    viewColumn: number;
   };
 }
 declare interface DocumentSelectionEvent extends DocumentEvent {
@@ -107,6 +132,7 @@ declare interface DocumentSelectionEvent extends DocumentEvent {
     uri: Uri;
     selections: readonly vscode.Selection[];
     time: number;
+    viewColumn: number;
   };
 }
 
@@ -116,6 +142,7 @@ declare interface SerializedDocumentSelectionEvent extends SerializedDocumentEve
     path: string;
     selections: vscode.Selection[];
     time: number;
+    viewColumn: number;
   };
 }
 

@@ -32,6 +32,8 @@ const eventsToProcess = {
   [DocumentEvents.DOCUMENT_SELECTION]: processSelectionEvent,
   [DocumentEvents.DOCUMENT_VISIBLE_RANGE]: processVisibleRangeEvent,
   [DocumentEvents.DOCUMENT_FOLD]: processFoldEvent,
+  [DocumentEvents.DOCUMENT_VISIBLE]: processVisibleEvent,
+  [DocumentEvents.DOCUMENT_VIEW_COLUMN]: processViewColumnEvent,
 };
 
 /**
@@ -180,12 +182,14 @@ async function processDeleteEvent(de: DocumentEvent) {
 async function processOpenEvent(de: DocumentEvent) {
   const data = de.data;
   const td = getTextDocument(data.uri.path);
+  const viewColumn = data.viewColumn ? data.viewColumn : 1;
 
   if (data.isUntitled && !td) {
     const untitledTD = await resolveUntitledTD(data.uri.path);
     await languages.setTextDocumentLanguage(untitledTD, de.data.languageId);
 
     if (!data.content.length) {
+      await window.showTextDocument(data.uri, { viewColumn, preview: false });
       return;
     }
 
@@ -196,7 +200,7 @@ async function processOpenEvent(de: DocumentEvent) {
   }
 
   // A document could be opened but not focused.
-  await window.showTextDocument(data.uri, { preview: false });
+  await window.showTextDocument(data.uri, { viewColumn, preview: false });
   const ate = window.activeTextEditor;
   await languages.setTextDocumentLanguage(ate.document, de.data.languageId);
 
@@ -291,6 +295,7 @@ async function processSaveEvent(de: DocumentEvent) {
     await workspace.fs.writeFile(data.uri, new TextEncoder().encode(data.content));
   }
 
+  // viewColumn doesn't matter here because a save will affect all "[Circular]" files.
   await window.showTextDocument(data.uri, { preview: false });
   await window.activeTextEditor.document.save();
 }
@@ -300,14 +305,24 @@ async function processSelectionEvent(dse: DocumentSelectionEvent) {
   const RangesToDecorate = data.selections.map((selection: Selection) => {
     return new Range(selection.anchor, selection.active);
   });
-  const textDocumentToDecorate: TextEditor = window.visibleTextEditors.find(
-    (editor) => editor.document.uri.path === data.uri.path,
-  );
-  if (textDocumentToDecorate) {
-    textDocumentToDecorate.setDecorations(cursorStyle, RangesToDecorate);
+  const textEditor: TextEditor = findTextEditor(dse);
+  if (textEditor) {
+    textEditor.setDecorations(cursorStyle, RangesToDecorate);
   }
 
-  await window.showTextDocument(data.uri, { preview: false });
+  await window.showTextDocument(data.uri, { viewColumn: data.viewColumn, preview: false });
+}
+
+/**
+ * Find visible text editor with given document event data.
+ * @param de Document event data to find.
+ * @returns Text editor or undefined.
+ */
+function findTextEditor(de: DocumentEvent) {
+  const data = de.data;
+  return window.visibleTextEditors.find((editor) => {
+    return editor.document.uri.path === data.uri.path && editor.viewColumn === data.viewColumn;
+  });
 }
 
 /**
@@ -317,9 +332,7 @@ async function processSelectionEvent(dse: DocumentSelectionEvent) {
 function processVisibleRangeEvent(dvre: DocumentVisibleRangeEvent) {
   console.log('processVisibleRangeEvent', dvre.data);
 
-  const textEditor: TextEditor = window.visibleTextEditors.find(
-    (editor) => editor.document.uri.path === dvre.data.uri.path,
-  );
+  const textEditor: TextEditor = findTextEditor(dvre);
   if (textEditor) {
     textEditor.revealRange(dvre.data.visibleRange, TextEditorRevealType.AtTop);
   }
@@ -332,9 +345,7 @@ function processVisibleRangeEvent(dvre: DocumentVisibleRangeEvent) {
 function processFoldEvent(dfe: DocumentFoldEvent) {
   console.log('processFoldEvent', dfe.data);
 
-  const textEditor: TextEditor = window.visibleTextEditors.find(
-    (editor) => editor.document.uri.path === dfe.data.uri.path,
-  );
+  const textEditor: TextEditor = findTextEditor(dfe);
   if (!textEditor) {
     return;
   }
@@ -357,6 +368,25 @@ function processFoldEvent(dfe: DocumentFoldEvent) {
     const command = direction === 'up' ? 'editor.fold' : 'editor.unfold';
     await commands.executeCommand(command, textEditor, schema);
   })();
+}
+
+/**
+ * Process the document that became visible by splitting or drag and dropping of a text editor into a new view column.
+ * @param dve Document with a visible event to process.
+ */
+function processVisibleEvent(dve: DocumentVisibleEvent) {
+  console.log('processVisibleEvent', dve.data);
+  window.showTextDocument(dve.data.uri, { viewColumn: dve.data.viewColumn, preserveFocus: true, preview: false });
+}
+
+/**
+ * Process the document that had a view column change.
+ * @param dvce Document with a view column change to process.
+ */
+function processViewColumnEvent(dvce: DocumentViewColumnEvent) {
+  console.log('processViewColumnEvent', dvce.data);
+  // Since it can't be told when a "[Circular]" file closes, let's just create a new view column.
+  window.showTextDocument(dvce.data.uri, { viewColumn: dvce.data.viewColumn, preserveFocus: true, preview: false });
 }
 
 // DEPRECATED

@@ -1,3 +1,6 @@
+## [0.12.0]
+- Adding splitting of text editors.
+
 ## [0.11.0]
 - Adding code folding inside documents.
 
