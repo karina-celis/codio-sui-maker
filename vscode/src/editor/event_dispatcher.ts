@@ -14,6 +14,7 @@ import {
   TextDocumentChangeEvent,
   languages,
   TextEditorRevealType,
+  SnippetString,
 } from 'vscode';
 import { cursorStyle } from '../user_interface/Viewers';
 import { overrideEditorText, getTextEditor, schemeSupported } from '../utils';
@@ -34,6 +35,8 @@ const eventsToProcess = {
   [DocumentEvents.DOCUMENT_FOLD]: processFoldEvent,
   [DocumentEvents.DOCUMENT_VISIBLE]: processVisibleEvent,
   [DocumentEvents.DOCUMENT_VIEW_COLUMN]: processViewColumnEvent,
+  [DocumentEvents.DOCUMENT_GROUP]: processGroupEvent,
+  [DocumentEvents.DOCUMENT_UNGROUP]: processUngroupEvent,
 };
 
 /**
@@ -342,7 +345,7 @@ function processVisibleRangeEvent(dvre: DocumentVisibleRangeEvent) {
  * Process the folding of ranges in a document.
  * @param dfe Document fold event to process.
  */
-function processFoldEvent(dfe: DocumentFoldEvent) {
+async function processFoldEvent(dfe: DocumentFoldEvent) {
   console.log('processFoldEvent', dfe.data);
 
   const textEditor: TextEditor = findTextEditor(dfe);
@@ -353,9 +356,7 @@ function processFoldEvent(dfe: DocumentFoldEvent) {
   // Create valid start position for selection
   const startLine = dfe.data.startLine;
   const pos = new Position(startLine, 0);
-  const selection = new Selection(pos, pos);
-  textEditor.selections = [selection]; // Place cursor
-  console.log(`selection:`, selection);
+  await textEditor.insertSnippet(new SnippetString(''), pos); // Place cursor; selection(s) doesn't always work.
 
   // Fold region
   const direction = dfe.data.direction;
@@ -387,6 +388,26 @@ function processViewColumnEvent(dvce: DocumentViewColumnEvent) {
   console.log('processViewColumnEvent', dvce.data);
   // Since it can't be told when a "[Circular]" file closes, let's just create a new view column.
   window.showTextDocument(dvce.data.uri, { viewColumn: dvce.data.viewColumn, preserveFocus: true, preview: false });
+}
+
+/**
+ * Process the document that had a group event.
+ * @param dge Document with a group to process.
+ */
+async function processGroupEvent(dge: DocumentGroupEvent) {
+  console.log('processGroupEvent', dge.data);
+  await window.showTextDocument(dge.data.uri, { viewColumn: dge.data.viewColumn, preview: false });
+  commands.executeCommand('workbench.action.splitEditorInGroup');
+}
+
+/**
+ * Process the document that had an ungroup event.
+ * @param duge Document with an ungroup to process.
+ */
+async function processUngroupEvent(duge: DocumentUngroupEvent) {
+  console.log('processUngroupEvent', duge.data);
+  await window.showTextDocument(duge.data.uri, { viewColumn: duge.data.viewColumn, preview: false });
+  commands.executeCommand('workbench.action.joinEditorInGroup');
 }
 
 // DEPRECATED

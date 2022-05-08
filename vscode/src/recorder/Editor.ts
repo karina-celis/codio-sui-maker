@@ -25,6 +25,26 @@ import serializeFrame from '../editor/frame/serialize_frame';
 import { DocumentEvents } from '../editor/consts';
 import { schemeSupported } from '../utils';
 
+interface Fold {
+  index: number;
+  line: number;
+  viewColumn?: number;
+}
+
+interface Group {
+  index: number;
+  path: string;
+  state: GroupState;
+  viewColumn?: number;
+}
+
+enum GroupState {
+  INIT = 1,
+  CREATE,
+  LIVE,
+  DESTROY,
+}
+
 export default class CodeEditorRecorder {
   onDidChangeActiveTextEditorListener: Disposable;
   onDidChangeTextEditorSelectionListener: Disposable;
@@ -46,7 +66,8 @@ export default class CodeEditorRecorder {
   events: DocumentEvent[] = [];
   processPaths: Array<string> = [];
   onLanguageIdChange: Record<string, string> = {};
-  foldStartLinesDict = {};
+  folds: Fold[] = [];
+  groups: Group[] = [];
 
   /**
    * Save active text editor and listen to change events.
@@ -241,16 +262,16 @@ export default class CodeEditorRecorder {
 
     let event: DocumentFoldEvent | DocumentVisibleRangeEvent;
 
-    // Check for any unfold events
-    const startLines = Object.keys(this.foldStartLinesDict);
-    for (let i = 0; i < startLines.length; i++) {
-      const startLine = parseInt(startLines[i]);
+    // Check for any unfold events in this view column.
+    const viewColumnFolds = this.folds.filter((fold) => fold.viewColumn === e.textEditor.viewColumn);
+    for (let i = 0; i < viewColumnFolds.length; i++) {
+      const startLine = viewColumnFolds[i].line;
       for (let j = 0; j < e.visibleRanges.length; j++) {
         // Is current folded start line between visible ranges?
         const range = e.visibleRanges[j];
         if (startLine < range.end.line) {
           if (startLine >= range.start.line) {
-            delete this.foldStartLinesDict[startLine];
+            this.folds.splice(viewColumnFolds[i].index, 1);
             event = eventCreators.createDocumentFoldEvent(e, startLine, 'down');
             this.events.push(event);
           }
@@ -265,10 +286,10 @@ export default class CodeEditorRecorder {
     // Create fold start lines before last visible range (aka EOF).
     event = null;
     for (let i = 0; i < e.visibleRanges.length - 1; i++) {
-      const range = e.visibleRanges[i];
-      const curLine = range.end.line;
-      if (!this.foldStartLinesDict[curLine]) {
-        this.foldStartLinesDict[curLine] = 1;
+      const curLine = e.visibleRanges[i].end.line;
+      const fold = this.folds.find((fold) => fold.line === curLine && fold.viewColumn === e.textEditor.viewColumn);
+      if (!fold) {
+        this.folds.push({ index: this.folds.length, line: curLine, viewColumn: e.textEditor.viewColumn });
         event = eventCreators.createDocumentFoldEvent(e, curLine, 'up');
         this.events.push(event);
       }
@@ -303,22 +324,85 @@ export default class CodeEditorRecorder {
       return;
     }
 
-    const viewColumns = {};
-    for (let i = 0; i < tes.length; i++) {
-      const te = tes[i];
-      if (!viewColumns[te.viewColumn]) {
-        viewColumns[te.viewColumn] = [];
+    const groups = this.groups;
+
+    // Handle group event?
+    const lastTE = tes[tes.length - 1];
+    if (!lastTE.viewColumn) {
+      // Collect viewColumns
+      const viewColumns: (number | undefined)[] = [];
+      for (let i = 0; i < tes.length - 1; i++) {
+        const te = tes[i];
+        if (!te.viewColumn) {
+          continue;
+        }
+        viewColumns.push(te.viewColumn);
       }
 
-      // Multiples of the same file merge when they have the same viewColumn.
-      if (viewColumns[te.viewColumn].includes(te.document.uri.path)) {
-        continue;
+      // A missing view column seen before indicates an ungroup.
+      const missingViewColumnGroup = groups.find((g) => !viewColumns.includes(g.viewColumn));
+      if (missingViewColumnGroup) {
+        missingViewColumnGroup.state = GroupState.DESTROY;
+      } else {
+        // No missing viewColumns, do any have the last text editor path?
+        // Only one group can exist in a file and only one visible file per view column, otherwise a merge happens.
+        const tePath = groups.find((g) => g.path === lastTE.document.uri.path);
+        if (!tePath) {
+          groups.push({
+            index: groups.length,
+            path: lastTE.document.uri.path,
+            state: GroupState.INIT,
+          });
+        }
+      }
+      // The other viewColumns will be processed in the future.
+      return;
+    }
+
+    // No new group events, let's loop and handle each visible text editor.
+    tes.forEach((te) => {
+      const path = te.document.uri.path;
+      // A new group will have no `viewColumn` and a group state of `GroupState.INIT`.
+      const group = groups.find((g) => g.path === path && (!g.viewColumn || g.viewColumn === te?.viewColumn));
+
+      // Check for a grouped text editor and change state.
+      if (!te.viewColumn) {
+        // This could be visited multiple times
+        if (group?.state === GroupState.INIT) {
+          group.state = GroupState.CREATE;
+        }
+        return;
       }
 
-      viewColumns[te.viewColumn].push(te.document.uri.path);
+      // Create a group event?
+      switch (group?.state) {
+        case GroupState.DESTROY: {
+          groups.splice(group.index, 1);
+          const event = eventCreators.createDocumentUngroupEvent(te.document, te.viewColumn);
+          this.events.push(event);
+          return;
+        }
+        case GroupState.CREATE: {
+          group.state = GroupState.LIVE;
+          group.viewColumn = te.viewColumn;
+          const event = eventCreators.createDocumentGroupEvent(te.document, te.viewColumn);
+          this.events.push(event);
+          return;
+        }
+      }
+
+      // Regular visible event with possible prior group event to act like native VSCode.
       const event = eventCreators.createDocumentVisibleEvent(te.document, te.viewColumn);
       this.events.push(event);
-    }
+
+      const foundGroup = groups.find((g) => {
+        return g.state === GroupState.LIVE && g.path === te.document.uri.path && g.viewColumn !== te.viewColumn;
+      });
+      if (foundGroup) {
+        const event = eventCreators.createDocumentGroupEvent(te.document, te.viewColumn);
+        this.events.push(event);
+      }
+    });
   }
 
   /**

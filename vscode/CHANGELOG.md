@@ -1,3 +1,6 @@
+## [0.13.0]
+- Adding grouping of text editors.
+
 ## [0.12.0]
 - Adding splitting of text editors.
 

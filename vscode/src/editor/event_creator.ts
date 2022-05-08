@@ -74,15 +74,7 @@ export function createDocumentVisibleRangeEvent(e: TextEditorVisibleRangesChange
  * @returns New event with given data.
  */
 export function createDocumentVisibleEvent(td: TextDocument, viewColumn: number): DocumentVisibleEvent {
-  return {
-    type: DocumentEvents.DOCUMENT_VISIBLE,
-    data: {
-      isUntitled: td.isUntitled,
-      time: Date.now(),
-      uri: td.uri,
-      viewColumn,
-    },
-  } as DocumentVisibleEvent;
+  return createEventType(DocumentEvents.DOCUMENT_VISIBLE, td, viewColumn) as DocumentVisibleEvent;
 }
 
 /**
@@ -93,15 +85,46 @@ export function createDocumentVisibleEvent(td: TextDocument, viewColumn: number)
  * @returns New event with given data.
  */
 export function createDocumentViewColumnEvent(td: TextDocument, viewColumn: number): DocumentViewColumnEvent {
+  return createEventType(DocumentEvents.DOCUMENT_VIEW_COLUMN, td, viewColumn) as DocumentViewColumnEvent;
+}
+
+/**
+ * Create event when a text editor was grouped.
+ * @param td Text document that was grouped.
+ * @param viewColumn View column of document that got grouped.
+ * @returns New event with given data.
+ */
+export function createDocumentGroupEvent(td: TextDocument, viewColumn: number): DocumentGroupEvent {
+  return createEventType(DocumentEvents.DOCUMENT_GROUP, td, viewColumn) as DocumentGroupEvent;
+}
+
+/**
+ * Create event when a text editor was ungrouped.
+ * @param td Text document that was ungrouped.
+ * @param viewColumn View column of document that got ungrouped.
+ * @returns New event with given data.
+ */
+export function createDocumentUngroupEvent(td: TextDocument, viewColumn: number): DocumentUngroupEvent {
+  return createEventType(DocumentEvents.DOCUMENT_UNGROUP, td, viewColumn) as DocumentUngroupEvent;
+}
+
+/**
+ * Create an event of given type with given data.
+ * @param type Type of event to create.
+ * @param td Text document for event.
+ * @param viewColumn View column for event.
+ * @returns New event of type with given data.
+ */
+function createEventType(type: DocumentEvents, td: TextDocument, viewColumn: number): DocumentEvent {
   return {
-    type: DocumentEvents.DOCUMENT_VIEW_COLUMN,
+    type,
     data: {
       isUntitled: td.isUntitled,
       time: Date.now(),
       uri: td.uri,
       viewColumn,
     },
-  } as DocumentViewColumnEvent;
+  } as DocumentEvent;
 }
 
 export function createDocumentFoldEvent(

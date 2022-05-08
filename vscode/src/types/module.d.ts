@@ -85,9 +85,33 @@ declare interface DocumentVisibleEvent extends DocumentEvent {
 }
 
 /**
- * Handled differently than DocumentVisibleEvent when processed.
+ * Handled differently when processed.
  */
 declare interface DocumentViewColumnEvent extends DocumentEvent {
+  type: number;
+  data: {
+    uri: Uri;
+    time: number;
+    viewColumn: number;
+  };
+}
+
+/**
+ * Handled differently when processed.
+ */
+declare interface DocumentGroupEvent extends DocumentEvent {
+  type: number;
+  data: {
+    uri: Uri;
+    time: number;
+    viewColumn: number;
+  };
+}
+
+/**
+ * Handled differently when processed.
+ */
+declare interface DocumentUngroupEvent extends DocumentEvent {
   type: number;
   data: {
     uri: Uri;
