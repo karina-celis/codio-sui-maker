@@ -17,8 +17,8 @@ export default class Player {
   stateObservers: Array<(isPlaying: boolean, isPaused: boolean) => void>;
 
   codioLength: number;
-  codioStartTime: number;
-  relativeActiveTimeMs = 0;
+  codioStartTimeMs: number;
+  elapsedTimeMs = 0;
 
   editorPlayer: EditorPlayer;
   audioPlayer: AudioHandler;
@@ -72,8 +72,8 @@ export default class Player {
   }
 
   private setInitialState(): void {
-    this.relativeActiveTimeMs = 0;
-    this.codioStartTime = undefined;
+    this.elapsedTimeMs = 0;
+    this.codioStartTimeMs = undefined;
     this.codioLength = undefined;
     this.closeCodioResolver = undefined;
     this.process = undefined;
@@ -94,9 +94,9 @@ export default class Player {
 
   /**
    * Play media from given time in seconds.
-   * @param timeSecs Seconds to start playing media from.
+   * @param timeMs Milliseconds to start playing media from.
    */
-  play(timeSecs: number): void {
+  play(timeMs: number): void {
     if (this.isPlaying) {
       this.pauseMedia();
     }
@@ -104,12 +104,11 @@ export default class Player {
     this.isPaused = false;
     this.updateContext(IS_PAUSED, this.isPaused);
 
-    const events = this.editorPlayer.getEventsFrom(this.relativeActiveTimeMs);
-    this.codioStartTime = Date.now(); // The editor adjusts events' time.
-    this.editorPlayer.play(events, this.codioStartTime);
-    this.subtitlesPlayer.play(timeSecs * 1000);
-    this.audioPlayer.play(timeSecs);
-    this.timer.run(timeSecs);
+    this.codioStartTimeMs = Date.now(); // The editor adjusts events' time.
+    this.editorPlayer.start(timeMs);
+    this.subtitlesPlayer.play(timeMs);
+    this.audioPlayer.play(timeMs / 1000);
+    this.timer.run(timeMs / 1000);
 
     this.isPlaying = true;
     this.updateContext(IS_PLAYING, this.isPlaying);
@@ -155,7 +154,7 @@ export default class Player {
   pause(): void {
     this.pauseMedia();
     // How long has the codio been playing?
-    this.relativeActiveTimeMs = this.relativeActiveTimeMs + (Date.now() - this.codioStartTime);
+    this.elapsedTimeMs = this.elapsedTimeMs + (Date.now() - this.codioStartTimeMs);
     this.isPaused = true;
     this.updateContext(IS_PAUSED, this.isPaused);
   }
@@ -164,7 +163,7 @@ export default class Player {
    * Resume playing of loaded codio.
    */
   resume(): void {
-    this.play(this.relativeActiveTimeMs / 1000);
+    this.play(this.elapsedTimeMs);
   }
 
   /**
@@ -202,11 +201,11 @@ export default class Player {
    */
   rewind(timeSecs: number): void {
     if (!this.isPaused) {
-      this.relativeActiveTimeMs = this.relativeActiveTimeMs + (Date.now() - this.codioStartTime);
+      this.elapsedTimeMs = this.elapsedTimeMs + (Date.now() - this.codioStartTimeMs);
     }
 
     // Get time from when/if the codio was paused.
-    let timeToRewind = this.relativeActiveTimeMs - timeSecs * 1000;
+    let timeToRewind = this.elapsedTimeMs - timeSecs * 1000;
     if (timeToRewind < 0) {
       timeToRewind = 0;
     }
@@ -219,11 +218,11 @@ export default class Player {
    */
   forward(timeSecs: number): void {
     if (!this.isPaused) {
-      this.relativeActiveTimeMs = this.relativeActiveTimeMs + (Date.now() - this.codioStartTime);
+      this.elapsedTimeMs = this.elapsedTimeMs + (Date.now() - this.codioStartTimeMs);
     }
 
     // Get time from when/if the codio was paused.
-    let timeToForward = this.relativeActiveTimeMs + timeSecs * 1000;
+    let timeToForward = this.elapsedTimeMs + timeSecs * 1000;
     if (timeToForward > this.codioLength) {
       timeToForward = this.codioLength;
     }
@@ -235,7 +234,7 @@ export default class Player {
    * @param relativeTimeMs Time in milliseconds.
    */
   goto(relativeTimeMs: number): void {
-    this.relativeActiveTimeMs = relativeTimeMs;
+    this.elapsedTimeMs = relativeTimeMs;
     if (!this.isPaused) {
       this.pauseMedia();
       this.resume();

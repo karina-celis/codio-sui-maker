@@ -65,11 +65,11 @@ export default async function trimEnd(player: Player): Promise<void> {
 
     player.stop();
 
-    const endTimeInSeconds = Math.round(player.relativeActiveTimeMs / SECOND_IN_MS);
+    const endTimeInSeconds = Math.round(player.elapsedTimeMs / SECOND_IN_MS);
 
     trimAudioFile(player.audioPlayer.audioFilePath, endTimeInSeconds);
-    trimCodioFile(player.codioPath, player.relativeActiveTimeMs);
-    trimMetaFile(player.codioPath, player.relativeActiveTimeMs);
+    trimCodioFile(player.codioPath, player.elapsedTimeMs);
+    trimMetaFile(player.codioPath, player.elapsedTimeMs);
   } catch (e) {
     console.log('Trimming file failed', e);
   }

@@ -40,19 +40,19 @@ export default class EditorPlayer {
    * Guard against future errors.
    */
   destroy(): void {
-    this.play = () => undefined;
+    this.start = () => undefined;
     this.stop = () => undefined;
     this.getEventsFrom = () => [];
   }
 
   /**
-   * Play given events after time adjustment of given time.
-   * @param events Editor and document events to play.
-   * @param time Time in milliseconds.
+   * Find events from given time and play them.
+   * @param elapsedTimeMs Elapsed time in milliseconds.
    */
-  play(events: DocumentEvent[], time: number): void {
+  start(elapsedTimeMs: number): void {
     this.ac = new AbortController();
-    const absoluteEvents = createTimelineWithAbsoluteTimes(events, time);
+    const events = this.getEventsFrom(elapsedTimeMs);
+    const absoluteEvents = createTimelineWithAbsoluteTimes(events, Date.now());
     console.log('play events', events);
     console.log('play absoluteEvents', absoluteEvents.length);
     this.playEvents(absoluteEvents);
@@ -118,7 +118,7 @@ export default class EditorPlayer {
    * @param timeMs Relative time in milliseconds to split events.
    * @returns Events that have been reconciled and adjusted for play.
    */
-  getEventsFrom(timeMs: number): DocumentEvent[] {
+  private getEventsFrom(timeMs: number): DocumentEvent[] {
     if (!timeMs) {
       return this.events;
     }
