@@ -1,4 +1,4 @@
-import Recorder from 'src/recorder/Recorder';
+import Recorder from '../recorder/Recorder';
 import Player from '../player/Player';
 
 /**

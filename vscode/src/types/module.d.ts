@@ -1,3 +1,31 @@
+declare interface IControl {
+  start: (timeMs: number) => void;
+  stop: () => void;
+  cancel: () => void;
+  pause: () => void;
+  resume: () => void;
+}
+
+declare interface IMedia {
+  start: (timeMs: number) => void;
+  stop: () => void;
+}
+
+declare interface IExport {
+  export: () => string;
+}
+
+declare interface IImport {
+  import: (jsonPath: string) => unknown;
+}
+
+declare interface IEvent {
+  type: number;
+  data: {
+    time: number;
+  };
+}
+
 declare interface Metadata {
   length: number;
   name: string;

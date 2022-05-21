@@ -1,3 +1,6 @@
+## [0.14.0]
+- Adding debug recording and playing.
+
 ## [0.13.0]
 - Adding grouping of text editors.
 

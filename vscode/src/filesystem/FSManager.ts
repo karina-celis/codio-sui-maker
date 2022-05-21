@@ -25,6 +25,7 @@ const EXTENSION_FOLDER = Environment.getInstance().getExtensionFolder();
 const codiosFolder = join(EXTENSION_FOLDER, 'codios');
 
 const CODIO_META_FILE = 'meta.json';
+const CODIO_DEBUG_FILE = 'debug.json';
 const CODIO_CONTENT_FILE = 'codio.json';
 const CODIO_WORKSPACE_FOLDER = 'workspace';
 
@@ -54,6 +55,10 @@ export default class FSManager {
 
   static timelinePath(codioPath: string): string {
     return join(codioPath, 'codio.json');
+  }
+
+  static debugPath(codioPath: string): string {
+    return join(codioPath, CODIO_DEBUG_FILE);
   }
 
   static audioPath(codioPath: string): string {
@@ -91,6 +96,7 @@ export default class FSManager {
   }
 
   static async saveRecordingToFile(
+    debugContent: string,
     codioContent: Record<string, unknown>,
     metaData: Record<string, unknown>,
     files: Array<string>,
@@ -99,6 +105,7 @@ export default class FSManager {
   ): Promise<void> {
     const codioContentJson = JSON.stringify(codioContent);
     const metaDataJson = JSON.stringify(metaData);
+    await this.saveFile(join(codioPath, CODIO_DEBUG_FILE), debugContent);
     await this.saveFile(join(codioPath, CODIO_CONTENT_FILE), codioContentJson);
     await this.saveFile(join(codioPath, CODIO_META_FILE), metaDataJson);
     const codioWorkspaceFolderPath = join(codioPath, CODIO_WORKSPACE_FOLDER);

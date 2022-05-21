@@ -5,6 +5,7 @@ import { commands, Disposable, TextEditorSelectionChangeEvent, TextEditorSelecti
 import AudioHandler from '../audio/Audio';
 import Subtitles from './Subtitles';
 import Environment from '../environment/Environment';
+import DebugPlayer from '../debug/DebugPlayer';
 
 const IS_PLAYING = 'isPlaying';
 const IS_PAUSED = 'isPlayerPaused';
@@ -21,6 +22,7 @@ export default class Player {
   elapsedTimeMs = 0;
 
   editorPlayer: EditorPlayer;
+  debugPlayer: DebugPlayer;
   audioPlayer: AudioHandler;
   subtitlesPlayer: Subtitles;
   timer: Timer;
@@ -50,6 +52,9 @@ export default class Player {
       if (!loaded) {
         this.editorPlayer.destroy();
       }
+
+      this.debugPlayer = new DebugPlayer();
+      this.debugPlayer.import(FSManager.debugPath(this.codioPath));
 
       this.audioPlayer = new AudioHandler(FSManager.audioPath(this.codioPath), Environment.getInstance());
 
@@ -104,8 +109,11 @@ export default class Player {
     this.isPaused = false;
     this.updateContext(IS_PAUSED, this.isPaused);
 
+    console.log('play', timeMs);
+
     this.codioStartTimeMs = Date.now(); // The editor adjusts events' time.
     this.editorPlayer.start(timeMs);
+    this.debugPlayer.start(timeMs);
     this.subtitlesPlayer.play(timeMs);
     this.audioPlayer.play(timeMs / 1000);
     this.timer.run(timeMs / 1000);
@@ -142,6 +150,7 @@ export default class Player {
    */
   private pauseMedia(): void {
     this.editorPlayer.stop();
+    this.debugPlayer.stop();
     this.audioPlayer.pause();
     this.subtitlesPlayer.pause();
     this.timer.stop();
@@ -173,6 +182,7 @@ export default class Player {
   private closeCodio(): void {
     this.timer.stop();
     this.editorPlayer.stop();
+    this.debugPlayer.stop();
     this.audioPlayer.pause();
     this.subtitlesPlayer.stop();
     this.closeCodioResolver();
@@ -200,6 +210,7 @@ export default class Player {
    * @param timeSecs Time in seconds.
    */
   rewind(timeSecs: number): void {
+    // Get relative time since play started if not paused.
     if (!this.isPaused) {
       this.elapsedTimeMs = this.elapsedTimeMs + (Date.now() - this.codioStartTimeMs);
     }
@@ -217,6 +228,7 @@ export default class Player {
    * @param timeSecs Time in seconds.
    */
   forward(timeSecs: number): void {
+    // Get relative time since play started if not paused.
     if (!this.isPaused) {
       this.elapsedTimeMs = this.elapsedTimeMs + (Date.now() - this.codioStartTimeMs);
     }
@@ -234,6 +246,7 @@ export default class Player {
    * @param relativeTimeMs Time in milliseconds.
    */
   goto(relativeTimeMs: number): void {
+    console.log('goto', relativeTimeMs);
     this.elapsedTimeMs = relativeTimeMs;
     if (!this.isPaused) {
       this.pauseMedia();

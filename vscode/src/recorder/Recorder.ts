@@ -4,6 +4,7 @@ import FSManager from '../filesystem/FSManager';
 import { Uri, commands } from 'vscode';
 import AudioHandler from '../audio/Audio';
 import Environment from '../environment/Environment';
+import DebugRecorder from '../debug/DebugRecorder';
 
 const CODIO_FORMAT_VERSION = '0.1.0';
 const IS_RECORDING = 'isRecording';
@@ -15,6 +16,7 @@ const IS_PAUSED = 'isRecordingPaused';
 export default class Recorder {
   audioRecorder: AudioHandler;
   codeEditorRecorder: CodeEditorRecorder;
+  debugRecorder: DebugRecorder;
   timer: Timer;
   codioPath: string;
   destinationFolder?: Uri;
@@ -38,6 +40,7 @@ export default class Recorder {
     this.timer = new Timer();
     this.audioRecorder = new AudioHandler(FSManager.audioPath(codioPath), Environment.getInstance());
     this.codeEditorRecorder = new CodeEditorRecorder();
+    this.debugRecorder = new DebugRecorder();
     this.setInitialState(codioPath, codioName, destinationFolder, workspaceRoot);
   }
 
@@ -86,11 +89,13 @@ export default class Recorder {
    * Start recording on all media and set state.
    */
   async startRecording(): Promise<void> {
+    this.recordingStartTime = Date.now() + 300;
+
+    this.debugRecorder.start(this.recordingStartTime);
     this.codeEditorRecorder.record();
     await this.audioRecorder.record();
     this.timer.run();
     this.process = new Promise((resolve) => (this.stopRecordingResolver = resolve));
-    this.recordingStartTime = Date.now() + 300;
 
     this.isRecording = true;
     this.updateContext(IS_RECORDING, this.isRecording);
@@ -126,6 +131,7 @@ export default class Recorder {
 
     await this.codeEditorRecorder.stopRecording();
     await this.audioRecorder.stopRecording();
+    this.debugRecorder.stop();
     this.timer.stop();
 
     // Todo: Check situation where pause time > recording time
@@ -146,6 +152,7 @@ export default class Recorder {
     this.pauseStartTime = Date.now();
     await this.audioRecorder.pause();
     this.codeEditorRecorder.stopRecording();
+    this.debugRecorder.stop();
     this.timer.stop();
 
     this.isPaused = true;
@@ -165,6 +172,7 @@ export default class Recorder {
     this.timer.run(this.timer.currentSecond);
     this.codeEditorRecorder.record();
     await this.audioRecorder.resume();
+    this.debugRecorder.start(this.recordingStartTime);
 
     this.isPaused = false;
     this.updateContext(IS_PAUSED, this.isPaused);
@@ -176,6 +184,7 @@ export default class Recorder {
    */
   async saveRecording(): Promise<void> {
     try {
+      const debugContent = this.debugRecorder.export();
       const codioTimelineContent = this.codeEditorRecorder.getTimelineContent(
         this.recordingStartTime,
         this.workspaceRoot,
@@ -184,6 +193,7 @@ export default class Recorder {
       const codioJsonContent = { ...codioTimelineContent, codioLength: this.recordingLength };
       const metadataJsonContent = { length: this.recordingLength, name: this.codioName, version: CODIO_FORMAT_VERSION };
       await FSManager.saveRecordingToFile(
+        debugContent,
         codioJsonContent,
         metadataJsonContent,
         codioJsonContent.openDocuments,
