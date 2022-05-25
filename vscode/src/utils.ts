@@ -2,9 +2,6 @@ import * as vscode from 'vscode';
 import { execFile } from 'child_process';
 import IDeviceParser from './environment/IDeviceParser';
 
-//filesystem
-export const uriSeperator = '/';
-
 /**
  * VS Code schemes supported by software.
  */
@@ -20,10 +17,7 @@ export function schemeSupported(scheme: string): boolean {
  * @param callback Optional callback to alert requester when parsing is done.
  * @returns A DeviceList containing audio and video input devices found.
  */
-export function getDeviceList(
-  deviceParser: IDeviceParser,
-  callback?: (value: unknown) => void,
-): Promise<DeviceList> {
+export function getDeviceList(deviceParser: IDeviceParser, callback?: (value: unknown) => void): Promise<DeviceList> {
   const videoDevices: Device[] = [];
   const audioDevices: Device[] = [];
 

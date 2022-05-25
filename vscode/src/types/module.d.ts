@@ -268,7 +268,6 @@ declare interface Timeline {
 }
 
 declare interface TimelineContent {
-  openDocuments: sting[];
   events: SerializedDocumentEvent[];
   initialFrame: CodioSerializedFile[];
 }

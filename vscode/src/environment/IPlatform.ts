@@ -1,5 +1,5 @@
-import { ChildProcess } from "child_process";
-import IDeviceParser from "./IDeviceParser";
+import { ChildProcess } from 'child_process';
+import IDeviceParser from './IDeviceParser';
 
 export default interface IPlatform {
   /**
@@ -23,13 +23,6 @@ export default interface IPlatform {
    * @param cb Callback to pass error result of unzip.
    */
   unzip(srcPath: string, destPath: string): Promise<void>;
-
-  /**
-   * Normalize for environments where case is sensitive.
-   * @param filePath File path to normalize.
-   * @returns Normalized given file path.
-   */
-  normalizeFilePath(filePath: string): string;
 
   /**
    * Record using dependencies according to OS type.

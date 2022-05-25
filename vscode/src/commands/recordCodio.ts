@@ -7,9 +7,9 @@ import { Uri } from 'vscode';
 export default async function recordCodio(
   fsManager: FSManager,
   recorder: Recorder,
-  destUri?: Uri,
-  workspaceRoot?: Uri,
-  codioName?: string,
+  destUri: Uri,
+  workspaceRoot: Uri,
+  codioName: string,
 ): Promise<void> {
   if (recorder.isRecording) {
     await recorder.stopRecording();

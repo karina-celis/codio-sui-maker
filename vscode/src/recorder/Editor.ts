@@ -18,7 +18,6 @@ import {
 import { TextDecoder } from 'util';
 import serializeEvents from '../editor/serialize';
 import * as eventCreators from '../editor/event_creator';
-import FSManager from '../filesystem/FSManager';
 import { createRelativeTimeline } from '../editor/event_timeline';
 import ShadowDocument from '../editor/frame/ShadowDocument';
 import serializeFrame from '../editor/frame/serialize_frame';
@@ -200,14 +199,14 @@ export default class CodeEditorRecorder {
     return isProcessing;
   }
 
-  getTimelineContent(recordingStartTime: number, workspaceRoot?: Uri): TimelineContent {
-    const { files, rootPath } = FSManager.normalizeFilesPath([], workspaceRoot);
-    console.log('getTimelineContent files', files);
+  getTimelineContent(recordingStartTime: number, workspaceRoot: Uri): TimelineContent {
+    const rootPath = workspaceRoot.path;
+    console.log('getTimelineContent workspaceRoot', workspaceRoot);
     console.log('getTimelineContent rootPath', rootPath);
     const eventsTimeline = createRelativeTimeline(this.events, recordingStartTime);
     const events = serializeEvents(eventsTimeline, rootPath);
     const initialFrame = serializeFrame(this.initialFrame, rootPath);
-    return { events, initialFrame, openDocuments: files };
+    return { events, initialFrame };
   }
 
   /**

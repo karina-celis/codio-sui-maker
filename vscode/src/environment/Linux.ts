@@ -1,12 +1,11 @@
-import { ChildProcess, execSync, spawn } from "child_process";
-import { homedir } from "os";
-import { join, sep } from "path";
-import { chmod, constants, existsSync } from "fs";
+import { ChildProcess, execSync, spawn } from 'child_process';
+import { homedir } from 'os';
+import { join, sep } from 'path';
+import { chmod, constants } from 'fs';
 import which = require('which');
-import IDeviceParser from "./IDeviceParser";
-import IPlatform from "./IPlatform";
-import { getExtensionPath } from "../utils";
-
+import IDeviceParser from './IDeviceParser';
+import IPlatform from './IPlatform';
+import { getExtensionPath } from '../utils';
 
 export default class Linux implements IPlatform {
   // Line Parser specific
@@ -96,26 +95,19 @@ export default class Linux implements IPlatform {
     execSync(`${this.zipPgm} x -o${destPath} ${srcPath}`);
   }
 
-  public normalizeFilePath(filePath: string): string {
-    return filePath;
-  }
-
   public async record(inputDevice: string, filePath: string): Promise<[ChildProcess, number]> {
-    const cp = spawn(
-      'ffmpeg',
-      [
-        '-hide_banner',
-        '-nostats',
-        '-loglevel',
-        'error',
-        '-f',
-        'pulse',
-        '-i',
-        `${inputDevice}`,
-        '-y',
-        filePath,
-      ],
-    );
+    const cp = spawn('ffmpeg', [
+      '-hide_banner',
+      '-nostats',
+      '-loglevel',
+      'error',
+      '-f',
+      'pulse',
+      '-i',
+      `${inputDevice}`,
+      '-y',
+      filePath,
+    ]);
 
     const pid = cp ? cp.pid : null;
     return [cp, pid];
@@ -140,14 +132,10 @@ export default class Linux implements IPlatform {
   getDeviceParser(): IDeviceParser {
     return {
       cmd: 'pactl',
-      args: [
-        'list',
-        'short',
-        'sources',
-      ],
+      args: ['list', 'short', 'sources'],
       searchPrefix: (line: string) => line.search(/input/) > -1,
       lineParser: this.lineParser.bind(this),
-    }
+    };
   }
 
   /**

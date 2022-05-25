@@ -4,12 +4,10 @@ import { DocumentEvents } from './consts';
 import { isDocumentChangeEvent } from './event_creator';
 
 export default function serialize(events: DocumentEvent[], rootPath: string): SerializedDocumentEvent[] {
-  return events
-    .map((event) => serializeEvent(event, rootPath))
-    .filter((event) => !!event);
+  return events.map((event) => serializeEvent(event, rootPath)).filter((event) => !!event);
 }
 
-function serializeEvent(event: DocumentEvent, rootPath): SerializedDocumentEvent {
+function serializeEvent(event: DocumentEvent, rootPath: string): SerializedDocumentEvent {
   if (isDocumentChangeEvent(event)) {
     return serializeTextEvent(event, rootPath);
   } else if (event.type === DocumentEvents.DOCUMENT_RENAME) {
@@ -20,7 +18,7 @@ function serializeEvent(event: DocumentEvent, rootPath): SerializedDocumentEvent
   }
 }
 
-function serializeTextEvent(event: DocumentChangeEvent, rootPath): SerializedDocumentChangeEvent {
+function serializeTextEvent(event: DocumentChangeEvent, rootPath: string): SerializedDocumentChangeEvent {
   serializeFilePath(event, rootPath);
   if (event.data.changes.length === 0) {
     console.log('serializeTextEvent with 0 length', event);
@@ -49,7 +47,7 @@ function serializeTextEvent(event: DocumentChangeEvent, rootPath): SerializedDoc
   return serializedEvent;
 }
 
-function serializeFilePath(event: DocumentEvent, rootPath): SerializedDocumentEvent {
+function serializeFilePath(event: DocumentEvent, rootPath: string): SerializedDocumentEvent {
   if (event.data.uri) {
     const { uri, ...eventData } = event.data;
     const newEvent = {
@@ -69,7 +67,7 @@ function serializeFilePath(event: DocumentEvent, rootPath): SerializedDocumentEv
  * @param rootPath Root path of workspace.
  * @returns A serialized codio event.
  */
-function serializeRenameEvent(event: DocumentRenameEvent, rootPath): SerializedDocumentEvent {
+function serializeRenameEvent(event: DocumentRenameEvent, rootPath: string): SerializedDocumentEvent {
   if (event.data.oldUri) {
     const { oldUri, newUri, ...eventData } = event.data;
     const newEvent = {

@@ -4,7 +4,6 @@ import {
   lstatSync,
   statSync,
   PathLike,
-  renameSync,
   readFileSync,
   writeFileSync,
   readdirSync,
@@ -14,8 +13,6 @@ import {
 } from 'fs';
 import { join } from 'path';
 import { v4 as uuid } from 'uuid';
-import { uriSeperator } from '../utils';
-import { saveProjectFiles, reduceToRoot } from './saveProjectFiles';
 import { getWorkspaceRootAndCodiosFolder } from './workspace';
 import Environment from '../environment/Environment';
 import { choose } from '../user_interface/messages';
@@ -27,7 +24,8 @@ const codiosFolder = join(EXTENSION_FOLDER, 'codios');
 const CODIO_META_FILE = 'meta.json';
 const CODIO_DEBUG_FILE = 'debug.json';
 const CODIO_CONTENT_FILE = 'codio.json';
-const CODIO_WORKSPACE_FOLDER = 'workspace';
+
+const URI_SEP = '/';
 
 export default class FSManager {
   tempFolder: string;
@@ -42,15 +40,6 @@ export default class FSManager {
 
   constructor() {
     this.tempFolder = tmpdir();
-  }
-
-  static async saveFile(path: number | PathLike, content: string): Promise<void> {
-    try {
-      writeFileSync(path, content);
-      console.log('The file was saved!', path);
-    } catch (e) {
-      console.log('save file fail', e);
-    }
   }
 
   static timelinePath(codioPath: string): string {
@@ -84,13 +73,13 @@ export default class FSManager {
   }
 
   static toRelativePath(uri: Uri, rootPath: string): string {
-    const pathSplit = uri.path.split(uriSeperator);
+    const pathSplit = uri.path.split(URI_SEP);
     if (pathSplit.length === 1) {
       return pathSplit[0];
     }
 
-    const rootPathSplit = rootPath.split(uriSeperator);
-    const relativePath = pathSplit.slice(rootPathSplit.length).join(uriSeperator);
+    const rootPathSplit = rootPath.split(URI_SEP);
+    const relativePath = pathSplit.slice(rootPathSplit.length).join(URI_SEP);
 
     return relativePath;
   }
@@ -99,24 +88,40 @@ export default class FSManager {
     debugContent: string,
     codioContent: Record<string, unknown>,
     metaData: Record<string, unknown>,
-    files: Array<string>,
     codioPath: string,
-    destinationFolder?: Uri,
+    destinationFolder: Uri,
   ): Promise<void> {
     const codioContentJson = JSON.stringify(codioContent);
     const metaDataJson = JSON.stringify(metaData);
-    await this.saveFile(join(codioPath, CODIO_DEBUG_FILE), debugContent);
-    await this.saveFile(join(codioPath, CODIO_CONTENT_FILE), codioContentJson);
-    await this.saveFile(join(codioPath, CODIO_META_FILE), metaDataJson);
-    const codioWorkspaceFolderPath = join(codioPath, CODIO_WORKSPACE_FOLDER);
-    // TODO: The workspace folder should save any files not in events.
-    await saveProjectFiles(codioWorkspaceFolderPath, files);
-    if (destinationFolder) {
-      await this.zip(codioPath, destinationFolder.fsPath);
-    } else {
-      renameSync(codioPath, join(codiosFolder, uuid()));
-    }
+    this.saveFile(join(codioPath, CODIO_DEBUG_FILE), debugContent);
+    this.saveFile(join(codioPath, CODIO_CONTENT_FILE), codioContentJson);
+    this.saveFile(join(codioPath, CODIO_META_FILE), metaDataJson);
+    await this.zip(codioPath, destinationFolder.fsPath);
     this.update();
+  }
+
+  static saveFile(path: number | PathLike, content: string): void {
+    try {
+      writeFileSync(path, content);
+      console.log('The file was saved!', path);
+    } catch (e) {
+      console.log('save file fail', e);
+    }
+  }
+
+  /**
+   * Save files found in given codio path to a zip file in given destination path.
+   * @param srcPath Source folder where files live.
+   * @param destPath Destination folder where created zip file will live.
+   * @returns The destination string where the zip file was successfully saved.
+   */
+  static async zip(srcPath: string, destPath: string): Promise<string> {
+    try {
+      await Environment.getInstance().zip(srcPath, destPath);
+      return `${destPath}`;
+    } catch (e) {
+      console.log(`zip for folder ${srcPath} failed`, e);
+    }
   }
 
   /**
@@ -124,30 +129,6 @@ export default class FSManager {
    */
   static update(): void {
     onCodiosChangedSubscribers.forEach((func) => func());
-  }
-
-  static normalizeFilesPath(fullPathFiles: Array<string>, root?: Uri): { rootPath: string; files: string[] } {
-    // In Windows, case doesn't matter in file names, and some events return files with different cases.
-    // That is not the same in Linux for example, where case does matter. The reduceToRoot algorithm is case sensitive,
-    // which is why we are normalizing for windows here
-    const env = Environment.getInstance();
-    const filesWithNormalizedCase = fullPathFiles.map((file) => env.normalizeFilePath(file));
-    if (root) {
-      const normalizedFiles = filesWithNormalizedCase.map((path) => {
-        return this.toRelativePath(Uri.file(path), root.path);
-      });
-      return { rootPath: root.path, files: normalizedFiles };
-    } else if (filesWithNormalizedCase.length > 1) {
-      console.log({ uriSeperator });
-      const splitFiles = filesWithNormalizedCase.map((file) => file.split(uriSeperator).slice(1));
-      const { rootPath, files } = reduceToRoot(splitFiles);
-      return { rootPath, files };
-    } else {
-      const fullPathSplit = filesWithNormalizedCase[0].split(uriSeperator);
-      const rootPath = fullPathSplit.slice(0, -1).join(uriSeperator);
-      const file = fullPathSplit[fullPathSplit.length - 1];
-      return { rootPath: rootPath, files: [file] };
-    }
   }
 
   async folderNameExists(folderName: string): Promise<boolean> {
@@ -194,21 +175,6 @@ export default class FSManager {
       return uri.fsPath;
     } else {
       return this.unzipCodio(uri.fsPath);
-    }
-  }
-
-  /**
-   * Save files found in given codio path to a zip file in given destination path.
-   * @param srcPath Source folder where files live.
-   * @param destPath Destination folder where created zip file will live.
-   * @returns The destination string where the zip file was successfully saved.
-   */
-  static async zip(srcPath: string, destPath: string): Promise<string> {
-    try {
-      await Environment.getInstance().zip(srcPath, destPath);
-      return `${destPath}`;
-    } catch (e) {
-      console.log(`zip for folder ${srcPath} failed`, e);
     }
   }
 

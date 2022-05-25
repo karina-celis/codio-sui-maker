@@ -19,8 +19,8 @@ export default class Recorder {
   debugRecorder: DebugRecorder;
   timer: Timer;
   codioPath: string;
-  destinationFolder?: Uri;
-  workspaceRoot?: Uri;
+  destinationFolder: Uri | null;
+  workspaceRoot: Uri | null;
   codioName: string;
 
   recordingStartTime: number;
@@ -36,7 +36,7 @@ export default class Recorder {
   process: Promise<unknown>;
   stopRecordingResolver: (value?: unknown) => void;
 
-  async loadCodio(codioPath: string, codioName: string, destinationFolder?: Uri, workspaceRoot?: Uri): Promise<void> {
+  async loadCodio(codioPath: string, codioName: string, destinationFolder: Uri, workspaceRoot: Uri): Promise<void> {
     this.timer = new Timer();
     this.audioRecorder = new AudioHandler(FSManager.audioPath(codioPath), Environment.getInstance());
     this.codeEditorRecorder = new CodeEditorRecorder();
@@ -44,7 +44,12 @@ export default class Recorder {
     this.setInitialState(codioPath, codioName, destinationFolder, workspaceRoot);
   }
 
-  private setInitialState(codioPath = '', codioName = '', destinationFolder?: Uri, workspaceRoot?: Uri) {
+  private setInitialState(
+    codioPath = '',
+    codioName = '',
+    destinationFolder: Uri | null = null,
+    workspaceRoot: Uri | null = null,
+  ) {
     this.codioPath = codioPath;
     this.codioName = codioName;
     this.destinationFolder = destinationFolder;
@@ -196,7 +201,6 @@ export default class Recorder {
         debugContent,
         codioJsonContent,
         metadataJsonContent,
-        codioJsonContent.openDocuments,
         this.codioPath,
         this.destinationFolder,
       );

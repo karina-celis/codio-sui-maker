@@ -1,11 +1,11 @@
-import { ChildProcess, execFile, spawn } from "child_process";
-import { homedir } from "os";
-import { existsSync } from "fs";
-import { join, sep } from "path";
+import { ChildProcess, execFile, spawn } from 'child_process';
+import { homedir } from 'os';
+import { existsSync } from 'fs';
+import { join, sep } from 'path';
 import { unzip, zip } from 'cross-zip';
-import { getExtensionPath } from "../utils";
-import IPlatform from "./IPlatform";
-import IDeviceParser from "./IDeviceParser";
+import { getExtensionPath } from '../utils';
+import IPlatform from './IPlatform';
+import IDeviceParser from './IDeviceParser';
 
 export default class Windows_NT implements IPlatform {
   // Line Parser specific
@@ -69,21 +69,18 @@ export default class Windows_NT implements IPlatform {
 
   public async record(inputDevice: string, filePath: string): Promise<[ChildProcess, number]> {
     let pid = null;
-    const cp = spawn(
-      'ffmpeg',
-      [
-        '-hide_banner',
-        '-nostats',
-        '-loglevel',
-        'error',
-        '-f',
-        'dshow',
-        '-i',
-        `audio=${inputDevice}`,
-        '-y',
-        filePath,
-      ],
-    );
+    const cp = spawn('ffmpeg', [
+      '-hide_banner',
+      '-nostats',
+      '-loglevel',
+      'error',
+      '-f',
+      'dshow',
+      '-i',
+      `audio=${inputDevice}`,
+      '-y',
+      filePath,
+    ]);
 
     try {
       pid = await this.findPID('ffmpeg.exe');
@@ -103,31 +100,21 @@ export default class Windows_NT implements IPlatform {
    */
   private findPID(cmd: string): Promise<number> {
     return new Promise((res, rej) => {
-      const cp = execFile(
-        'tasklist.exe',
-        [
-          '/FI',
-          `IMAGENAME eq ${cmd}`,
-          '/FO',
-          'CSV',
-          '/NH'
-        ],
-        (error, stdout) => {
-          if (error) {
-            console.error(`exec error: ${error}`);
-            return;
-          }
-
-          const arr = this.getLastLine(stdout).split(',');
-          if (arr.length < 2) {
-            rej('PID in array not found.');
-            return;
-          }
-
-          const pid = parseInt(arr[1]);
-          pid > 0 ? res(pid) : rej('Valid PID not found.');
+      const cp = execFile('tasklist.exe', ['/FI', `IMAGENAME eq ${cmd}`, '/FO', 'CSV', '/NH'], (error, stdout) => {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          return;
         }
-      );
+
+        const arr = this.getLastLine(stdout).split(',');
+        if (arr.length < 2) {
+          rej('PID in array not found.');
+          return;
+        }
+
+        const pid = parseInt(arr[1]);
+        pid > 0 ? res(pid) : rej('Valid PID not found.');
+      });
 
       cp.stderr.on('data', (data) => {
         rej(data.toString());
@@ -179,19 +166,10 @@ export default class Windows_NT implements IPlatform {
   getDeviceParser(): IDeviceParser {
     return {
       cmd: 'ffmpeg.exe',
-      args: [
-        '-hide_banner',
-        '-nostats',
-        '-f',
-        'dshow',
-        '-list_devices',
-        'true',
-        '-i',
-        'dummy'
-      ],
+      args: ['-hide_banner', '-nostats', '-f', 'dshow', '-list_devices', 'true', '-i', 'dummy'],
       searchPrefix: (line: string) => line.search(/\[dshow/) > -1,
       lineParser: this.lineParser.bind(this),
-    }
+    };
   }
 
   /**

@@ -1,9 +1,9 @@
-import { ChildProcess, execSync, spawn } from "child_process";
-import { homedir } from "os";
-import { join } from "path";
-import { unzip } from "cross-zip";
-import IDeviceParser from "./IDeviceParser";
-import IPlatform from "./IPlatform";
+import { ChildProcess, execSync, spawn } from 'child_process';
+import { homedir } from 'os';
+import { join } from 'path';
+import { unzip } from 'cross-zip';
+import IDeviceParser from './IDeviceParser';
+import IPlatform from './IPlatform';
 
 export default class Darwin implements IPlatform {
   // Line Parser specific
@@ -26,26 +26,19 @@ export default class Darwin implements IPlatform {
     await new Promise((res, rej) => unzip(srcPath, destPath, (error: Error) => (error ? rej(error) : res(''))));
   }
 
-  public normalizeFilePath(filePath: string): string {
-    return filePath;
-  }
-
   public async record(inputDevice: string, filePath: string): Promise<[ChildProcess, number]> {
-    const cp = spawn(
-      'ffmpeg',
-      [
-        '-hide_banner',
-        '-nostats',
-        '-loglevel',
-        'error',
-        '-f',
-        'avfoundation',
-        '-i',
-        `:${inputDevice}`,
-        '-y',
-        filePath,
-      ],
-    );
+    const cp = spawn('ffmpeg', [
+      '-hide_banner',
+      '-nostats',
+      '-loglevel',
+      'error',
+      '-f',
+      'avfoundation',
+      '-i',
+      `:${inputDevice}`,
+      '-y',
+      filePath,
+    ]);
     const pid = cp ? cp.pid : null;
     return [cp, pid];
   }
@@ -70,19 +63,10 @@ export default class Darwin implements IPlatform {
   getDeviceParser(): IDeviceParser {
     return {
       cmd: 'ffmpeg',
-      args: [
-        '-hide_banner',
-        '-nostats',
-        '-f',
-        'avfoundation',
-        '-list_devices',
-        'true',
-        '-i',
-        '""'
-      ],
+      args: ['-hide_banner', '-nostats', '-f', 'avfoundation', '-list_devices', 'true', '-i', '""'],
       searchPrefix: (line: string) => line.search(/^\[AVFoundation/) > -1,
       lineParser: this.lineParser.bind(this),
-    }
+    };
   }
 
   /**
