@@ -1,4 +1,4 @@
-import CodeEditorRecorder from './Editor';
+import EditorRecorder from './Editor';
 import Timer from '../ProgressTimer';
 import FSManager from '../filesystem/FSManager';
 import { Uri, commands } from 'vscode';
@@ -6,7 +6,7 @@ import AudioHandler from '../audio/Audio';
 import Environment from '../environment/Environment';
 import DebugRecorder from '../debug/DebugRecorder';
 
-const CODIO_FORMAT_VERSION = '0.1.0';
+export const CODIO_FORMAT_VERSION = '0.2.0';
 const IS_RECORDING = 'isRecording';
 const IS_PAUSED = 'isRecordingPaused';
 
@@ -15,12 +15,12 @@ const IS_PAUSED = 'isRecordingPaused';
  */
 export default class Recorder {
   audioRecorder: AudioHandler;
-  codeEditorRecorder: CodeEditorRecorder;
+  editorRecorder: EditorRecorder;
   debugRecorder: DebugRecorder;
   timer: Timer;
   codioPath: string;
-  destinationFolder: Uri | null;
-  workspaceRoot: Uri | null;
+  destinationUri: Uri | null;
+  workspaceUri: Uri | null;
   codioName: string;
 
   recordingStartTime: number;
@@ -36,24 +36,25 @@ export default class Recorder {
   process: Promise<unknown>;
   stopRecordingResolver: (value?: unknown) => void;
 
-  async loadCodio(codioPath: string, codioName: string, destinationFolder: Uri, workspaceRoot: Uri): Promise<void> {
+  async loadCodio(codioPath: string, codioName: string, destinationUri: Uri, workspaceUri: Uri): Promise<void> {
+    console.log('loadCodio', { codioPath, codioName, destinationUri, workspaceUri });
     this.timer = new Timer();
     this.audioRecorder = new AudioHandler(FSManager.audioPath(codioPath), Environment.getInstance());
-    this.codeEditorRecorder = new CodeEditorRecorder();
+    this.editorRecorder = new EditorRecorder();
     this.debugRecorder = new DebugRecorder();
-    this.setInitialState(codioPath, codioName, destinationFolder, workspaceRoot);
+    this.setInitialState(codioPath, codioName, destinationUri, workspaceUri);
   }
 
   private setInitialState(
     codioPath = '',
     codioName = '',
-    destinationFolder: Uri | null = null,
-    workspaceRoot: Uri | null = null,
+    destinationUri: Uri | null = null,
+    workspaceUri: Uri | null = null,
   ) {
     this.codioPath = codioPath;
     this.codioName = codioName;
-    this.destinationFolder = destinationFolder;
-    this.workspaceRoot = workspaceRoot;
+    this.destinationUri = destinationUri;
+    this.workspaceUri = workspaceUri;
     this.process = undefined;
     this.stateObservers = [];
     this.recordingSavedObservers = [];
@@ -97,7 +98,7 @@ export default class Recorder {
     this.recordingStartTime = Date.now() + 300;
 
     this.debugRecorder.start(this.recordingStartTime);
-    this.codeEditorRecorder.record();
+    this.editorRecorder.record();
     await this.audioRecorder.record();
     this.timer.run();
     this.process = new Promise((resolve) => (this.stopRecordingResolver = resolve));
@@ -134,7 +135,7 @@ export default class Recorder {
       await this.resume();
     }
 
-    await this.codeEditorRecorder.stopRecording();
+    await this.editorRecorder.stopRecording();
     await this.audioRecorder.stopRecording();
     this.debugRecorder.stop();
     this.timer.stop();
@@ -156,7 +157,7 @@ export default class Recorder {
   async pause(): Promise<void> {
     this.pauseStartTime = Date.now();
     await this.audioRecorder.pause();
-    this.codeEditorRecorder.stopRecording();
+    this.editorRecorder.stopRecording();
     this.debugRecorder.stop();
     this.timer.stop();
 
@@ -175,7 +176,7 @@ export default class Recorder {
     }
 
     this.timer.run(this.timer.currentSecond);
-    this.codeEditorRecorder.record();
+    this.editorRecorder.record();
     await this.audioRecorder.resume();
     this.debugRecorder.start(this.recordingStartTime);
 
@@ -184,25 +185,23 @@ export default class Recorder {
   }
 
   /**
-   * Save recording by getting timeline content and constructing objects to save to file.
+   * Save recording by getting codio content and constructing objects to save to file.
    * Alert any observers.
    */
   async saveRecording(): Promise<void> {
     try {
       const debugContent = this.debugRecorder.export();
-      const codioTimelineContent = this.codeEditorRecorder.getTimelineContent(
-        this.recordingStartTime,
-        this.workspaceRoot,
-      );
-      console.log('saveRecording codioTimelineContent', codioTimelineContent);
-      const codioJsonContent = { ...codioTimelineContent, codioLength: this.recordingLength };
-      const metadataJsonContent = { length: this.recordingLength, name: this.codioName, version: CODIO_FORMAT_VERSION };
+      const serializedEvents = this.editorRecorder.getSerializedEvents(this.recordingStartTime, this.workspaceUri.path);
+      console.log('saveRecording serializedEvents', serializedEvents);
+      const editorContent = JSON.stringify(serializedEvents);
+      const metaDataJsonContent = { length: this.recordingLength, name: this.codioName, version: CODIO_FORMAT_VERSION };
+      const metaDataContent = JSON.stringify(metaDataJsonContent);
       await FSManager.saveRecordingToFile(
         debugContent,
-        codioJsonContent,
-        metadataJsonContent,
+        editorContent,
+        metaDataContent,
         this.codioPath,
-        this.destinationFolder,
+        this.destinationUri,
       );
       this.recordingSavedObservers.forEach((obs) => obs());
     } catch (e) {

@@ -13,7 +13,6 @@ function serializeEvent(event: DocumentEvent, rootPath: string): SerializedDocum
   } else if (event.type === DocumentEvents.DOCUMENT_RENAME) {
     return serializeRenameEvent(event as DocumentRenameEvent, rootPath);
   } else {
-    //if (isSelectionEvent(event) || isEditorEvent(event) || isExecutionEvent(event) || isVisibleRangeEvent(event)) {
     return serializeFilePath(event, rootPath);
   }
 }

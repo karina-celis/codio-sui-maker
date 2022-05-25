@@ -17,9 +17,9 @@ import {
   SnippetString,
 } from 'vscode';
 import { cursorStyle } from '../user_interface/Viewers';
-import { overrideEditorText, getTextEditor, schemeSupported } from '../utils';
+import { schemeSupported } from '../utils';
 import { DocumentEvents } from './consts';
-import { isExecutionEvent, isEditorEvent, createDocumentChangeEvent } from './event_creator';
+import { createDocumentChangeEvent } from './event_creator';
 
 // Map of valid events.
 const eventsToProcess = {
@@ -51,14 +51,7 @@ export default async function processEvent(event: CodioEvent | DocumentEvent): P
       await eventsToProcess[event.type](event);
       return;
     }
-
-    // @note Deprecated
-    console.log('dispatchEvent', event);
-    if (isExecutionEvent(event)) {
-      dispatchExecutionEvent(event);
-    } else if (isEditorEvent(event)) {
-      await dispatchEditorEvent(event);
-    }
+    console.log('processEvent not handled:', event);
   } catch (e) {
     console.log('Failed to dispatch codio action', event);
     console.log('Error', e);
@@ -408,80 +401,6 @@ async function processUngroupEvent(duge: DocumentUngroupEvent) {
   console.log('processUngroupEvent', duge.data);
   await window.showTextDocument(duge.data.uri, { viewColumn: duge.data.viewColumn, preview: false });
   commands.executeCommand('workbench.action.joinEditorInGroup');
-}
-
-// DEPRECATED
-function dispatchExecutionEvent(event: CodioExecutionEvent) {
-  console.log('dispatchExecutionEvent DEPRECATED');
-  try {
-    const outputChannel = window.createOutputChannel('codioReplay');
-    outputChannel.show(true);
-    outputChannel.append(event.data.executionOutput);
-  } catch (e) {
-    console.log('output error', e);
-  }
-}
-
-// DEPRECATED
-function isEditorShownForFirstTime(event: CodioChangeActiveEditorEvent) {
-  console.log('isEditorShownForFirstTime DEPRECATED');
-  return !!event.data.isInitial;
-}
-
-// DEPRECATED
-async function dispatchEditorShownFirstTime(event: CodioChangeActiveEditorEvent) {
-  console.log('dispatchEditorShownFirstTime DEPRECATED');
-  await window.showTextDocument(event.data.uri, {
-    viewColumn: event.data.viewColumn,
-    preview: true,
-  });
-  const textEditor: TextEditor = window.visibleTextEditors.find(
-    (editor) => editor.document.uri.path === event.data.uri.path,
-  );
-  console.log(textEditor);
-  if (textEditor) {
-    overrideEditorText(textEditor, event.data.content);
-  }
-}
-
-// @Note DEPRECATED
-async function dispatchEditorEvent(event: CodioChangeActiveEditorEvent) {
-  console.log('dispatchEditorEvent DEPRECATED');
-  if (isEditorShownForFirstTime(event)) {
-    dispatchEditorShownFirstTime(event);
-  } else {
-    const textEditor: TextEditor = getTextEditor(event.data.uri.path);
-    if (textEditor) {
-      try {
-        if (textEditor.viewColumn === event.data.viewColumn) {
-          await window.showTextDocument(textEditor.document, {
-            viewColumn: event.data.viewColumn,
-            preview: true,
-          });
-        } else {
-          await workspace.saveAll();
-          await window.showTextDocument(textEditor.document, {
-            viewColumn: textEditor.viewColumn,
-          });
-          await commands.executeCommand('workbench.action.closeActiveEditor');
-          await window.showTextDocument(textEditor.document, {
-            viewColumn: event.data.viewColumn,
-            preview: true,
-          });
-        }
-        textEditor.revealRange(event.data.visibleRange);
-      } catch (e) {
-        console.log('bagabaga faillll', { e, event });
-      }
-    } else {
-      await window.showTextDocument(event.data.uri, {
-        viewColumn: event.data.viewColumn,
-        preview: true,
-      });
-      const textEditor = getTextEditor(event.data.uri.path);
-      textEditor.revealRange(event.data.visibleRange);
-    }
-  }
 }
 
 export function removeSelection(): void {

@@ -23,7 +23,7 @@ const codiosFolder = join(EXTENSION_FOLDER, 'codios');
 
 const CODIO_META_FILE = 'meta.json';
 const CODIO_DEBUG_FILE = 'debug.json';
-const CODIO_CONTENT_FILE = 'codio.json';
+const CODIO_EDITOR_FILE = 'editor.json';
 
 const URI_SEP = '/';
 
@@ -42,8 +42,13 @@ export default class FSManager {
     this.tempFolder = tmpdir();
   }
 
-  static timelinePath(codioPath: string): string {
-    return join(codioPath, 'codio.json');
+  /**
+   * Return path to editor JSON file.
+   * @param codioPath Path to unzip codio file.
+   * @returns Path to editor JSON file.
+   */
+  static editorPath(codioPath: string): string {
+    return join(codioPath, CODIO_EDITOR_FILE);
   }
 
   static debugPath(codioPath: string): string {
@@ -62,16 +67,6 @@ export default class FSManager {
     return join(codioPath, 'subtitles.srt');
   }
 
-  static workspacePath(codioPath: string): string {
-    return join(codioPath, 'workspace');
-  }
-
-  static async loadTimeline(codioPath: string): Promise<Timeline> {
-    const timelineContent = readFileSync(this.timelinePath(codioPath));
-    const parsedTimeline = JSON.parse(timelineContent.toString());
-    return parsedTimeline;
-  }
-
   static toRelativePath(uri: Uri, rootPath: string): string {
     const pathSplit = uri.path.split(URI_SEP);
     if (pathSplit.length === 1) {
@@ -86,16 +81,14 @@ export default class FSManager {
 
   static async saveRecordingToFile(
     debugContent: string,
-    codioContent: Record<string, unknown>,
-    metaData: Record<string, unknown>,
+    editorContent: string,
+    metaDataContent: string,
     codioPath: string,
     destinationFolder: Uri,
   ): Promise<void> {
-    const codioContentJson = JSON.stringify(codioContent);
-    const metaDataJson = JSON.stringify(metaData);
     this.saveFile(join(codioPath, CODIO_DEBUG_FILE), debugContent);
-    this.saveFile(join(codioPath, CODIO_CONTENT_FILE), codioContentJson);
-    this.saveFile(join(codioPath, CODIO_META_FILE), metaDataJson);
+    this.saveFile(join(codioPath, CODIO_EDITOR_FILE), editorContent);
+    this.saveFile(join(codioPath, CODIO_META_FILE), metaDataContent);
     await this.zip(codioPath, destinationFolder.fsPath);
     this.update();
   }

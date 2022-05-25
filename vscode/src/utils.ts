@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import { execFile } from 'child_process';
 import IDeviceParser from './environment/IDeviceParser';
 
@@ -56,28 +55,6 @@ export const checkForFfmpeg = async (): Promise<unknown> => {
   });
 };
 
-//editor
-export async function overrideEditorText(editor: vscode.TextEditor, newText: string): Promise<void> {
-  console.log('overrideEditorText editor', editor);
-  console.log('overrideEditorText newText', newText);
-
-  const invalidRange = new vscode.Range(0, 0, editor.document.lineCount /*intentionally missing the '-1' */, 0);
-  console.log('overrideEditorText invalidRange', invalidRange);
-  const fullRange = editor.document.validateRange(invalidRange);
-  console.log('overrideEditorText fullRange', fullRange);
-  console.log('overrideEditorText editor.selection', editor.selection);
-  console.log('overrideEditorText editor.selections', editor.selections);
-  await editor.edit((edit) => {
-    console.log('editor edit', edit);
-    return edit.replace(fullRange, newText);
-  });
-  console.log('overrideEditorText after editor.selection', editor.selection);
-  console.log('overrideEditorText after editor.selections', editor.selections);
-}
-
-export function getTextEditor(path: string): vscode.TextEditor {
-  return vscode.window.visibleTextEditors.find((editor) => editor.document.uri.path === path);
-}
 //strings
 export function replaceRange(s: string, start: number, end: number, substitute: string): string {
   return s.substring(0, start) + substitute + s.substring(end);
@@ -93,20 +70,6 @@ export function nthIndex(str: string, pat: string, n: number): number {
     }
   }
   return i;
-}
-
-/**
- * After each interation wait for callback to return to continue.
- * @param array Array to iterate through and pass to callback.
- * @param callback Callback to wait on.
- */
-export async function asyncForEach(
-  array: Array<unknown>,
-  callback: (elem: unknown, i: number, arr: Array<unknown>) => unknown,
-): Promise<void> {
-  for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array);
-  }
 }
 
 /**

@@ -3,7 +3,6 @@ import {
   isSerializedDocumentChangeEvent,
   isSerializedSelectionEvent,
   isSerializedVisibleRangeEvent,
-  isSerializedEditorEvent,
 } from './event_creator';
 import { DocumentEvents } from './consts';
 
@@ -29,8 +28,6 @@ export default function deserializeEvents(
       return deserializeSelectionEvent(event);
     } else if (isSerializedVisibleRangeEvent(event)) {
       return deserializeVisibleRangeEvent(event);
-    } else if (isSerializedEditorEvent(event)) {
-      return deserializeEditorEvent(event);
     } else {
       return event;
     }
@@ -136,22 +133,6 @@ function deserializeVisibleRangeEvent(event: SerializedDocumentVisibleRangeEvent
       visibleRange: deserializeRange(event.data.visibleRange),
     },
   } as unknown) as DocumentVisibleRangeEvent;
-}
-
-/**
- * @note Deprecated
- * Construct a CodioChangeActiveEditorEvent from given arguments.
- * @param event A serialized event to deserialize into a CodioChangeActiveEditorEvent.
- * @returns A CodioChangeActiveEditorEvent.
- */
-function deserializeEditorEvent(event: CodioSerializedChangeActiveEditorEvent): CodioChangeActiveEditorEvent {
-  return ({
-    ...event,
-    data: {
-      ...event.data,
-      visibleRange: deserializeRange(event.data.visibleRange),
-    },
-  } as unknown) as CodioChangeActiveEditorEvent;
 }
 
 function deserializeRange(range: Range): Range {

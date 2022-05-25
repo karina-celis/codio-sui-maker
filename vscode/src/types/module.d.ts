@@ -198,80 +198,6 @@ declare interface SerializedDocumentSelectionEvent extends SerializedDocumentEve
   };
 }
 
-declare interface CodioExecutionEvent extends CodioEvent {
-  type: 'exec';
-  data: {
-    executionOutput: string;
-    time: number;
-  };
-}
-
-declare interface CodioSerializedExecutionEvent extends SerializedDocumentEvent {
-  type: 'exec';
-  data: {
-    executionOutput: string;
-    time: number;
-  };
-}
-
-// @Note Deprecated
-declare interface CodioChangeActiveEditorEvent extends CodioEvent {
-  type: 'editor';
-  data: {
-    uri: Uri;
-    time: number;
-    isInitial: boolean;
-    content: string;
-    viewColumn: ViewColumn;
-    visibleRange: vscode.Range;
-    selections: readonly vscode.Selection[];
-  };
-}
-
-// @Note Deprecated
-declare interface CodioSerializedChangeActiveEditorEvent {
-  type: 'editor';
-  data: {
-    path: string;
-    time: number;
-    isInitial: boolean;
-    content: string;
-    viewColumn: ViewColumn;
-    visibleRange: vscode.Range;
-    selections: vscode.Selection[];
-  };
-}
-
-declare interface IntitialFileContent {
-  content: string;
-  uri: Uri;
-}
-
-declare interface CodioFile {
-  document: ShadowDocument;
-  column: ViewColumn;
-  uri: Uri;
-  lastAction: number;
-}
-
-declare interface CodioSerializedFile {
-  text: string;
-  column: number;
-  path: string;
-  lastActionCount: number;
-}
-
-declare interface Timeline {
-  codioLength: number;
-  events: SerializedDocumentEvent[];
-  initialFrame: CodioSerializedFile[];
-}
-
-declare interface TimelineContent {
-  events: SerializedDocumentEvent[];
-  initialFrame: CodioSerializedFile[];
-}
-
 declare interface Device {
   id?: number;
   alternativeName?: string;
@@ -287,5 +213,3 @@ declare interface ModalMessage {
   msg: string;
   detail?: string;
 }
-
-declare type CodioFrame = Array<CodioFile>;

@@ -1,6 +1,3 @@
-const CODIO_EDITOR_CHANGED = 'editor';
-const CODIO_EXEC = 'exec';
-
 enum DocumentEvents {
   DOCUMENT_CHANGE,
   DOCUMENT_CLOSE,
@@ -18,4 +15,4 @@ enum DocumentEvents {
   DOCUMENT_UNGROUP,
 }
 
-export { CODIO_EDITOR_CHANGED, CODIO_EXEC, DocumentEvents };
+export { DocumentEvents };

@@ -14,7 +14,7 @@ export function createEventWithModifiedTime(event: DocumentEvent, newTime: numbe
  * @param startTime A relative time in milliseconds.
  * @returns A new array of events with time relative to the given time.
  */
-export function createRelativeTimeline(events: DocumentEvent[], startTime: number): DocumentEvent[] {
+export function createEventsWithRelativeTime(events: DocumentEvent[], startTime: number): DocumentEvent[] {
   return events.map((event) => {
     const newTime = event.data.time - startTime;
     return createEventWithModifiedTime(event, newTime);
@@ -31,15 +31,15 @@ export function cutTimelineUntil(events: DocumentEvent[], time: number): Documen
 
 /**
  * Adjust given events by given start time.
- * @param eventsWithRelativeTimeline Editor and document events with relative time in milliseconds.
+ * @param eventsWithRelativeTime Editor and document events with relative time in milliseconds.
  * @param startTime Time to adjust in milliseconds.
  * @returns A new array of events with time absolute to the time given.
  */
-export function createTimelineWithAbsoluteTimes(
-  eventsWithRelativeTimeline: DocumentEvent[],
+export function createEventsWithAbsoluteTime(
+  eventsWithRelativeTime: DocumentEvent[],
   startTime: number,
 ): DocumentEvent[] {
-  return eventsWithRelativeTimeline.map((event) => {
+  return eventsWithRelativeTime.map((event) => {
     const newTime = event.data.time + startTime;
     return createEventWithModifiedTime(event, newTime);
   });

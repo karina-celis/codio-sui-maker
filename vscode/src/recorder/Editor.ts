@@ -6,7 +6,6 @@ import {
   TextEditorSelectionChangeEvent,
   Disposable,
   TextEditorVisibleRangesChangeEvent,
-  Uri,
   TextDocument,
   FileWillDeleteEvent,
   FileWillRenameEvent,
@@ -18,9 +17,7 @@ import {
 import { TextDecoder } from 'util';
 import serializeEvents from '../editor/serialize';
 import * as eventCreators from '../editor/event_creator';
-import { createRelativeTimeline } from '../editor/event_timeline';
-import ShadowDocument from '../editor/frame/ShadowDocument';
-import serializeFrame from '../editor/frame/serialize_frame';
+import { createEventsWithRelativeTime } from '../editor/event_time';
 import { DocumentEvents } from '../editor/consts';
 import { schemeSupported } from '../utils';
 
@@ -44,7 +41,7 @@ enum GroupState {
   DESTROY,
 }
 
-export default class CodeEditorRecorder {
+export default class EditorRecorder {
   onDidChangeActiveTextEditorListener: Disposable;
   onDidChangeTextEditorSelectionListener: Disposable;
   onDidChangeTextEditorVisibleRangesListener: Disposable;
@@ -61,7 +58,6 @@ export default class CodeEditorRecorder {
   onSaveDocumentListener: Disposable;
   onCloseDocumentListener: Disposable;
 
-  initialFrame: Array<CodioFile> = [];
   events: DocumentEvent[] = [];
   processPaths: Array<string> = [];
   onLanguageIdChange: Record<string, string> = {};
@@ -74,8 +70,6 @@ export default class CodeEditorRecorder {
   record(): void {
     const editor = window.activeTextEditor;
     if (editor) {
-      this.addCodioFileToInitialFrame(new ShadowDocument(editor.document.getText()), 1, editor.document.uri, 0);
-
       // Filter out active document.
       const unfocusedPaths = workspace.textDocuments.filter((td) => td.uri.path !== editor.document.uri.path);
       unfocusedPaths.forEach((td) => {
@@ -141,15 +135,6 @@ export default class CodeEditorRecorder {
     this.onCloseDocumentListener = workspace.onDidCloseTextDocument(this.onCloseDocument, this);
   }
 
-  private addCodioFileToInitialFrame(document: ShadowDocument, column: number, uri: Uri, lastAction: number): void {
-    this.initialFrame.push({
-      document,
-      column,
-      uri,
-      lastAction,
-    });
-  }
-
   /**
    * Clean up after recording.
    */
@@ -199,14 +184,9 @@ export default class CodeEditorRecorder {
     return isProcessing;
   }
 
-  getTimelineContent(recordingStartTime: number, workspaceRoot: Uri): TimelineContent {
-    const rootPath = workspaceRoot.path;
-    console.log('getTimelineContent workspaceRoot', workspaceRoot);
-    console.log('getTimelineContent rootPath', rootPath);
-    const eventsTimeline = createRelativeTimeline(this.events, recordingStartTime);
-    const events = serializeEvents(eventsTimeline, rootPath);
-    const initialFrame = serializeFrame(this.initialFrame, rootPath);
-    return { events, initialFrame };
+  getSerializedEvents(recordingStartTime: number, workspacePath: string): SerializedDocumentEvent[] {
+    const eventsTimeline = createEventsWithRelativeTime(this.events, recordingStartTime);
+    return serializeEvents(eventsTimeline, workspacePath);
   }
 
   /**
@@ -227,11 +207,6 @@ export default class CodeEditorRecorder {
 
     // From an onOpenDocument.
     if (this.removePathFromProcessing(uri.path)) {
-      // Save active text editor if it wasn't available when record started.
-      if (this.events.length === 1) {
-        this.addCodioFileToInitialFrame(new ShadowDocument(content), 1, uri, 0);
-      }
-
       return;
     }
 

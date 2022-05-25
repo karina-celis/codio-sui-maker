@@ -6,6 +6,7 @@ import AudioHandler from '../audio/Audio';
 import Subtitles from './Subtitles';
 import Environment from '../environment/Environment';
 import DebugPlayer from '../debug/DebugPlayer';
+import { CODIO_FORMAT_VERSION } from '../recorder/Recorder';
 
 const IS_PLAYING = 'isPlaying';
 const IS_PAUSED = 'isPlayerPaused';
@@ -37,21 +38,22 @@ export default class Player {
    * @param workspaceToPlayOn Path of the current workspace.
    */
   async loadCodio(codioPath: string, workspaceToPlayOn?: string): Promise<void> {
+    console.log('loadCodio codioPath', codioPath);
+    console.log('loadCodio workspaceToPlayOn', workspaceToPlayOn);
     try {
       this.setInitialState();
-      this.codioName = FSManager.getMetaData(codioPath).name;
       this.codioPath = codioPath;
-      const timeline = await FSManager.loadTimeline(this.codioPath);
-      this.codioLength = timeline.codioLength;
-
-      this.editorPlayer = new EditorPlayer();
-      let loaded = this.editorPlayer.load(
-        workspaceToPlayOn ? workspaceToPlayOn : FSManager.workspacePath(this.codioPath),
-        timeline,
-      );
-      if (!loaded) {
-        this.editorPlayer.destroy();
+      const metaData = FSManager.getMetaData(codioPath);
+      if (metaData.version !== CODIO_FORMAT_VERSION) {
+        throw Error(`Verison Mismatch: ${metaData.version} !== ${CODIO_FORMAT_VERSION}`);
       }
+
+      console.log('loadCodio metaData', metaData);
+      this.codioName = metaData.name;
+      this.codioLength = metaData.length;
+
+      this.editorPlayer = new EditorPlayer(workspaceToPlayOn);
+      this.editorPlayer.import(FSManager.editorPath(codioPath));
 
       this.debugPlayer = new DebugPlayer();
       this.debugPlayer.import(FSManager.debugPath(this.codioPath));
@@ -59,7 +61,7 @@ export default class Player {
       this.audioPlayer = new AudioHandler(FSManager.audioPath(this.codioPath), Environment.getInstance());
 
       this.subtitlesPlayer = new Subtitles();
-      loaded = await this.subtitlesPlayer.load(FSManager.subtitlesPath(this.codioPath));
+      const loaded = await this.subtitlesPlayer.load(FSManager.subtitlesPath(this.codioPath));
       if (!loaded) {
         this.subtitlesPlayer.destroy();
       }
@@ -146,7 +148,7 @@ export default class Player {
   }
 
   /**
-   * Pause all media types: Editor, Audio, Subtitles, and Timeline.
+   * Pause all media types: Editor, Audio, Subtitles, and Timer.
    */
   private pauseMedia(): void {
     this.editorPlayer.stop();

@@ -1,13 +1,12 @@
 import {
   TextDocumentChangeEvent,
   TextEditorSelectionChangeEvent,
-  TextEditor,
   TextEditorVisibleRangesChangeEvent,
   Uri,
   TextDocument,
 } from 'vscode';
 
-import { CODIO_EXEC, CODIO_EDITOR_CHANGED, DocumentEvents } from './consts';
+import { DocumentEvents } from './consts';
 
 export function createDocumentEvent(
   type: DocumentEvents,
@@ -158,36 +157,6 @@ export function createDocumentSelectionEvent(e: TextEditorSelectionChangeEvent):
   } as DocumentSelectionEvent;
 }
 
-export function createCodioExecutionEvent(output: string): CodioExecutionEvent {
-  return {
-    type: CODIO_EXEC,
-    data: {
-      executionOutput: output,
-      time: Date.now(),
-    },
-  };
-}
-
-// @Note Deprecated
-export function createCodioEditorEvent(
-  e: TextEditor,
-  content: string,
-  isInitial: boolean,
-): CodioChangeActiveEditorEvent {
-  return {
-    type: CODIO_EDITOR_CHANGED,
-    data: {
-      uri: e.document.uri,
-      isInitial,
-      content,
-      viewColumn: e.viewColumn,
-      visibleRange: e.visibleRanges[0],
-      selections: e.selections,
-      time: Date.now(),
-    },
-  };
-}
-
 export function isDocumentChangeEvent(event: CodioEvent): event is DocumentChangeEvent {
   return event.type === DocumentEvents.DOCUMENT_CHANGE;
 }
@@ -214,20 +183,4 @@ export function isSerializedVisibleRangeEvent(
   event: SerializedDocumentEvent,
 ): event is SerializedDocumentVisibleRangeEvent {
   return event.type === DocumentEvents.DOCUMENT_VISIBLE_RANGE;
-}
-
-export function isExecutionEvent(event: CodioEvent): event is CodioExecutionEvent | CodioSerializedExecutionEvent {
-  return event.type === CODIO_EXEC;
-}
-
-// @Note Deprecated
-export function isEditorEvent(event: CodioEvent): event is CodioChangeActiveEditorEvent {
-  return event.type === CODIO_EDITOR_CHANGED;
-}
-
-// @Note Deprecated
-export function isSerializedEditorEvent(
-  event: SerializedDocumentEvent,
-): event is CodioSerializedChangeActiveEditorEvent {
-  return event.type === CODIO_EDITOR_CHANGED;
 }

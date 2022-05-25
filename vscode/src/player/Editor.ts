@@ -3,17 +3,18 @@ import { AbortController } from 'node-abort-controller';
 import processEvent, { removeSelection } from '../editor/event_dispatcher';
 import deserializeEvents from '../editor/deserialize';
 import {
-  createTimelineWithAbsoluteTimes,
-  createRelativeTimeline,
+  createEventsWithAbsoluteTime,
+  createEventsWithRelativeTime,
   createEventWithModifiedTime,
-} from '../editor/event_timeline';
+} from '../editor/event_time';
 import { DocumentEvents } from '../editor/consts';
 import { nthIndex, replaceRange } from '../utils';
 import { Position, Range } from 'vscode';
+import { readFileSync } from 'fs';
 
-export default class EditorPlayer {
+export default class EditorPlayer implements IImport {
   currentEventTimer: NodeJS.Timer;
-  workspaceFolder: string;
+  workspacePath: string;
   private events: DocumentEvent[];
   private ac: AbortController;
   private abortHandler: () => void;
@@ -21,19 +22,20 @@ export default class EditorPlayer {
   /**
    * Construct EditorPlayer necessities.
    */
-  constructor() {
+  constructor(workspacePath: string) {
+    this.workspacePath = workspacePath;
     this.abortHandler = () => undefined;
   }
 
-  /**
-   * Load given data to create events and initial frame.
-   * @param workspacePath Path to where codio lives.
-   * @param timeline Object containing properties to act on.
-   * @returns True if loaded correctly; false otherwise.
-   */
-  load(workspacePath: string, timeline: Timeline): boolean {
-    this.events = deserializeEvents(timeline.events, workspacePath) as DocumentEvent[];
-    return !!this.events.length;
+  import(jsonPath: string): void {
+    const editorContent = readFileSync(jsonPath);
+    const events = JSON.parse(editorContent.toString());
+    console.log('import events', events);
+    this.events = deserializeEvents(events, this.workspacePath) as DocumentEvent[];
+    if (!this.events.length) {
+      this.destroy(); // @note Is this actually needed?
+    }
+    console.log('import', jsonPath, this.events);
   }
 
   /**
@@ -52,7 +54,7 @@ export default class EditorPlayer {
   start(elapsedTimeMs: number): void {
     this.ac = new AbortController();
     const events = this.getEventsFrom(elapsedTimeMs);
-    const absoluteEvents = createTimelineWithAbsoluteTimes(events, Date.now());
+    const absoluteEvents = createEventsWithAbsoluteTime(events, Date.now());
     console.log('play events', events);
     console.log('play absoluteEvents', absoluteEvents.length);
     this.playEvents(absoluteEvents);
@@ -126,7 +128,7 @@ export default class EditorPlayer {
     const vitalEvents = [];
 
     const [pastEvts, futureEvts] = this.getPastAndFutureEvents(this.events, timeMs);
-    const adjustedEvents = createRelativeTimeline(futureEvts, timeMs);
+    const adjustedEvents = createEventsWithRelativeTime(futureEvts, timeMs);
 
     const lastVisibleRange = this.getLastEventOfType(pastEvts, DocumentEvents.DOCUMENT_VISIBLE_RANGE);
     if (lastVisibleRange) {
