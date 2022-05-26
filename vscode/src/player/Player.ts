@@ -1,4 +1,4 @@
-import EditorPlayer from './Editor';
+import EditorPlayer from '../editor/EditorPlayer';
 import Timer from '../ProgressTimer';
 import FSManager from '../filesystem/FSManager';
 import { commands, Disposable, TextEditorSelectionChangeEvent, TextEditorSelectionChangeKind, window } from 'vscode';

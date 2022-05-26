@@ -1,4 +1,4 @@
-import EditorRecorder from './Editor';
+import EditorRecorder from '../editor/EditorRecorder';
 import Timer from '../ProgressTimer';
 import FSManager from '../filesystem/FSManager';
 import { Uri, commands } from 'vscode';

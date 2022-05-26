@@ -1,13 +1,9 @@
 import { clearTimeout } from 'timers';
 import { AbortController } from 'node-abort-controller';
-import processEvent, { removeSelection } from '../editor/event_dispatcher';
-import deserializeEvents from '../editor/deserialize';
-import {
-  createEventsWithAbsoluteTime,
-  createEventsWithRelativeTime,
-  createEventWithModifiedTime,
-} from '../editor/event_time';
-import { DocumentEvents } from '../editor/consts';
+import processEvent, { removeSelection } from './event_dispatcher';
+import deserializeEvents from './deserialize';
+import { createEventsWithAbsoluteTime, createEventsWithRelativeTime, createEventWithModifiedTime } from './event_time';
+import { DocumentEvents } from './consts';
 import { nthIndex, replaceRange } from '../utils';
 import { Position, Range } from 'vscode';
 import { readFileSync } from 'fs';

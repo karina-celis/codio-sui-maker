@@ -15,10 +15,10 @@ import {
   TextEditorViewColumnChangeEvent,
 } from 'vscode';
 import { TextDecoder } from 'util';
-import serializeEvents from '../editor/serialize';
-import * as eventCreators from '../editor/event_creator';
-import { createEventsWithRelativeTime } from '../editor/event_time';
-import { DocumentEvents } from '../editor/consts';
+import serializeEvents from './serialize';
+import * as eventCreators from './event_creator';
+import { createEventsWithRelativeTime } from './event_time';
+import { DocumentEvents } from './consts';
 import { schemeSupported } from '../utils';
 
 interface Fold {
