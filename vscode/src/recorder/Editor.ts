@@ -41,33 +41,42 @@ enum GroupState {
   DESTROY,
 }
 
-export default class EditorRecorder {
-  onDidChangeActiveTextEditorListener: Disposable;
-  onDidChangeTextEditorSelectionListener: Disposable;
-  onDidChangeTextEditorVisibleRangesListener: Disposable;
-  onDidChangeVisibleTextEditorListener: Disposable;
-  onDidChangeTextEditorViewColumnListener: Disposable;
+export default class EditorRecorder implements IMedia, IExport {
+  private onDidChangeActiveTextEditorListener: Disposable;
+  private onDidChangeTextEditorSelectionListener: Disposable;
+  private onDidChangeTextEditorVisibleRangesListener: Disposable;
+  private onDidChangeVisibleTextEditorListener: Disposable;
+  private onDidChangeTextEditorViewColumnListener: Disposable;
 
-  onWillCreateFilesListener: Disposable;
-  onWillRenameFilesListener: Disposable;
-  onWillDeleteFilesListener: Disposable;
-  onWillSaveDocumentListener: Disposable;
-  onDeleteDocumentListener: Disposable;
-  onOpenDocumentListener: Disposable;
-  onChangeDocumentListener: Disposable;
-  onSaveDocumentListener: Disposable;
-  onCloseDocumentListener: Disposable;
+  private onWillCreateFilesListener: Disposable;
+  private onWillRenameFilesListener: Disposable;
+  private onWillDeleteFilesListener: Disposable;
+  private onWillSaveDocumentListener: Disposable;
+  private onDeleteDocumentListener: Disposable;
+  private onOpenDocumentListener: Disposable;
+  private onChangeDocumentListener: Disposable;
+  private onSaveDocumentListener: Disposable;
+  private onCloseDocumentListener: Disposable;
 
-  events: DocumentEvent[] = [];
-  processPaths: Array<string> = [];
-  onLanguageIdChange: Record<string, string> = {};
-  folds: Fold[] = [];
-  groups: Group[] = [];
+  private events: DocumentEvent[] = [];
+  private processPaths: Array<string> = [];
+  private onLanguageIdChange: Record<string, string> = {};
+  private folds: Fold[] = [];
+  private groups: Group[] = [];
+
+  private startTimeMs: number;
+  private workspacePath: string;
+
+  constructor(workspacePath: string) {
+    this.workspacePath = workspacePath;
+  }
 
   /**
    * Save active text editor and listen to change events.
    */
-  record(): void {
+  start(timeMs: number): void {
+    this.startTimeMs = timeMs;
+
     const editor = window.activeTextEditor;
     if (editor) {
       // Filter out active document.
@@ -138,7 +147,7 @@ export default class EditorRecorder {
   /**
    * Clean up after recording.
    */
-  async stopRecording(): Promise<void> {
+  stop(): void {
     this.onDidChangeActiveTextEditorListener.dispose();
     this.onDidChangeTextEditorSelectionListener.dispose();
     this.onDidChangeTextEditorVisibleRangesListener.dispose();
@@ -184,11 +193,6 @@ export default class EditorRecorder {
     return isProcessing;
   }
 
-  getSerializedEvents(recordingStartTime: number, workspacePath: string): SerializedDocumentEvent[] {
-    const eventsTimeline = createEventsWithRelativeTime(this.events, recordingStartTime);
-    return serializeEvents(eventsTimeline, workspacePath);
-  }
-
   /**
    * Handle when text editor is shown.
    * @param te New active text editor with state.
@@ -202,19 +206,17 @@ export default class EditorRecorder {
     }
 
     const document: TextDocument = te.document;
-    const uri = document.uri;
-    const content = document.getText();
 
     // From an onOpenDocument.
-    if (this.removePathFromProcessing(uri.path)) {
+    if (this.removePathFromProcessing(document.uri.path)) {
       return;
     }
 
     // Switch to document
     const event = eventCreators.createDocumentEvent(
       DocumentEvents.DOCUMENT_OPEN,
-      uri,
-      content,
+      document.uri,
+      document.getText(),
       document.isUntitled,
       document.languageId,
       te.viewColumn,
@@ -289,7 +291,7 @@ export default class EditorRecorder {
   }
 
   /**
-   * Handle the user splitting or drag and dropping of a text editor into a new view column.
+   * Handle the user grouping, splitting, or drag and dropping of a text editor into a new view column.
    * @param tes An array of text editors that are visible.
    */
   private onDidChangeVisibleTextEditor(tes: readonly TextEditor[]): void {
@@ -573,5 +575,16 @@ export default class EditorRecorder {
       return;
     }
     this.removePathFromProcessing(td.uri.path);
+  }
+
+  /**
+   * Return a JSON string of events converted to relative time and path.
+   * @returns JSON of editor and workspace events.
+   */
+  export(): string {
+    const relativeTimeEvents = createEventsWithRelativeTime(this.events, this.startTimeMs);
+    const serializedEvents = serializeEvents(relativeTimeEvents, this.workspacePath);
+    console.log('export serializedEvents', serializedEvents);
+    return JSON.stringify(serializedEvents);
   }
 }

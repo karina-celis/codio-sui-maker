@@ -40,7 +40,7 @@ export default class Recorder {
     console.log('loadCodio', { codioPath, codioName, destinationUri, workspaceUri });
     this.timer = new Timer();
     this.audioRecorder = new AudioHandler(FSManager.audioPath(codioPath), Environment.getInstance());
-    this.editorRecorder = new EditorRecorder();
+    this.editorRecorder = new EditorRecorder(workspaceUri.path);
     this.debugRecorder = new DebugRecorder();
     this.setInitialState(codioPath, codioName, destinationUri, workspaceUri);
   }
@@ -97,10 +97,10 @@ export default class Recorder {
   async startRecording(): Promise<void> {
     this.recordingStartTime = Date.now() + 300;
 
-    this.debugRecorder.start(this.recordingStartTime);
-    this.editorRecorder.record();
-    await this.audioRecorder.record();
     this.timer.run();
+    await this.audioRecorder.record();
+    this.editorRecorder.start(this.recordingStartTime);
+    this.debugRecorder.start(this.recordingStartTime);
     this.process = new Promise((resolve) => (this.stopRecordingResolver = resolve));
 
     this.isRecording = true;
@@ -135,9 +135,9 @@ export default class Recorder {
       await this.resume();
     }
 
-    await this.editorRecorder.stopRecording();
-    await this.audioRecorder.stopRecording();
     this.debugRecorder.stop();
+    this.editorRecorder.stop();
+    await this.audioRecorder.stopRecording();
     this.timer.stop();
 
     // Todo: Check situation where pause time > recording time
@@ -156,9 +156,9 @@ export default class Recorder {
    */
   async pause(): Promise<void> {
     this.pauseStartTime = Date.now();
-    await this.audioRecorder.pause();
-    this.editorRecorder.stopRecording();
     this.debugRecorder.stop();
+    this.editorRecorder.stop();
+    await this.audioRecorder.pause();
     this.timer.stop();
 
     this.isPaused = true;
@@ -176,8 +176,8 @@ export default class Recorder {
     }
 
     this.timer.run(this.timer.currentSecond);
-    this.editorRecorder.record();
     await this.audioRecorder.resume();
+    this.editorRecorder.start(this.recordingStartTime);
     this.debugRecorder.start(this.recordingStartTime);
 
     this.isPaused = false;
@@ -191,11 +191,10 @@ export default class Recorder {
   async saveRecording(): Promise<void> {
     try {
       const debugContent = this.debugRecorder.export();
-      const serializedEvents = this.editorRecorder.getSerializedEvents(this.recordingStartTime, this.workspaceUri.path);
-      console.log('saveRecording serializedEvents', serializedEvents);
-      const editorContent = JSON.stringify(serializedEvents);
+      const editorContent = this.editorRecorder.export();
       const metaDataJsonContent = { length: this.recordingLength, name: this.codioName, version: CODIO_FORMAT_VERSION };
       const metaDataContent = JSON.stringify(metaDataJsonContent);
+
       await FSManager.saveRecordingToFile(
         debugContent,
         editorContent,

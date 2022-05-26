@@ -12,6 +12,10 @@ enum State {
   PAUSE,
 }
 
+/**
+ * Handle playing and recording of audio.
+ * @todo Could break this up to be AudioRecorder and AudioPlayer.
+ */
 export default class AudioHandler {
   audioFilePath: string;
   private pid: number;
@@ -62,18 +66,15 @@ export default class AudioHandler {
    * @param time Time in seconds to seek into audio file.
    */
   play(time: number): void {
-    this.currentAudioProcess = spawn(
-      'ffplay',
-      [
-        '-hide_banner',
-        '-nodisp',
-        '-nostats',
-        '-autoexit',
-        '-ss',
-        `${time}`,
-        `${this.audioFilePath}`
-      ]
-    );
+    this.currentAudioProcess = spawn('ffplay', [
+      '-hide_banner',
+      '-nodisp',
+      '-nostats',
+      '-autoexit',
+      '-ss',
+      `${time}`,
+      `${this.audioFilePath}`,
+    ]);
     this.pid = this.currentAudioProcess.pid;
     this.state = State.PLAYING;
   }
@@ -92,6 +93,7 @@ export default class AudioHandler {
       return;
     }
 
+    // Recording
     await this.iPlatform.pause(this.pid);
     this.state = State.PAUSE;
   }
@@ -116,7 +118,9 @@ export default class AudioHandler {
     const cp = this.currentAudioProcess;
     if (this.isRecording()) {
       // Kill if VS Code process exits before audio process
-      const killFunc = () => { this.iPlatform.kill(this.pid, cp); };
+      const killFunc = () => {
+        this.iPlatform.kill(this.pid, cp);
+      };
       process.once('exit', killFunc);
 
       // Listen to child process events and handle accordingly when quitting
