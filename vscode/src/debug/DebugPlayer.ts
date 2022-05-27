@@ -140,7 +140,12 @@ export default class DebugPlayer implements IMedia, IImport {
    */
   private async processDebugStop(dse: DebugStopEvent) {
     console.log('processDebugStop', dse);
-    await debug.stopDebugging();
+    /*
+    Turning off processing this event because of the different processing speeds
+    that can happen on the same computer. A stop event could be processed sooner than
+    when the debugger stops processing. This would halt a debug before it finishes.
+    */
+    // await debug.stopDebugging();
   }
 
   /**
