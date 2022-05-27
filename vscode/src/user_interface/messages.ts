@@ -10,6 +10,7 @@ import {
   ThemeIcon,
   Uri,
 } from 'vscode';
+import { CommandNames } from '../commands';
 import Player from '../player/Player';
 import Recorder from '../recorder/Recorder';
 import { playerUI, recorderUI } from './popups';
@@ -145,7 +146,7 @@ class UIController {
     context.subscriptions.push(this.statusBar);
   }
 
-  showMessage(message): void {
+  showMessage(message: string): void {
     if (this.shouldDisplayMessages) {
       window.showInformationMessage(message);
 
@@ -179,7 +180,7 @@ class UIController {
    * Show given message as an error pop-up.
    * @param message Message to show in error pop-up.
    */
-  showError(message): void {
+  showError(message: string): void {
     window.showErrorMessage(message);
   }
 
@@ -191,11 +192,13 @@ class UIController {
     this.mds.value = playerUI(player);
     this.statusBar.tooltip = this.mds;
 
-    player.onStateUpdate(() => {
+    player.onStateUpdate((isPlaying, isPaused) => {
       this.mds.value = playerUI(player);
       this.statusBar.tooltip = this.mds;
+      this.statusBar.command = isPaused ? CommandNames.RESUME_CODIO : CommandNames.PAUSE_CODIO;
     });
 
+    this.statusBar.command = CommandNames.PAUSE_CODIO;
     this.statusBar.name = 'Codio Player';
     this.statusBar.text = '$(megaphone) Playing...';
     this.statusBar.show();
@@ -221,11 +224,13 @@ class UIController {
     this.mds.value = recorderUI(recorder);
     this.statusBar.tooltip = this.mds;
 
-    recorder.onStateUpdate(() => {
+    recorder.onStateUpdate((isRecording, isPaused) => {
       this.mds.value = recorderUI(recorder);
       this.statusBar.tooltip = this.mds;
+      this.statusBar.command = isPaused ? CommandNames.RESUME_RECORDING : CommandNames.PAUSE_RECORDING;
     });
 
+    this.statusBar.command = CommandNames.PAUSE_RECORDING;
     this.statusBar.name = 'Codio Recorder';
     this.statusBar.text = '$(pulse) Recording...';
     this.statusBar.show();

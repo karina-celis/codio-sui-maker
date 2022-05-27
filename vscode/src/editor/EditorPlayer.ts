@@ -102,7 +102,7 @@ export default class EditorPlayer implements IImport {
             this.playEvents(events);
           }
         })
-        .catch((e) => console.log("Event's Promise ", e));
+        .catch((e) => console.log("Event's Promise", e));
     } catch (e) {
       console.log('playEvents error', e);
     }
