@@ -37,6 +37,7 @@ const eventsToProcess = {
   [DocumentEvents.DOCUMENT_VIEW_COLUMN]: processViewColumnEvent,
   [DocumentEvents.DOCUMENT_GROUP]: processGroupEvent,
   [DocumentEvents.DOCUMENT_UNGROUP]: processUngroupEvent,
+  [DocumentEvents.DOCUMENT_ACTIVE]: processActiveEvent,
 };
 
 /**
@@ -176,11 +177,28 @@ async function processDeleteEvent(de: DocumentEvent) {
  * @param de Document event to process.
  */
 async function processOpenEvent(de: DocumentEvent) {
+  await prepareDocument(de);
+  commands.executeCommand('scrollPageUp');
+}
+
+/**
+ * Process an active document.
+ * @param de Document event to process.
+ */
+async function processActiveEvent(de: DocumentEvent) {
+  await prepareDocument(de);
+}
+
+/**
+ *
+ * Using the given document event prepare the document to display accurately.
+ * @param de Document event to process.
+ */
+async function prepareDocument(de: DocumentEvent) {
   const data = de.data;
-  const td = getTextDocument(data.uri.path);
   const viewColumn = data.viewColumn ? data.viewColumn : 1;
 
-  if (data.isUntitled && !td) {
+  if (isUntitledAndNotFound(de)) {
     const untitledTD = await resolveUntitledTD(data.uri.path);
     await languages.setTextDocumentLanguage(untitledTD, de.data.languageId);
 
@@ -200,11 +218,10 @@ async function processOpenEvent(de: DocumentEvent) {
   const ate = window.activeTextEditor;
   await languages.setTextDocumentLanguage(ate.document, de.data.languageId);
 
-  // If the active editor is the document in an unsaved state or untitled then replace all.
-  if (ate?.document.isDirty || ate?.document.isUntitled) {
+  if (shouldReplaceContent(ate)) {
     await ate.edit(async (tee: TextEditorEdit) => {
-      const start = ate.visibleRanges[0].start as Position;
-      const end = ate.visibleRanges[0].end as Position;
+      const start = new Position(0, 0);
+      const end = new Position(ate.document.lineCount, 0);
       tee.replace(new Range(start, end), data.content);
     });
 
@@ -216,6 +233,26 @@ async function processOpenEvent(de: DocumentEvent) {
   }
 
   removeSelection();
+}
+
+/**
+ * Check whether given document event is untitled and not in workspace's text documents.
+ * @param de Document event to test.
+ * @returns True is document is untitled and not found in workspace's text documents.
+ */
+function isUntitledAndNotFound(de: DocumentEvent) {
+  const data = de.data;
+  const td = getTextDocument(data.uri.path);
+  return data.isUntitled && !td;
+}
+
+/**
+ * Test if given text editor's document content should be replaced.
+ * @param te Text editor to test.
+ * @returns True if document is unsaved or untitled.
+ */
+function shouldReplaceContent(te?: TextEditor) {
+  return te?.document.isDirty || te?.document.isUntitled;
 }
 
 /**
@@ -326,8 +363,6 @@ function findTextEditor(de: DocumentEvent) {
  * @param dvre Document visible range event to process.
  */
 function processVisibleRangeEvent(dvre: DocumentVisibleRangeEvent) {
-  console.log('processVisibleRangeEvent', dvre.data);
-
   const textEditor: TextEditor = findTextEditor(dvre);
   if (textEditor) {
     textEditor.revealRange(dvre.data.visibleRange, TextEditorRevealType.AtTop);
@@ -339,8 +374,6 @@ function processVisibleRangeEvent(dvre: DocumentVisibleRangeEvent) {
  * @param dfe Document fold event to process.
  */
 async function processFoldEvent(dfe: DocumentFoldEvent) {
-  console.log('processFoldEvent', dfe.data);
-
   const textEditor: TextEditor = findTextEditor(dfe);
   if (!textEditor) {
     return;
@@ -369,7 +402,6 @@ async function processFoldEvent(dfe: DocumentFoldEvent) {
  * @param dve Document with a visible event to process.
  */
 function processVisibleEvent(dve: DocumentVisibleEvent) {
-  console.log('processVisibleEvent', dve.data);
   window.showTextDocument(dve.data.uri, { viewColumn: dve.data.viewColumn, preserveFocus: true, preview: false });
 }
 
@@ -378,7 +410,6 @@ function processVisibleEvent(dve: DocumentVisibleEvent) {
  * @param dvce Document with a view column change to process.
  */
 function processViewColumnEvent(dvce: DocumentViewColumnEvent) {
-  console.log('processViewColumnEvent', dvce.data);
   // Since it can't be told when a "[Circular]" file closes, let's just create a new view column.
   window.showTextDocument(dvce.data.uri, { viewColumn: dvce.data.viewColumn, preserveFocus: true, preview: false });
 }
@@ -388,7 +419,6 @@ function processViewColumnEvent(dvce: DocumentViewColumnEvent) {
  * @param dge Document with a group to process.
  */
 async function processGroupEvent(dge: DocumentGroupEvent) {
-  console.log('processGroupEvent', dge.data);
   await window.showTextDocument(dge.data.uri, { viewColumn: dge.data.viewColumn, preview: false });
   commands.executeCommand('workbench.action.splitEditorInGroup');
 }
@@ -398,7 +428,6 @@ async function processGroupEvent(dge: DocumentGroupEvent) {
  * @param duge Document with an ungroup to process.
  */
 async function processUngroupEvent(duge: DocumentUngroupEvent) {
-  console.log('processUngroupEvent', duge.data);
   await window.showTextDocument(duge.data.uri, { viewColumn: duge.data.viewColumn, preview: false });
   commands.executeCommand('workbench.action.joinEditorInGroup');
 }

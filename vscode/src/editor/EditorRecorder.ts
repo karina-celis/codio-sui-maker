@@ -212,9 +212,9 @@ export default class EditorRecorder implements IMedia, IExport {
       return;
     }
 
-    // Switch to document
+    // Switch to already opened document
     const event = eventCreators.createDocumentEvent(
-      DocumentEvents.DOCUMENT_OPEN,
+      DocumentEvents.DOCUMENT_ACTIVE,
       document.uri,
       document.getText(),
       document.isUntitled,

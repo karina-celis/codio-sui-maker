@@ -39,6 +39,9 @@ export default async function playCodio(
 }
 
 async function loadAndPlay(player: Player, path: string, workspacePath: string) {
+  console.log('window.visibleTextEditors', window.visibleTextEditors);
+  console.log('workspace.textDocuments', workspace.textDocuments);
+
   // Start with a clean workbench
   await commands.executeCommand('workbench.action.closeUnmodifiedEditors');
   let total = workspace.textDocuments.length;
@@ -47,6 +50,8 @@ async function loadAndPlay(player: Player, path: string, workspacePath: string) 
     if (!schemeSupported(td.uri.scheme)) {
       continue;
     }
+
+    console.log('loadAndPlay Showing td', td);
 
     await window.showTextDocument(td.uri, { preview: false });
     const saved = await td.save();

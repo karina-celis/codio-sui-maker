@@ -13,6 +13,7 @@ enum DocumentEvents {
   DOCUMENT_VIEW_COLUMN,
   DOCUMENT_GROUP,
   DOCUMENT_UNGROUP,
+  DOCUMENT_ACTIVE,
 }
 
 export { DocumentEvents };
