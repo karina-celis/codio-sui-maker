@@ -99,7 +99,7 @@ export default class Recorder {
 
     this.timer.run();
     await this.audioRecorder.record();
-    this.editorRecorder.start(this.recordingStartTime);
+    await this.editorRecorder.start(this.recordingStartTime);
     this.debugRecorder.start(this.recordingStartTime);
     this.process = new Promise((resolve) => (this.stopRecordingResolver = resolve));
 

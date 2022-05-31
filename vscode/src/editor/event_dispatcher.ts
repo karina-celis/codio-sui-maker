@@ -178,7 +178,8 @@ async function processDeleteEvent(de: DocumentEvent) {
  */
 async function processOpenEvent(de: DocumentEvent) {
   await prepareDocument(de);
-  commands.executeCommand('scrollPageUp');
+  await commands.executeCommand('scrollPageUp');
+  await commands.executeCommand('editor.unfoldAll');
 }
 
 /**
@@ -386,15 +387,13 @@ async function processFoldEvent(dfe: DocumentFoldEvent) {
 
   // Fold region
   const direction = dfe.data.direction;
-  (async () => {
-    const schema = {
-      levels: 1,
-      direction,
-      selectionLines: [startLine],
-    };
-    const command = direction === 'up' ? 'editor.fold' : 'editor.unfold';
-    await commands.executeCommand(command, textEditor, schema);
-  })();
+  const schema = {
+    levels: 1,
+    direction,
+    selectionLines: [startLine],
+  };
+  const command = direction === 'up' ? 'editor.fold' : 'editor.unfold';
+  await commands.executeCommand(command, textEditor, schema);
 }
 
 /**

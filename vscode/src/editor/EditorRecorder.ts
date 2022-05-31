@@ -13,6 +13,7 @@ import {
   TextDocumentWillSaveEvent,
   FileDeleteEvent,
   TextEditorViewColumnChangeEvent,
+  commands,
 } from 'vscode';
 import { TextDecoder } from 'util';
 import serializeEvents from './serialize';
@@ -74,17 +75,21 @@ export default class EditorRecorder implements IMedia, IExport {
   /**
    * Save active text editor and listen to change events.
    */
-  start(timeMs: number): void {
+  async start(timeMs: number): Promise<void> {
     this.startTimeMs = timeMs;
 
     const editor = window.activeTextEditor;
     if (editor) {
       // Filter out active document.
-      const unfocusedPaths = workspace.textDocuments.filter((td) => td.uri.path !== editor.document.uri.path);
-      unfocusedPaths.forEach((td) => {
+      const unfocusedTds = this.getTdsExcept(editor.document.uri.path);
+      for (let i = 0; i < unfocusedTds.length; i++) {
+        const td = unfocusedTds[i];
         if (!schemeSupported(td.uri.scheme)) {
           return;
         }
+
+        await window.showTextDocument(td.uri, { preserveFocus: true, preview: false });
+        await commands.executeCommand('editor.unfoldAll');
 
         // These events don't have a viewColumn because they aren't viewable yet.
         const event = eventCreators.createDocumentEvent(
@@ -95,7 +100,10 @@ export default class EditorRecorder implements IMedia, IExport {
           td.languageId,
         );
         this.events.push(event);
-      });
+      }
+
+      await window.showTextDocument(editor.document.uri, { preview: false });
+      await commands.executeCommand('editor.unfoldAll', editor);
 
       // Create active document to have focus.
       const event = eventCreators.createDocumentEvent(
@@ -142,6 +150,15 @@ export default class EditorRecorder implements IMedia, IExport {
     this.onChangeDocumentListener = workspace.onDidChangeTextDocument(this.onChangeDocument, this);
     this.onSaveDocumentListener = workspace.onDidSaveTextDocument(this.onSaveDocument, this);
     this.onCloseDocumentListener = workspace.onDidCloseTextDocument(this.onCloseDocument, this);
+  }
+
+  /**
+   * Get an array of text documents excluding the given path.
+   * @param path Path to exclude from returned array.
+   * @returns An array of text documents that exclude given path.
+   */
+  private getTdsExcept(path: string): TextDocument[] {
+    return workspace.textDocuments.filter((td) => td.uri.path !== path);
   }
 
   /**
@@ -448,8 +465,7 @@ export default class EditorRecorder implements IMedia, IExport {
       return;
     }
 
-    // Add to processing queue?
-    if (!this.onLanguageIdChange[td.uri.path] || this.onLanguageIdChange[td.uri.path] === td.languageId) {
+    if (this.shouldAddToProcessingQueue(td)) {
       this.processPaths.push(td.uri.path);
       console.log('To be processed', this.processPaths);
     }
@@ -465,6 +481,15 @@ export default class EditorRecorder implements IMedia, IExport {
       td.languageId,
     );
     this.events.push(event);
+  }
+
+  /**
+   * Test if given text document should be added to the processing queue.
+   * @param td Text document to test.
+   * @returns True if text document should be added to the processing queue.
+   */
+  private shouldAddToProcessingQueue(td: TextDocument): boolean {
+    return !this.onLanguageIdChange[td.uri.path] || this.onLanguageIdChange[td.uri.path] === td.languageId;
   }
 
   /**
