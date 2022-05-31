@@ -90,6 +90,7 @@ export default class EditorRecorder implements IMedia, IExport {
 
         await window.showTextDocument(td.uri, { preserveFocus: true, preview: false });
         await commands.executeCommand('editor.unfoldAll');
+        await commands.executeCommand('workbench.action.joinEditorInGroup');
 
         // These events don't have a viewColumn because they aren't viewable yet.
         const event = eventCreators.createDocumentEvent(
@@ -104,6 +105,7 @@ export default class EditorRecorder implements IMedia, IExport {
 
       await window.showTextDocument(editor.document.uri, { preview: false });
       await commands.executeCommand('editor.unfoldAll', editor);
+      await commands.executeCommand('workbench.action.joinEditorInGroup');
 
       // Create active document to have focus.
       const event = eventCreators.createDocumentEvent(
