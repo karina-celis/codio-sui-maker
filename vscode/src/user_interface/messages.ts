@@ -203,17 +203,50 @@ class UIController {
     this.statusBar.text = '$(megaphone) Playing...';
     this.statusBar.show();
 
-    player.onTimerUpdate((currentTime, totalTime) => {
-      const percentage = (currentTime / totalTime) * 100;
-      this.statusBar.text = `$(megaphone) Codio $(mention)${Math.round(percentage)}% - ${Math.round(
-        currentTime,
-      )}s/${Math.round(totalTime)}s`;
+    player.onTimerUpdate((currentSecs, totalSecs) => {
+      const percentage = (currentSecs / totalSecs) * 100;
+      const current = this.getTimeDisplay(currentSecs);
+      const total = this.getTimeDisplay(totalSecs);
+      this.statusBar.text = `$(megaphone) Codio $(mention)${Math.round(percentage)}% - ${current}/${total}`;
     });
 
     player.process.then(() => {
       this.clearStatusBar();
       this.statusBar.hide();
     });
+  }
+
+  /**
+   * Using given time, get human readable time to display.
+   * @param timeSecs Time in seconds.
+   * @returns Display time using time system of units.
+   */
+  private getTimeDisplay(timeSecs: number): string {
+    const seconds = Math.floor(timeSecs % 60);
+    let minutes = Math.floor(timeSecs / 60);
+    const hours = Math.floor(minutes / 60);
+    minutes %= 60;
+
+    let display = '';
+    if (hours) {
+      display = `${hours}h`;
+    }
+
+    if (minutes && minutes < 60) {
+      if (display) {
+        display += ':';
+      }
+      display += `${minutes}min`;
+    }
+
+    if (seconds) {
+      if (display) {
+        display += ':';
+      }
+      display += `${seconds}s`;
+    }
+
+    return display;
   }
 
   /**
@@ -235,8 +268,9 @@ class UIController {
     this.statusBar.text = '$(pulse) Recording...';
     this.statusBar.show();
 
-    recorder.onTimerUpdate(async (currentTime) => {
-      this.statusBar.text = `$(pulse) Recording Codio $(mention) ${Math.round(currentTime)}s`;
+    recorder.onTimerUpdate(async (currentSecs) => {
+      const display = this.getTimeDisplay(currentSecs);
+      this.statusBar.text = `$(pulse) Recording Codio $(mention) ${display}`;
     });
 
     recorder.process.then(() => {
