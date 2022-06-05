@@ -255,7 +255,7 @@ export default class EditorRecorder implements IMedia, IExport {
       return;
     }
 
-    let event: DocumentFoldEvent | DocumentVisibleRangeEvent;
+    let event: DocumentFoldUpEvent | DocumentFoldDownEvent | DocumentVisibleRangeEvent;
 
     // Check for any unfold events in this view column.
     const viewColumnFolds = this.folds.filter((fold) => fold.viewColumn === e.textEditor.viewColumn);
@@ -267,7 +267,7 @@ export default class EditorRecorder implements IMedia, IExport {
         if (startLine < range.end.line) {
           if (startLine >= range.start.line) {
             this.folds.splice(viewColumnFolds[i].index, 1);
-            event = eventCreators.createDocumentFoldEvent(e, startLine, 'down');
+            event = eventCreators.createDocumentFoldDownEvent(e, startLine);
             this.events.push(event);
           }
         }
@@ -285,7 +285,7 @@ export default class EditorRecorder implements IMedia, IExport {
       const fold = this.folds.find((fold) => fold.line === curLine && fold.viewColumn === e.textEditor.viewColumn);
       if (!fold) {
         this.folds.push({ index: this.folds.length, line: curLine, viewColumn: e.textEditor.viewColumn });
-        event = eventCreators.createDocumentFoldEvent(e, curLine, 'up');
+        event = eventCreators.createDocumentFoldUpEvent(e, curLine);
         this.events.push(event);
       }
     }

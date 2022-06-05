@@ -154,10 +154,12 @@ declare interface DocumentFoldEvent extends DocumentEvent {
     uri: Uri;
     time: number;
     startLine: number;
-    direction: string;
     viewColumn: number;
   };
 }
+
+type DocumentFoldUpEvent = DocumentFoldEvent;
+type DocumentFoldDownEvent = DocumentFoldEvent;
 
 declare interface DocumentVisibleRangeEvent extends DocumentEvent {
   type: number;

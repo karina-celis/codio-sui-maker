@@ -32,7 +32,8 @@ const eventsToProcess = {
   [DocumentEvents.DOCUMENT_SAVE]: processSaveEvent,
   [DocumentEvents.DOCUMENT_SELECTION]: processSelectionEvent,
   [DocumentEvents.DOCUMENT_VISIBLE_RANGE]: processVisibleRangeEvent,
-  [DocumentEvents.DOCUMENT_FOLD]: processFoldEvent,
+  [DocumentEvents.DOCUMENT_FOLD_UP]: processFoldUpEvent,
+  [DocumentEvents.DOCUMENT_FOLD_DOWN]: processFoldDownEvent,
   [DocumentEvents.DOCUMENT_VISIBLE]: processVisibleEvent,
   [DocumentEvents.DOCUMENT_VIEW_COLUMN]: processViewColumnEvent,
   [DocumentEvents.DOCUMENT_GROUP]: processGroupEvent,
@@ -371,10 +372,29 @@ function processVisibleRangeEvent(dvre: DocumentVisibleRangeEvent) {
 }
 
 /**
+ * Process folding up a region in a document.
+ * @param dfue Document fold up event to process.
+ */
+async function processFoldUpEvent(dfue: DocumentFoldUpEvent) {
+  processFoldEvent(dfue, 'up', 'editor.fold');
+}
+
+/**
+ * Process folding down a region in a document.
+ * @param dfde Document fold down event to process.
+ */
+async function processFoldDownEvent(dfde: DocumentFoldDownEvent) {
+  processFoldEvent(dfde, 'down', 'editor.unfold');
+}
+
+/**
  * Process the folding of ranges in a document.
  * @param dfe Document fold event to process.
+ * @param direction Direction [up | down] of fold action.
+ * @param command Command of fold action.
+ * @returns Void
  */
-async function processFoldEvent(dfe: DocumentFoldEvent) {
+async function processFoldEvent(dfe: DocumentFoldUpEvent, direction: string, command: string) {
   const textEditor: TextEditor = findTextEditor(dfe);
   if (!textEditor) {
     return;
@@ -386,13 +406,11 @@ async function processFoldEvent(dfe: DocumentFoldEvent) {
   await textEditor.insertSnippet(new SnippetString(''), pos); // Place cursor; selection(s) doesn't always work.
 
   // Fold region
-  const direction = dfe.data.direction;
   const schema = {
     levels: 1,
     direction,
     selectionLines: [startLine],
   };
-  const command = direction === 'up' ? 'editor.fold' : 'editor.unfold';
   await commands.executeCommand(command, textEditor, schema);
 }
 

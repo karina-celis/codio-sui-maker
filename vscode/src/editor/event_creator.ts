@@ -126,22 +126,36 @@ function createEventType(type: DocumentEvents, td: TextDocument, viewColumn: num
   } as DocumentEvent;
 }
 
-export function createDocumentFoldEvent(
+export function createDocumentFoldUpEvent(
   e: TextEditorVisibleRangesChangeEvent,
   startLine: number,
-  direction: string,
-): DocumentFoldEvent {
+): DocumentFoldUpEvent {
   return {
-    type: DocumentEvents.DOCUMENT_FOLD,
+    type: DocumentEvents.DOCUMENT_FOLD_UP,
     data: {
       isUntitled: e.textEditor.document.isUntitled,
       time: Date.now(),
       uri: e.textEditor.document.uri,
       startLine,
-      direction,
       viewColumn: e.textEditor.viewColumn,
     },
-  } as DocumentFoldEvent;
+  } as DocumentFoldUpEvent;
+}
+
+export function createDocumentFoldDownEvent(
+  e: TextEditorVisibleRangesChangeEvent,
+  startLine: number,
+): DocumentFoldDownEvent {
+  return {
+    type: DocumentEvents.DOCUMENT_FOLD_DOWN,
+    data: {
+      isUntitled: e.textEditor.document.isUntitled,
+      time: Date.now(),
+      uri: e.textEditor.document.uri,
+      startLine,
+      viewColumn: e.textEditor.viewColumn,
+    },
+  } as DocumentFoldDownEvent;
 }
 
 export function createDocumentSelectionEvent(e: TextEditorSelectionChangeEvent): DocumentSelectionEvent {
