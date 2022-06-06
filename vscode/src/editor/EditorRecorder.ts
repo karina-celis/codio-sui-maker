@@ -14,6 +14,7 @@ import {
   FileDeleteEvent,
   TextEditorViewColumnChangeEvent,
   commands,
+  Range,
 } from 'vscode';
 import { TextDecoder } from 'util';
 import serializeEvents from './serialize';
@@ -23,8 +24,8 @@ import { DocumentEvents } from './consts';
 import { schemeSupported } from '../utils';
 
 interface Fold {
-  index: number;
   line: number;
+  path: string;
   viewColumn?: number;
 }
 
@@ -62,7 +63,8 @@ export default class EditorRecorder implements IMedia, IExport {
   private events: DocumentEvent[] = [];
   private processPaths: Array<string> = [];
   private onLanguageIdChange: Record<string, string> = {};
-  private folds: Fold[] = [];
+  private foldUps: Fold[] = [];
+  private foldDowns: Fold[] = [];
   private groups: Group[] = [];
 
   private startTimeMs: number;
@@ -224,20 +226,29 @@ export default class EditorRecorder implements IMedia, IExport {
       return;
     }
 
-    const document: TextDocument = te.document;
+    const td: TextDocument = te.document;
+    const path = td.uri.path;
 
     // From an onOpenDocument.
-    if (this.removePathFromProcessing(document.uri.path)) {
+    if (this.removePathFromProcessing(td.uri.path)) {
       return;
+    }
+
+    // This just became active with folded ranges so ignore multiple visible range events.
+    if (this.foldUps.find((fold) => fold.path === path) && this.shouldAddToProcessingQueue(td)) {
+      this.processPaths.push(path);
+      this.processPaths.push(path);
+      this.processPaths.push(path);
+      console.log('To be processed', this.processPaths);
     }
 
     // Switch to already opened document
     const event = eventCreators.createDocumentEvent(
       DocumentEvents.DOCUMENT_ACTIVE,
-      document.uri,
-      document.getText(),
-      document.isUntitled,
-      document.languageId,
+      td.uri,
+      td.getText(),
+      td.isUntitled,
+      td.languageId,
       te.viewColumn,
     );
     this.events.push(event);
@@ -255,48 +266,136 @@ export default class EditorRecorder implements IMedia, IExport {
       return;
     }
 
-    let event: DocumentFoldUpEvent | DocumentFoldDownEvent | DocumentVisibleRangeEvent;
-
-    // Check for any unfold events in this view column.
-    const viewColumnFolds = this.folds.filter((fold) => fold.viewColumn === e.textEditor.viewColumn);
-    for (let i = 0; i < viewColumnFolds.length; i++) {
-      const startLine = viewColumnFolds[i].line;
-      for (let j = 0; j < e.visibleRanges.length; j++) {
-        // Is current folded start line between visible ranges?
-        const range = e.visibleRanges[j];
-        if (startLine < range.end.line) {
-          if (startLine >= range.start.line) {
-            this.folds.splice(viewColumnFolds[i].index, 1);
-            event = eventCreators.createDocumentFoldDownEvent(e, startLine);
-            this.events.push(event);
-          }
-        }
-      }
-    }
-    if (event) {
-      // No need to process further.
+    // From an onDidChangeActiveTextEditor.
+    const path = e.textEditor.document.uri.path;
+    if (this.foldUps.length && this.removePathFromProcessing(path)) {
       return;
     }
 
-    // Create fold start lines before last visible range (aka EOF).
-    event = null;
-    for (let i = 0; i < e.visibleRanges.length - 1; i++) {
-      const curLine = e.visibleRanges[i].end.line;
-      const fold = this.folds.find((fold) => fold.line === curLine && fold.viewColumn === e.textEditor.viewColumn);
-      if (!fold) {
-        this.folds.push({ index: this.folds.length, line: curLine, viewColumn: e.textEditor.viewColumn });
-        event = eventCreators.createDocumentFoldUpEvent(e, curLine);
-        this.events.push(event);
-      }
+    if (this.handleFoldDowns(e)) {
+      return;
     }
-    if (event) {
-      // No need to process further.
+
+    if (this.handleFoldUps(e)) {
       return;
     }
 
     // Create scroll event
-    event = eventCreators.createDocumentVisibleRangeEvent(e);
+    const event = eventCreators.createDocumentVisibleRangeEvent(e);
     this.events.push(event);
+  }
+
+  /**
+   * Handle the creation of any fold down events.
+   * @param e Visible range event to handle.
+   * @returns True if events were created.
+   */
+  private handleFoldDowns(e: TextEditorVisibleRangesChangeEvent): boolean {
+    const path = e.textEditor.document.uri.path;
+    const viewColumn = e.textEditor.viewColumn;
+    const ranges = e.visibleRanges;
+    let event: DocumentFoldDownEvent;
+
+    // Check for any unfold events in this view column and path.
+    const viewColumnFoldUps = this.foldUps.filter((fold) => fold.viewColumn === viewColumn && fold.path === path);
+    for (const foldUp of viewColumnFoldUps) {
+      const line = foldUp.line;
+      for (let j = 0; j < ranges.length; j++) {
+        if (!this.lineBetweenRange(line, ranges[j])) {
+          continue;
+        }
+
+        this.removeFold(foldUp, this.foldUps);
+
+        const fold = this.getFold(line, path, viewColumn, this.foldDowns);
+        if (fold) {
+          continue;
+        }
+
+        this.foldDowns.push({ line: line, path, viewColumn });
+        event = eventCreators.createDocumentFoldDownEvent(e, line);
+        this.events.push(event);
+      }
+    }
+
+    return event ? true : false;
+  }
+
+  /**
+   * Test if given line is between given range.
+   * @param line Line number to test against.
+   * @param range Range to test against.
+   * @returns True if given line is between given range; false otherwise.
+   */
+  private lineBetweenRange(line: number, range: Range): boolean {
+    return line < range.end.line && line >= range.start.line;
+  }
+
+  /**
+   * Delete given fold from given fold array.
+   * @param toDelete Fold object to delete.
+   * @param folds Fold object array to delete from.
+   * @returns Deleted fold.
+   */
+  private removeFold(toDelete: Fold, folds: Fold[]): Fold {
+    const index = this.getFoldIndex(toDelete.line, toDelete.path, toDelete.viewColumn, folds);
+    return folds.splice(index, 1)[0];
+  }
+
+  /**
+   * Find index of fold object with given arguments.
+   * @param line Line to test for.
+   * @param path Path to test for.
+   * @param viewColumn View column to test for.
+   * @param folds Fold object array to parse.
+   * @returns The index of found object; -1 otherwise.
+   */
+  private getFoldIndex(line: number, path: string, viewColumn: number, folds: Fold[]): number {
+    return folds.findIndex((fold) => fold.line === line && fold.path === path && fold.viewColumn === viewColumn);
+  }
+
+  /**
+   * Find fold object with given arguments.
+   * @param line Line to test for.
+   * @param path Path to test for.
+   * @param viewColumn View column to test for.
+   * @param folds Fold object array to parse.
+   * @returns Fold object found; undefined otherwise.
+   */
+  private getFold(line: number, path: string, viewColumn: number, folds: Fold[]): Fold | undefined {
+    return folds.find((fold) => fold.line === line && fold.path === path && fold.viewColumn === viewColumn);
+  }
+
+  /**
+   * Handle the creation of any fold up events.
+   * @param e Visible range event to handle.
+   * @returns True if events were created.
+   */
+  private handleFoldUps(e: TextEditorVisibleRangesChangeEvent): boolean {
+    const path = e.textEditor.document.uri.path;
+    const viewColumn = e.textEditor.viewColumn;
+    const ranges = e.visibleRanges;
+
+    // Create fold start lines before last visible range (aka EOF).
+    let event: DocumentFoldUpEvent;
+    for (let i = 0; i < ranges.length - 1; i++) {
+      const line = ranges[i].end.line;
+      let fold = this.getFold(line, path, viewColumn, this.foldDowns);
+      if (fold) {
+        this.removeFold(fold, this.foldDowns);
+      }
+
+      fold = this.getFold(line, path, viewColumn, this.foldUps);
+      if (fold) {
+        continue;
+      }
+
+      this.foldUps.push({ line: line, path, viewColumn });
+      event = eventCreators.createDocumentFoldUpEvent(e, line);
+      this.events.push(event);
+    }
+
+    return event ? true : false;
   }
 
   /**
