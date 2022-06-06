@@ -181,6 +181,7 @@ async function processOpenEvent(de: DocumentEvent) {
   await prepareDocument(de);
   await commands.executeCommand('scrollPageUp');
   await commands.executeCommand('editor.unfoldAll');
+  await commands.executeCommand('workbench.action.joinEditorInGroup');
 }
 
 /**
@@ -418,17 +419,21 @@ async function processFoldEvent(dfe: DocumentFoldUpEvent, direction: string, com
  * Process the document that became visible by splitting or drag and dropping of a text editor into a new view column.
  * @param dve Document with a visible event to process.
  */
-function processVisibleEvent(dve: DocumentVisibleEvent) {
-  window.showTextDocument(dve.data.uri, { viewColumn: dve.data.viewColumn, preserveFocus: true, preview: false });
+async function processVisibleEvent(dve: DocumentVisibleEvent) {
+  await window.showTextDocument(dve.data.uri, { viewColumn: dve.data.viewColumn, preview: false });
 }
 
 /**
  * Process the document that had a view column change.
  * @param dvce Document with a view column change to process.
  */
-function processViewColumnEvent(dvce: DocumentViewColumnEvent) {
+async function processViewColumnEvent(dvce: DocumentViewColumnEvent) {
   // Since it can't be told when a "[Circular]" file closes, let's just create a new view column.
-  window.showTextDocument(dvce.data.uri, { viewColumn: dvce.data.viewColumn, preserveFocus: true, preview: false });
+  await window.showTextDocument(dvce.data.uri, {
+    viewColumn: dvce.data.viewColumn,
+    preserveFocus: true,
+    preview: false,
+  });
 }
 
 /**

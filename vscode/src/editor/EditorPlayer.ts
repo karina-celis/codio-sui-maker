@@ -141,10 +141,65 @@ export default class EditorPlayer implements IImport {
       DocumentEvents.DOCUMENT_SELECTION,
     ]);
 
+    /*
+    Reconcile each path
+    Our understanding is that documents start unfolded, ungrouped, and scrolled to the top.
+    A text editor could open in any available view column.
+    Visible and active events present a document in a text editor.
+    */
     const pathEvents = this.getPathEvents(coreEvents);
     for (const path in pathEvents) {
       const events = this.getReconciledEvents(pathEvents[path]);
 
+      // These events could cancel each other out if even.
+      // In terms of odd events: fold, unfold, fold; the last fold event is valid.
+      const foldUpEvents = this.getEventsOfType(events, DocumentEvents.DOCUMENT_FOLD_UP) as DocumentFoldUpEvent[];
+      const foldDownEvents = this.getEventsOfType(events, DocumentEvents.DOCUMENT_FOLD_DOWN) as DocumentFoldDownEvent[];
+      const foldDownLines = foldDownEvents.map((e) => e.data.startLine);
+      const validFoldUpEvents = foldUpEvents.filter((e) => {
+        const index = foldDownLines.indexOf(e.data.startLine);
+        if (index > -1) {
+          foldDownLines.splice(index, 1);
+          return false;
+        }
+        return true;
+      });
+      vitalEvents.push(...validFoldUpEvents);
+
+      // These events cancel each other out if even.
+      const groupEvents = this.getEventsOfType(events, DocumentEvents.DOCUMENT_GROUP);
+      const ungroupEvents = this.getEventsOfType(events, DocumentEvents.DOCUMENT_UNGROUP);
+      const totalGroupEvts = groupEvents.length;
+      const totalUngroupEvts = ungroupEvents.length;
+      if (totalGroupEvts > totalUngroupEvts) {
+        vitalEvents.push(groupEvents[totalGroupEvts - 1]);
+      } else if (totalUngroupEvts > totalGroupEvts) {
+        vitalEvents.push(ungroupEvents[totalUngroupEvts - 1]);
+      }
+
+      // Get view column and visible events
+      const viewColumnEvents = this.getEventsOfTypes(events, [
+        DocumentEvents.DOCUMENT_VIEW_COLUMN,
+        DocumentEvents.DOCUMENT_VISIBLE,
+      ]);
+      const viewColumns = viewColumnEvents.map((e) => e.data.viewColumn);
+      const uniqueViewColumns = [...new Set(viewColumns)];
+      const visibleEvent = this.getEventOfType(events, DocumentEvents.DOCUMENT_VISIBLE) as DocumentVisibleEvent;
+
+      // Create visible event clones
+      const clonedVisibleEvents = uniqueViewColumns.map((viewColumn) => {
+        const { type, data } = visibleEvent;
+        return {
+          type,
+          data: {
+            ...data,
+            viewColumn,
+          },
+        } as DocumentVisibleEvent;
+      });
+      vitalEvents.push(...clonedVisibleEvents);
+
+      // Consolidate remaining text change events
       if (events.length > 2) {
         const finalEvent = this.getConsolidatedEvent(events);
         vitalEvents.push(finalEvent);
@@ -243,12 +298,13 @@ export default class EditorPlayer implements IImport {
   /**
    * Reconcile given events.
    * The logic here is looking at events that are most final to least.
-   * Each event knows it's state other than Change, Selection, and VisibleRange.
+   * Each event checked here knows it's state.
    * @param events Events to reconcile.
    * @returns An array of reconciled events.
    */
   private getReconciledEvents(events: DocumentEvent[]): DocumentEvent[] {
     const eventsAfterDelete = this.discardEventsBeforeType(events, DocumentEvents.DOCUMENT_DELETE);
+    // Rename is 'deleting' an old file; the new file will have an open event with another path containing the new name.
     const eventsAfterRename = this.discardEventsBeforeType(eventsAfterDelete, DocumentEvents.DOCUMENT_RENAME);
     const eventsAfterClose = this.discardEventsBeforeType(eventsAfterRename, DocumentEvents.DOCUMENT_CLOSE);
     const eventsAfterSave = this.discardEventsBeforeType(eventsAfterClose, DocumentEvents.DOCUMENT_SAVE);
@@ -327,6 +383,30 @@ export default class EditorPlayer implements IImport {
    */
   private getEventsOfType(events: DocumentEvent[], type: number): DocumentEvent[] {
     return events.filter((e) => {
+      return e.type === type;
+    });
+  }
+
+  /**
+   * Get events of given types from given array.
+   * @param events Events to parse.
+   * @param type Event types to test for.
+   * @returns A new array containing events of given types.
+   */
+  private getEventsOfTypes(events: DocumentEvent[], type: number[]): DocumentEvent[] {
+    return events.filter((e) => {
+      return type.includes(e.type);
+    });
+  }
+
+  /**
+   * Get event of given type from given array.
+   * @param events Events to parse.
+   * @param type Event type to test for.
+   * @returns Event found of given type or null.
+   */
+  private getEventOfType(events: DocumentEvent[], type: number): DocumentEvent | undefined {
+    return events.find((e) => {
       return e.type === type;
     });
   }
