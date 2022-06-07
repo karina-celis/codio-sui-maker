@@ -1,7 +1,7 @@
 import { UI, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
 import Recorder from '../recorder/Recorder';
 
-export default async function cancelRecording(recorder: Recorder): Promise<void> {
+export default async function recordCancel(recorder: Recorder): Promise<void> {
   try {
     // TODO: Don't think I need try and catch here
     if (recorder && recorder.isRecording) {

@@ -6,7 +6,7 @@ import { showPlayFromInputBox, UI, MODAL_MESSAGE_OBJS } from '../user_interface/
  * @param player Player to activate.
  * @param time Given milliseconds time to go into codio.
  */
-export default async function goto(player: Player, time?: number): Promise<void> {
+export default async function playGoto(player: Player, time?: number): Promise<void> {
   // Ask for a time if none given.
   if (!time) {
     let timeInSeconds = parseInt(await showPlayFromInputBox(player));

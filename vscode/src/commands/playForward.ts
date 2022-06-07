@@ -5,7 +5,7 @@ import Player from '../player/Player';
  * @param player Codio player instance.
  * @param timeSecs Time in seconds.
  */
-export default function forward(player: Player, timeSecs?: number): void {
+export default function playForward(player: Player, timeSecs?: number): void {
   if (player) {
     typeof timeSecs === 'number' ? player.forward(timeSecs) : player.forward(10);
   }

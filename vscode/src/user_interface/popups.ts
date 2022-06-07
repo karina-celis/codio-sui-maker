@@ -1,5 +1,6 @@
 import Recorder from '../recorder/Recorder';
 import Player from '../player/Player';
+import { Commands } from '../commands';
 
 /**
  * Get player UI to display.
@@ -10,13 +11,11 @@ export function playerUI(player: Player): string {
   const title = getHeader(player.codioName);
   let primary;
   if (player.isPaused) {
-    primary =
-      '# [$(debug-reverse-continue)](command:codio.rewind) [$(debug-start)](command:codio.resumeCodio) [$(debug-continue)](command:codio.forward)';
+    primary = `# [$(debug-reverse-continue)](command:${Commands.PLAY_REWIND}) [$(debug-start)](command:${Commands.PLAY_RESUME}) [$(debug-continue)](command:${Commands.PLAY_FORWARD})`;
   } else {
-    primary =
-      '# [$(debug-reverse-continue)](command:codio.rewind) [$(debug-pause)](command:codio.pauseCodio) [$(debug-continue)](command:codio.forward)';
+    primary = `# [$(debug-reverse-continue)](command:${Commands.PLAY_REWIND}) [$(debug-pause)](command:${Commands.PLAY_PAUSE}) [$(debug-continue)](command:${Commands.PLAY_FORWARD})`;
   }
-  const secondary = '# [$(debug-stop)](command:codio.stopCodio)';
+  const secondary = `# [$(debug-stop)](command:${Commands.PLAY_STOP})`;
   return tableTmpl(title, primary, secondary);
 }
 
@@ -29,11 +28,11 @@ export function recorderUI(recorder: Recorder): string {
   const title = getHeader(recorder.codioName);
   let primary;
   if (recorder.isPaused) {
-    primary = '# [$(save)](command:codio.saveRecording) [$(record)](command:codio.resumeRecording)';
+    primary = `# [$(save)](command:${Commands.RECORD_SAVE}) [$(record)](command:${Commands.RECORD_RESUME})`;
   } else {
-    primary = '# [$(save)](command:codio.saveRecording) [$(debug-pause)](command:codio.pauseRecording)';
+    primary = `# [$(save)](command:${Commands.RECORD_SAVE}) [$(debug-pause)](command:${Commands.RECORD_PAUSE})`;
   }
-  const secondary = '# [$(close)](command:codio.cancelRecording)';
+  const secondary = `# [$(close)](command:${Commands.RECORD_CANCEL})`;
   return tableTmpl(title, primary, secondary);
 }
 

@@ -4,7 +4,7 @@ import Recorder from '../recorder/Recorder';
 import FSManager from '../filesystem/FSManager';
 import { Uri } from 'vscode';
 
-export default async function recordCodio(
+export default async function recordStart(
   fsManager: FSManager,
   recorder: Recorder,
   destUri: Uri,

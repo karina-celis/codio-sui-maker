@@ -40,7 +40,7 @@ declare interface Codio extends Metadata {
 declare interface RecordProject {
   workspaceUri: Uri;
   codioUri: Uri;
-  getCodioName: () => Promise<string>;
+  codioName: string;
 }
 
 declare interface CodioEvent {

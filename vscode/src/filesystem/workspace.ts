@@ -6,17 +6,17 @@ import { existsSync, mkdirSync } from 'fs';
 
 const CODIO_EXT = '.codio';
 
-const createWorkspaceCodiosFolder = async (workspaceUri: Uri) => {
+const createWorkspaceCodioFolder = (workspaceUri: Uri) => {
   const codioWorkspaceFolder = join(workspaceUri.fsPath, CODIO_EXT);
   mkdirSync(codioWorkspaceFolder, { recursive: true });
   return codioWorkspaceFolder;
 };
 
-export const getWorkspaceUriAndCodioDestinationUri = async (): Promise<RecordProject> => {
+export const getRecordProject = async (): Promise<RecordProject> => {
   const rp: RecordProject = {
     codioUri: null,
     workspaceUri: null,
-    getCodioName: null,
+    codioName: null,
   };
 
   if (workspace.workspaceFolders) {
@@ -25,7 +25,7 @@ export const getWorkspaceUriAndCodioDestinationUri = async (): Promise<RecordPro
       rp.workspaceUri = workspace.workspaceFolders[0].uri;
       rp.codioUri = await getAvailableUri(name, rp.workspaceUri);
       name = basename(rp.codioUri.path, CODIO_EXT);
-      rp.getCodioName = async () => name;
+      rp.codioName = name;
     }
   } else {
     UI.showModalMessage(MODAL_MESSAGE_OBJS.noActiveWorkspace);
@@ -46,7 +46,7 @@ const getAvailableUri = async (name: string, workspaceUri: Uri): Promise<vscode.
   let count = 0;
   let filename;
   let fileStat: vscode.FileStat;
-  const codioWorkspaceFolderPath = await createWorkspaceCodiosFolder(workspaceUri);
+  const codioWorkspaceFolderPath = createWorkspaceCodioFolder(workspaceUri);
 
   do {
     filename = `${name.split(' ').join('_')}${append}${CODIO_EXT}`;

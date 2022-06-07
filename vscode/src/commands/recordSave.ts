@@ -3,7 +3,7 @@ import Recorder from '../recorder/Recorder';
 import { window, workspace } from 'vscode';
 import { schemeSupported } from '../utils';
 
-export default async function saveRecording(recorder: Recorder): Promise<void> {
+export default async function recordSave(recorder: Recorder): Promise<void> {
   try {
     if (recorder && recorder.isRecording) {
       const processedPaths = {};

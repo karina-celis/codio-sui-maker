@@ -5,7 +5,7 @@ import Player from '../player/Player';
  * @param player Codio player instance.
  * @param timeSecs Time in seconds.
  */
-export default function rewind(player: Player, timeSecs?: number): void {
+export default function playRewind(player: Player, timeSecs?: number): void {
   if (player) {
     typeof timeSecs === 'number' ? player.rewind(timeSecs) : player.rewind(10);
   }

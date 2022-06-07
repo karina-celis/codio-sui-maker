@@ -1,12 +1,12 @@
 import { commands, ExtensionContext, Uri } from 'vscode';
-import { UI, showCodioNameInputBox, MODAL_MESSAGE_OBJS, MESSAGES } from './user_interface/messages';
+import { UI, MODAL_MESSAGE_OBJS, MESSAGES } from './user_interface/messages';
 import Player from './player/Player';
 import Recorder from './recorder/Recorder';
 import { registerTreeViews } from './user_interface/Viewers';
 import FSManager from './filesystem/FSManager';
-import { codioCommands, CommandNames } from './commands';
-import { getWorkspaceUriAndCodioDestinationUri } from './filesystem/workspace';
-import { checkForFfmpeg, saveExtensionPath } from './utils';
+import { funcs, Commands } from './commands';
+import { getRecordProject } from './filesystem/workspace';
+import { checkForFFmpeg, saveExtensionPath } from './utils';
 import Environment from './environment/Environment';
 
 const fsManager = new FSManager();
@@ -22,127 +22,96 @@ export async function activate(context: ExtensionContext): Promise<void> {
   UI.createStatusBar(context);
   registerTreeViews(fsManager, context.extensionPath);
 
-  const recordCodioDisposable = commands.registerCommand(
-    CommandNames.RECORD_CODIO,
-    async (destination?: Uri, workspaceRoot?: Uri) => {
-      const hasFfmpeg = await checkForFfmpeg();
-      if (!hasFfmpeg) {
-        UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
-        return;
-      }
+  const playForwardDisposable = commands.registerCommand(Commands.PLAY_FORWARD, async (time?: number) => {
+    funcs.playForward(player, time);
+  });
 
-      if (player.isPlaying) {
-        player.stop();
-      }
+  const playGotoDisposable = commands.registerCommand(Commands.PLAY_GOTO, async (time?: number) => {
+    funcs.playGoto(player, time);
+    FSManager.update();
+  });
 
-      let codioName = await showCodioNameInputBox();
-      codioName = codioName?.trim();
-      if (!codioName) {
-        UI.showModalMessage(MODAL_MESSAGE_OBJS.emptyCodioNameInvalid);
-        return;
-      }
+  const playPauseDisposable = commands.registerCommand(Commands.PLAY_PAUSE, () => {
+    funcs.playPause(player);
+    FSManager.update();
+  });
 
-      codioCommands.recordCodio(fsManager, recorder, destination, workspaceRoot, codioName);
-    },
-  );
+  const playResumeDisposable = commands.registerCommand(Commands.PLAY_RESUME, () => {
+    funcs.playResume(player);
+    FSManager.update();
+  });
 
-  const recordCodioToProjectDisposable = commands.registerCommand(CommandNames.RECORD_CODIO_TO_PROJECT, async () => {
-    const rp: RecordProject = await getWorkspaceUriAndCodioDestinationUri();
-    if (rp.workspaceUri && rp.codioUri && rp.getCodioName) {
-      const codioName = await rp.getCodioName();
-      codioCommands.recordCodio(fsManager, recorder, rp.codioUri, rp.workspaceUri, codioName);
+  const playRewindDisposable = commands.registerCommand(Commands.PLAY_REWIND, async (time?: number) => {
+    funcs.playRewind(player, time);
+  });
+
+  const playStartDisposable = commands.registerCommand(Commands.PLAY_START, async (source: Uri, workspaceUri?: Uri) => {
+    const hasFFmpeg = checkForFFmpeg();
+    if (!hasFFmpeg) {
+      UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
+      return;
+    }
+
+    if (recorder && recorder.isRecording) {
+      UI.showMessage(MESSAGES.cantPlayWhileRecording);
+      return;
+    }
+
+    funcs.playStart(fsManager, player, source, workspaceUri);
+    FSManager.update();
+  });
+
+  const playStopDisposable = commands.registerCommand(Commands.PLAY_STOP, () => {
+    funcs.playStop(player);
+    FSManager.update();
+  });
+
+  const recordCancelDisposable = commands.registerCommand(Commands.RECORD_CANCEL, () => {
+    funcs.recordCancel(recorder);
+  });
+
+  const recordPauseDisposable = commands.registerCommand(Commands.RECORD_PAUSE, () => {
+    funcs.recordPause(recorder);
+  });
+
+  const recordResumeDisposable = commands.registerCommand(Commands.RECORD_RESUME, () => {
+    funcs.recordResume(recorder);
+  });
+
+  const recordSaveDisposable = commands.registerCommand(Commands.RECORD_SAVE, () => {
+    funcs.recordSave(recorder);
+  });
+
+  const recordStartDisposable = commands.registerCommand(Commands.RECORD_START, async () => {
+    const hasFFmpeg = checkForFFmpeg();
+    if (!hasFFmpeg) {
+      UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
+      return;
+    }
+
+    if (player.isPlaying) {
+      player.stop();
+    }
+
+    const rp: RecordProject = await getRecordProject();
+    if (rp.workspaceUri && rp.codioUri && rp.codioName) {
+      const codioName = rp.codioName;
+      funcs.recordStart(fsManager, recorder, rp.codioUri, rp.workspaceUri, codioName);
     }
   });
 
-  const saveRecordingDisposable = commands.registerCommand(CommandNames.SAVE_RECORDING, () => {
-    codioCommands.saveRecording(recorder);
-  });
-
-  const pauseRecordingDisposable = commands.registerCommand(CommandNames.PAUSE_RECORDING, () => {
-    codioCommands.pauseRecording(recorder);
-  });
-
-  const resumeRecordingDisposable = commands.registerCommand(CommandNames.RESUME_RECORDING, () => {
-    codioCommands.resumeRecording(recorder);
-  });
-
-  const cancelRecordingDisposable = commands.registerCommand(CommandNames.CANCEL_RECORDING, () => {
-    codioCommands.cancelRecording(recorder);
-  });
-
-  const playCodioDisposable = commands.registerCommand(
-    CommandNames.PLAY_CODIO,
-    async (source: Uri, workspaceUri?: Uri) => {
-      const hasFfmpeg = await checkForFfmpeg();
-      if (!hasFfmpeg) {
-        UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
-        return;
-      }
-
-      if (recorder && recorder.isRecording) {
-        UI.showMessage(MESSAGES.cantPlayWhileRecording);
-        return;
-      }
-
-      codioCommands.playCodio(fsManager, player, source, workspaceUri);
-      FSManager.update();
-    },
-  );
-
-  const playCodioTaskDisposable = commands.registerCommand(
-    CommandNames.PLAY_CODIO_TASK,
-    async (source: Uri, workspaceUri?: Uri) => {
-      codioCommands.playCodioTask(fsManager, player, source, workspaceUri);
-    },
-  );
-
-  const gotoDisposable = commands.registerCommand(CommandNames.PLAY_GOTO, async (time?: number) => {
-    codioCommands.goto(player, time);
-    FSManager.update();
-  });
-
-  const stopCodioDisposable = commands.registerCommand(CommandNames.STOP_CODIO, () => {
-    codioCommands.stopCodio(player);
-    FSManager.update();
-  });
-
-  const pauseCodioDisposable = commands.registerCommand(CommandNames.PAUSE_CODIO, () => {
-    codioCommands.pauseCodio(player);
-    FSManager.update();
-  });
-
-  const resumeCodioDisposable = commands.registerCommand(CommandNames.RESUME_CODIO, () => {
-    codioCommands.resumeCodio(player);
-    FSManager.update();
-  });
-
-  const rewindDisposable = commands.registerCommand(CommandNames.REWIND, async (time?: number) => {
-    codioCommands.rewind(player, time);
-  });
-
-  const forwardDisposable = commands.registerCommand(CommandNames.FORWARD, async (time?: number) => {
-    codioCommands.forward(player, time);
-  });
-
-  const trimEnd = commands.registerCommand(CommandNames.TRIM_END, async () => {
-    codioCommands.trimEnd(player);
-  });
-
-  context.subscriptions.push(recordCodioDisposable);
-  context.subscriptions.push(saveRecordingDisposable);
-  context.subscriptions.push(pauseRecordingDisposable);
-  context.subscriptions.push(resumeRecordingDisposable);
-  context.subscriptions.push(cancelRecordingDisposable);
-  context.subscriptions.push(recordCodioToProjectDisposable);
-  context.subscriptions.push(playCodioDisposable);
-  context.subscriptions.push(playCodioTaskDisposable);
-  context.subscriptions.push(stopCodioDisposable);
-  context.subscriptions.push(pauseCodioDisposable);
-  context.subscriptions.push(resumeCodioDisposable);
-  context.subscriptions.push(gotoDisposable);
-  context.subscriptions.push(rewindDisposable);
-  context.subscriptions.push(forwardDisposable);
-  context.subscriptions.push(trimEnd);
+  context.subscriptions.push(playForwardDisposable);
+  context.subscriptions.push(playGotoDisposable);
+  context.subscriptions.push(playPauseDisposable);
+  context.subscriptions.push(playResumeDisposable);
+  context.subscriptions.push(playRewindDisposable);
+  context.subscriptions.push(playStartDisposable);
+  context.subscriptions.push(playStopDisposable);
+  context.subscriptions.push(recordCancelDisposable);
+  context.subscriptions.push(recordPauseDisposable);
+  context.subscriptions.push(recordResumeDisposable);
+  context.subscriptions.push(recordSaveDisposable);
+  context.subscriptions.push(recordStartDisposable);
 }
 
 export function deactivate(): void {

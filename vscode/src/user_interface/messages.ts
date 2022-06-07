@@ -10,7 +10,7 @@ import {
   ThemeIcon,
   Uri,
 } from 'vscode';
-import { CommandNames } from '../commands';
+import { Commands } from '../commands';
 import Player from '../player/Player';
 import Recorder from '../recorder/Recorder';
 import { playerUI, recorderUI } from './popups';
@@ -109,7 +109,6 @@ export const MODAL_MESSAGE_OBJS = {
     msg: 'Codio requires FFmpeg to work.',
     detail: 'Please install FFmpeg: https://www.ffmpeg.org/download.html',
   },
-  emptyCodioNameInvalid: { msg: 'Filename needed to save codio to.', detail: 'Enter a filename to save to.' },
   noRecordingDeviceAvailable: {
     msg: 'Codio could not find an audio recording device.',
     detail: 'Make sure a microphone is active.',
@@ -195,10 +194,10 @@ class UIController {
     player.onStateUpdate((isPlaying, isPaused) => {
       this.mds.value = playerUI(player);
       this.statusBar.tooltip = this.mds;
-      this.statusBar.command = isPaused ? CommandNames.RESUME_CODIO : CommandNames.PAUSE_CODIO;
+      this.statusBar.command = isPaused ? Commands.PLAY_RESUME : Commands.PLAY_PAUSE;
     });
 
-    this.statusBar.command = CommandNames.PAUSE_CODIO;
+    this.statusBar.command = Commands.PLAY_PAUSE;
     this.statusBar.name = 'Codio Player';
     this.statusBar.text = '$(megaphone) Playing...';
     this.statusBar.show();
@@ -260,10 +259,10 @@ class UIController {
     recorder.onStateUpdate((isRecording, isPaused) => {
       this.mds.value = recorderUI(recorder);
       this.statusBar.tooltip = this.mds;
-      this.statusBar.command = isPaused ? CommandNames.RESUME_RECORDING : CommandNames.PAUSE_RECORDING;
+      this.statusBar.command = isPaused ? Commands.RECORD_RESUME : Commands.RECORD_PAUSE;
     });
 
-    this.statusBar.command = CommandNames.PAUSE_RECORDING;
+    this.statusBar.command = Commands.RECORD_PAUSE;
     this.statusBar.name = 'Codio Recorder';
     this.statusBar.text = '$(pulse) Recording...';
     this.statusBar.show();

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import FSManager from '../filesystem/FSManager';
 import { join } from 'path';
 import * as parser from 'subtitles-parser-vtt';
-import { CommandNames } from '../commands';
+import { Commands } from '../commands';
 
 export async function registerTreeViews(fsManager: FSManager, extensionPath: string): Promise<void> {
   const codioTreeDataProvider = new CodiosDataProvider(fsManager, extensionPath);
@@ -69,9 +69,9 @@ class RecordActionItem extends vscode.TreeItem {
       dark: join(extensionPath, 'media/dark/mic.svg'),
       light: join(extensionPath, 'media/light/mic.svg'),
     };
-    this.tooltip = 'Record Codio to Project';
+    this.tooltip = 'Record Codio';
     this.command = {
-      command: CommandNames.RECORD_CODIO_TO_PROJECT,
+      command: Commands.RECORD_START,
       title: '',
     };
   }
@@ -88,7 +88,7 @@ class CodioItem extends vscode.TreeItem {
       light: join(extensionPath, 'media/light/icon-small.svg'),
     };
     this.command = {
-      command: CommandNames.PLAY_CODIO,
+      command: Commands.PLAY_START,
       title: 'Play Codio',
       arguments: [codio.uri, codio.workspaceRoot],
     };

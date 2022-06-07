@@ -1,7 +1,7 @@
 import { UI, MESSAGES } from '../user_interface/messages';
 import Recorder from '../recorder/Recorder';
 
-export default async function resumeRecording(recorder: Recorder): Promise<void> {
+export default async function recordResume(recorder: Recorder): Promise<void> {
   try {
     // TODO: Don't think I need try and catch here
     if (recorder && recorder.isRecording) {

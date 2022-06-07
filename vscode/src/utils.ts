@@ -1,4 +1,4 @@
-import { execFile } from 'child_process';
+import { execFile, execFileSync } from 'child_process';
 import IDeviceParser from './environment/IDeviceParser';
 
 /**
@@ -46,13 +46,17 @@ export function getDeviceList(deviceParser: IDeviceParser, callback?: (value: un
   }
 }
 
-//ffmpeg
-export const checkForFfmpeg = async (): Promise<unknown> => {
-  return new Promise((res) => {
-    execFile('ffmpeg', ['-version'], (error) => {
-      res(!error);
-    });
-  });
+/**
+ * Check if FFmpeg is on the system.
+ * @returns Output string of executed command or false.
+ */
+export const checkForFFmpeg = (): string | boolean => {
+  try {
+    return execFileSync('ffmpeg', ['-version'], { encoding: 'utf8' });
+  } catch (error) {
+    console.log('error', error.message);
+    return false;
+  }
 };
 
 //strings

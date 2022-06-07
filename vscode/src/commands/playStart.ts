@@ -4,7 +4,7 @@ import Player from '../player/Player';
 import FSManager from '../filesystem/FSManager';
 import { isTreeItem, schemeSupported } from '../utils';
 
-export default async function playCodio(
+export default async function playStart(
   fsManager: FSManager,
   player: Player,
   codioUri?: Uri,
