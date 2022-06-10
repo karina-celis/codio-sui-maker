@@ -1,6 +1,9 @@
- <p align="center">
-  <img src="./assets/black_small.png" alt="Codio logo"/>
-</p>
+<div align="center">
+  <img src="media/logo.png" height="128" alt="Codio logo"/>
+  <!-- <img src="media/dark/logo.svg#gh-dark-mode-only" height="128" alt="Codio logo"/> -->
+  <!-- <img src="media/light/logo.svg#gh-light-mode-only" height="128" alt="Codio logo"/> -->
+</div>
+
 <h3 align="center">
 Codio
 </h3>
@@ -59,12 +62,5 @@ Codio could be used to enhance code by appending codios to specific functions or
 
 ***
 ## Continue Reading
-1) [Getting Started with Codio in VSCode](./vscode/README.md)
-2) [Codio in Intellij -WIP](./docs/intellij-docs.md)
-3) [The Format Spec - WIP](./docs/spec.md)
-4) [Contributing - WIP](./docs/contributing.md)
-5) [Roadmap - WIP](./docs/roadmap.md)
-6) [Codio on the Web - WIP](./docs/web-docs.md)
-
-
-
+1) [Getting Started with Codio in VSCode](./vscode/vscode.md)
+2) [The Format Spec - WIP](https://github.com/rbrisita/codio-sui/wiki/Codio-Format)

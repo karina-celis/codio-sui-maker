@@ -69,8 +69,8 @@ class CodioItem extends vscode.TreeItem {
   constructor(codio: Codio, extensionPath: string) {
     super(codio.name);
     this.iconPath = {
-      dark: join(extensionPath, 'media/dark/icon-small.svg'),
-      light: join(extensionPath, 'media/light/icon-small.svg'),
+      dark: join(extensionPath, 'media/dark/logo.svg'),
+      light: join(extensionPath, 'media/light/logo.svg'),
     };
     this.command = {
       command: Commands.PLAY_START,
