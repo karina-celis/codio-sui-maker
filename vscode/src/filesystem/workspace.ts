@@ -38,7 +38,7 @@ export const getRecordProject = async (): Promise<RecordProject> => {
  * Get a URI that does not exist and safe to write to.
  * @param name Name to save codio to.
  * @param workspaceUri Workspace folder to save codio to.
- * @returns A safe URI to write the new given codio to.
+ * @returns A safe Uri to write the new given codio to.
  */
 const getAvailableUri = async (name: string, workspaceUri: Uri): Promise<vscode.Uri> => {
   let uri: Uri;
@@ -66,14 +66,16 @@ const getAvailableUri = async (name: string, workspaceUri: Uri): Promise<vscode.
   return uri;
 };
 
-export const getWorkspaceRootAndCodiosFolder = ():
-  | { workspaceRootUri: Uri; workspaceCodiosFolder: string }
-  | undefined => {
+/**
+ * Access workspace to get first workspace Uri and codio folder path.
+ * @returns An object containing workspace root Uri and path to codio folder.
+ */
+export const getWorkspaceCodioData = (): { workspaceRootUri: Uri; workspaceCodioFolder: string } | undefined => {
   const workspaceRootUri = workspace.workspaceFolders[0]?.uri;
   if (workspaceRootUri) {
-    const workspaceCodiosFolder = join(workspaceRootUri.fsPath, CODIO_EXT);
-    if (existsSync(workspaceCodiosFolder)) {
-      return { workspaceCodiosFolder, workspaceRootUri };
+    const workspaceCodioFolder = join(workspaceRootUri.fsPath, CODIO_EXT);
+    if (existsSync(workspaceCodioFolder)) {
+      return { workspaceCodioFolder, workspaceRootUri };
     }
   }
 };

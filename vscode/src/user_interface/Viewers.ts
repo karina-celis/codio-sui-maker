@@ -12,8 +12,7 @@ export async function registerTreeViews(fsManager: FSManager, extensionPath: str
 }
 
 export class CodiosDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-  codios: Array<unknown>;
-  fsManager: FSManager;
+  private fsManager: FSManager;
   private extensionPath: string;
 
   _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined> = new vscode.EventEmitter<
@@ -34,28 +33,14 @@ export class CodiosDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
     return element;
   }
 
-  async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
-    const workspaceCodios = await this.fsManager.getWorkspaceCodios();
-    const libraryCodios = await this.fsManager.getLibraryCodios();
+  getChildren(): vscode.TreeItem[] {
+    const workspaceCodios = this.fsManager.getWorkspaceCodios();
 
-    if (!workspaceCodios.length && !libraryCodios.length) {
+    if (!workspaceCodios.length) {
       return [new RecordActionItem(this.extensionPath)];
     }
 
-    if (!element) {
-      return [
-        new vscode.TreeItem('Workspace Codios', vscode.TreeItemCollapsibleState.Collapsed),
-        new vscode.TreeItem('Library Codios', vscode.TreeItemCollapsibleState.Collapsed),
-      ];
-    }
-
-    if (element.label === 'Workspace Codios') {
-      return workspaceCodios.map((codio) => new CodioItem(codio, this.extensionPath));
-    }
-
-    if (element.label === 'Library Codios') {
-      return libraryCodios.map((codio) => new CodioItem(codio, this.extensionPath));
-    }
+    return workspaceCodios.map((codio) => new CodioItem(codio, this.extensionPath));
   }
 }
 
@@ -89,7 +74,7 @@ class CodioItem extends vscode.TreeItem {
     };
     this.command = {
       command: Commands.PLAY_START,
-      title: 'Play Codio',
+      title: 'Play Start',
       arguments: [codio.uri, codio.workspaceRoot],
     };
     this.description = this.getTimeDescription(codio.length);

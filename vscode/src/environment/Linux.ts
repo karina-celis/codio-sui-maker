@@ -1,6 +1,5 @@
 import { ChildProcess, execSync, spawn } from 'child_process';
-import { homedir } from 'os';
-import { join, sep } from 'path';
+import { sep } from 'path';
 import { chmod, constants } from 'fs';
 import which = require('which');
 import IDeviceParser from './IDeviceParser';
@@ -87,11 +86,11 @@ export default class Linux implements IPlatform {
     });
   }
 
-  public async zip(srcPath: string, destPath: string): Promise<void> {
+  public zip(srcPath: string, destPath: string): void {
     execSync(`cd ${srcPath} && ${this.zipPgm} a -tzip ${destPath} .`);
   }
 
-  public async unzip(srcPath: string, destPath: string): Promise<void> {
+  public unzip(srcPath: string, destPath: string): void {
     execSync(`${this.zipPgm} x -o${destPath} ${srcPath}`);
   }
 
@@ -123,10 +122,6 @@ export default class Linux implements IPlatform {
 
   async kill(pid: number, cp: ChildProcess): Promise<void> {
     cp.kill();
-  }
-
-  getExtensionFolder(): string {
-    return join(homedir(), 'codio');
   }
 
   getDeviceParser(): IDeviceParser {

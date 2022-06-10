@@ -1,8 +1,7 @@
 import { ChildProcess, execFile, spawn } from 'child_process';
-import { homedir } from 'os';
 import { existsSync } from 'fs';
-import { join, sep } from 'path';
-import { unzip, zip } from 'cross-zip';
+import { sep } from 'path';
+import { unzipSync, zipSync } from 'cross-zip';
 import { getExtensionPath } from '../utils';
 import IPlatform from './IPlatform';
 import IDeviceParser from './IDeviceParser';
@@ -55,12 +54,12 @@ export default class Windows_NT implements IPlatform {
     });
   }
 
-  public async zip(srcPath: string, destPath: string): Promise<void> {
-    await new Promise((res, rej) => zip(srcPath, destPath, (error: Error) => (error ? rej(error) : res(''))));
+  public zip(srcPath: string, destPath: string): void {
+    zipSync(srcPath, destPath);
   }
 
-  public async unzip(srcPath: string, destPath: string): Promise<void> {
-    await new Promise((res, rej) => unzip(srcPath, destPath, (error: Error) => (error ? rej(error) : res(''))));
+  public unzip(srcPath: string, destPath: string): void {
+    unzipSync(srcPath, destPath);
   }
 
   public normalizeFilePath(filePath: string): string {
@@ -157,10 +156,6 @@ export default class Windows_NT implements IPlatform {
    */
   private taskKill(pid: number) {
     spawn('taskkill', ['/pid', pid.toString(), '/f', '/t']);
-  }
-
-  getExtensionFolder(): string {
-    return join(homedir(), 'codio');
   }
 
   getDeviceParser(): IDeviceParser {

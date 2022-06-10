@@ -12,17 +12,17 @@ export default interface IPlatform {
    * Save files found in given codio path to a zip file in given destination path.
    * @param srcPath Source folder where files live.
    * @param destPath Destination folder where created zip file will live.
-   * @returns The destination string where the zip file was successfully saved.
+   * @note Throws an Error object.
    */
-  zip(srcPath: string, destPath: string): Promise<void>;
+  zip(srcPath: string, destPath: string): void;
 
   /**
    * Uncompress given file to given destination.
    * @param srcPath Path of compressed file.
    * @param destPath Path to uncompress files to.
-   * @param cb Callback to pass error result of unzip.
+   * @note Throws an Error object.
    */
-  unzip(srcPath: string, destPath: string): Promise<void>;
+  unzip(srcPath: string, destPath: string): void;
 
   /**
    * Record using dependencies according to OS type.
@@ -49,11 +49,6 @@ export default interface IPlatform {
    * @param cp Child process to try to quit.
    */
   kill(pid: number, cp: ChildProcess): Promise<void>;
-
-  /**
-   * Return extension folder according to OS type.
-   */
-  getExtensionFolder(): string;
 
   /**
    * Returns a device parser to be used to find input (audio and video) devices according to OS type.

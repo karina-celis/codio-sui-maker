@@ -6,7 +6,7 @@ import { registerTreeViews } from './user_interface/Viewers';
 import FSManager from './filesystem/FSManager';
 import { funcs, Commands } from './commands';
 import { getRecordProject } from './filesystem/workspace';
-import { checkForFFmpeg, saveExtensionPath } from './utils';
+import { checkForFFmpeg, isTreeItem, saveExtensionPath } from './utils';
 import Environment from './environment/Environment';
 
 const fsManager = new FSManager();
@@ -17,7 +17,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   saveExtensionPath(context.extensionPath);
   await Environment.getInstance().resolveDependencies();
 
-  await fsManager.createExtensionFolders();
   UI.shouldDisplayMessages = true;
   UI.createStatusBar(context);
   registerTreeViews(fsManager, context.extensionPath);
@@ -55,6 +54,22 @@ export async function activate(context: ExtensionContext): Promise<void> {
     if (recorder && recorder.isRecording) {
       UI.showMessage(MESSAGES.cantPlayWhileRecording);
       return;
+    }
+
+    // source and workspaceUri will be empty on a Command Palette execution.
+    if (!source) {
+      const itemSelected = await fsManager.chooseCodio();
+      if (!itemSelected?.path) {
+        UI.showModalMessage(MODAL_MESSAGE_OBJS.noActiveCodio);
+        return;
+      }
+      source = Uri.file(itemSelected.path);
+      workspaceUri = itemSelected.workspaceRoot;
+    } else if (isTreeItem(source)) {
+      // A tree item execution by button will have the source in a different format.
+      const command = source['command'];
+      source = command?.arguments[0];
+      workspaceUri = command?.arguments[1];
     }
 
     funcs.playStart(fsManager, player, source, workspaceUri);

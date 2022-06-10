@@ -37,13 +37,13 @@ export default class Player {
    * @param codioPath Path where codio was unzipped to access files.
    * @param workspaceToPlayOn Path of the current workspace.
    */
-  async loadCodio(codioPath: string, workspaceToPlayOn?: string): Promise<void> {
+  async loadCodio(codioPath: string, workspaceToPlayOn: string): Promise<void> {
     console.log('loadCodio codioPath', codioPath);
     console.log('loadCodio workspaceToPlayOn', workspaceToPlayOn);
     try {
       this.setInitialState();
       this.codioPath = codioPath;
-      const metaData = FSManager.getMetaData(codioPath);
+      const metaData = FSManager.getMetadata(codioPath);
       if (metaData.version !== CODIO_FORMAT_VERSION) {
         throw Error(`Verison Mismatch: ${metaData.version} !== ${CODIO_FORMAT_VERSION}`);
       }

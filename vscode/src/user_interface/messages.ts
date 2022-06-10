@@ -54,7 +54,7 @@ export const choose = async (codiosMetadata: Codio[]): Promise<{ path: string; w
   const quickPick = window.createQuickPick();
   quickPick.ignoreFocusOut = true;
   quickPick.placeholder = 'Type or select codio name';
-  quickPick.title = 'Play Codio';
+  quickPick.title = 'Play Start';
 
   quickPick.buttons = [QuickInputButtons.Back];
   quickPick.onDidTriggerButton(() => {
@@ -62,11 +62,10 @@ export const choose = async (codiosMetadata: Codio[]): Promise<{ path: string; w
     quickPick.hide();
   });
 
-  const quickPickItems = codiosMetadata.map((codio) => ({
+  quickPick.items = codiosMetadata.map((codio) => ({
     label: codio.name,
-    buttons: [{ iconPath: new ThemeIcon('play'), tooltip: 'Play Codio' }],
+    buttons: [{ iconPath: new ThemeIcon('play'), tooltip: 'Play Start' }],
   }));
-  quickPick.items = quickPickItems;
 
   quickPick.onDidTriggerItemButton((e) => {
     codioSelected = e.item;

@@ -1,7 +1,5 @@
 import { ChildProcess, execSync, spawn } from 'child_process';
-import { homedir } from 'os';
-import { join } from 'path';
-import { unzip } from 'cross-zip';
+import { unzipSync } from 'cross-zip';
 import IDeviceParser from './IDeviceParser';
 import IPlatform from './IPlatform';
 
@@ -18,12 +16,12 @@ export default class Darwin implements IPlatform {
     return true;
   }
 
-  public async zip(srcPath: string, destPath: string): Promise<void> {
+  public zip(srcPath: string, destPath: string): void {
     execSync(`cd ${srcPath} && zip -r ${destPath} .`);
   }
 
-  public async unzip(srcPath: string, destPath: string): Promise<void> {
-    await new Promise((res, rej) => unzip(srcPath, destPath, (error: Error) => (error ? rej(error) : res(''))));
+  public unzip(srcPath: string, destPath: string): void {
+    unzipSync(srcPath, destPath);
   }
 
   public async record(inputDevice: string, filePath: string): Promise<[ChildProcess, number]> {
@@ -54,10 +52,6 @@ export default class Darwin implements IPlatform {
   async kill(pid: number, cp: ChildProcess): Promise<void> {
     // process.kill(pid); // kill ESRCH because of unresolved promise
     cp.kill();
-  }
-
-  getExtensionFolder(): string {
-    return join(homedir(), 'Library', 'codio');
   }
 
   getDeviceParser(): IDeviceParser {

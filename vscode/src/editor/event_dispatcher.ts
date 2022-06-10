@@ -93,7 +93,7 @@ async function processCloseEvent(de: DocumentEvent) {
     await td.save();
   }
 
-  // There could be a situation where the active editor is not the given event's URI.
+  // There could be a situation where the active editor is not the given event's Uri.
   await window.showTextDocument(data.uri, { preview: false });
   await commands.executeCommand('workbench.action.closeActiveEditor');
 }
