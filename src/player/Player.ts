@@ -7,6 +7,7 @@ import Subtitles from './Subtitles';
 import Environment from '../environment/Environment';
 import DebugPlayer from '../debug/DebugPlayer';
 import { CODIO_FORMAT_VERSION } from '../recorder/Recorder';
+import { MESSAGES, MODAL_MESSAGE_OBJS, UI } from '../user_interface/messages';
 
 const IS_PLAYING = 'isPlaying';
 const IS_PAUSED = 'isPlayerPaused';
@@ -40,42 +41,40 @@ export default class Player {
   async loadCodio(codioPath: string, workspaceToPlayOn: string): Promise<void> {
     console.log('loadCodio codioPath', codioPath);
     console.log('loadCodio workspaceToPlayOn', workspaceToPlayOn);
-    try {
-      this.setInitialState();
-      this.codioPath = codioPath;
-      const metaData = FSManager.getMetadata(codioPath);
-      if (metaData.version !== CODIO_FORMAT_VERSION) {
-        throw Error(`Verison Mismatch: ${metaData.version} !== ${CODIO_FORMAT_VERSION}`);
-      }
 
-      console.log('loadCodio metaData', metaData);
-      this.codioName = metaData.name;
-      this.codioLength = metaData.length;
-
-      this.editorPlayer = new EditorPlayer(workspaceToPlayOn);
-      this.editorPlayer.import(FSManager.editorPath(codioPath));
-
-      this.debugPlayer = new DebugPlayer();
-      this.debugPlayer.import(FSManager.debugPath(this.codioPath));
-
-      this.audioPlayer = new AudioHandler(FSManager.audioPath(this.codioPath), Environment.getInstance());
-
-      this.subtitlesPlayer = new Subtitles();
-      const loaded = await this.subtitlesPlayer.load(FSManager.subtitlesPath(this.codioPath));
-      if (!loaded) {
-        this.subtitlesPlayer.destroy();
-      }
-
-      this.timer = new Timer(this.codioLength);
-      this.timer.onFinish(() => {
-        this.stop();
-        FSManager.update();
-      });
-
-      this.process = new Promise((resolve) => (this.closeCodioResolver = resolve));
-    } catch (e) {
-      console.log('loadCodio failed', e);
+    this.setInitialState();
+    this.codioPath = codioPath;
+    const metadata = FSManager.getMetadata(codioPath);
+    if (metadata.version !== CODIO_FORMAT_VERSION) {
+      UI.showModalMessage(MODAL_MESSAGE_OBJS.Incompatible);
+      throw Error(`Verison Mismatch: ${metadata.version} !== ${CODIO_FORMAT_VERSION}`);
     }
+
+    console.log('loadCodio metaData', metadata);
+    this.codioName = metadata.name;
+    this.codioLength = metadata.length;
+
+    this.editorPlayer = new EditorPlayer(workspaceToPlayOn);
+    this.editorPlayer.import(FSManager.editorPath(codioPath));
+
+    this.debugPlayer = new DebugPlayer();
+    this.debugPlayer.import(FSManager.debugPath(this.codioPath));
+
+    this.audioPlayer = new AudioHandler(FSManager.audioPath(this.codioPath), Environment.getInstance());
+
+    this.subtitlesPlayer = new Subtitles();
+    const loaded = await this.subtitlesPlayer.load(FSManager.subtitlesPath(this.codioPath));
+    if (!loaded) {
+      this.subtitlesPlayer.destroy();
+    }
+
+    this.timer = new Timer(this.codioLength);
+    this.timer.onFinish(() => {
+      this.stop();
+      FSManager.update();
+    });
+
+    this.process = new Promise((resolve) => (this.closeCodioResolver = resolve));
   }
 
   private setInitialState(): void {
@@ -134,6 +133,7 @@ export default class Player {
       if (e.kind && e.kind !== TextEditorSelectionChangeKind.Command) {
         this.onPauseHandler.dispose();
         this.pause();
+        UI.showMessage(MESSAGES.interactive);
       }
     });
   }

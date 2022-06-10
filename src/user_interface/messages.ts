@@ -12,7 +12,7 @@ import {
 } from 'vscode';
 import { Commands } from '../commands';
 import Player from '../player/Player';
-import Recorder from '../recorder/Recorder';
+import Recorder, { CODIO_FORMAT_VERSION } from '../recorder/Recorder';
 import { playerUI, recorderUI } from './popups';
 
 export const showCodioNameInputBox = async (): Promise<string> => {
@@ -97,6 +97,7 @@ export const MESSAGES = {
   recordingResumed: 'Recording resumed.',
   cantPlayWhileRecording: "Can't play codio while recording.",
   alreadyPlaying: 'Codio already playing.',
+  interactive: 'Entering interactive mode.',
 };
 
 export const MODAL_MESSAGE_OBJS = {
@@ -115,6 +116,10 @@ export const MODAL_MESSAGE_OBJS = {
   noActiveWorkspace: {
     msg: 'Active workspace needed to record a codio.',
     detail: 'Open a folder from the File menu option.',
+  },
+  Incompatible: {
+    msg: `The current codio format version is incompatible with version ${CODIO_FORMAT_VERSION}.`,
+    detail: 'Please update VS Codio version.',
   },
 };
 

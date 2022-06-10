@@ -54,7 +54,11 @@ async function loadAndPlay(player: Player, path: string, workspacePath: string) 
     }
   }
 
-  await player.loadCodio(path, workspacePath);
-  player.play(0);
-  UI.showPlayerStatusBar(player);
+  try {
+    await player.loadCodio(path, workspacePath);
+    player.play(0);
+    UI.showPlayerStatusBar(player);
+  } catch (e) {
+    console.error(e.message);
+  }
 }
