@@ -2,7 +2,7 @@ import { ChildProcess, execFile, spawn } from 'child_process';
 import { existsSync } from 'fs';
 import { sep } from 'path';
 import { unzipSync, zipSync } from 'cross-zip';
-import { getExtensionPath } from '../utils';
+import { getExtensionPath, getFFmpegVersion } from '../utils';
 import IPlatform from './IPlatform';
 import IDeviceParser from './IDeviceParser';
 
@@ -10,9 +10,16 @@ export default class Windows_NT implements IPlatform {
   // Line Parser specific
   private type = 'video';
   private lastDevice: Device;
+  private versionParse: (line: string) => boolean;
 
   public async resolveDependencies(): Promise<boolean> {
-    // TODO: ffmpeg
+    const ffmpegVersion = getFFmpegVersion();
+    if (ffmpegVersion.major > 4) {
+      this.versionParse = this.v5LineParser;
+    } else {
+      this.versionParse = this.v4LineParser;
+    }
+
     // Recorder Pause/Resume
     const libPath = `${getExtensionPath()}${sep}dependencies${sep}win${sep}win32-${process.arch}_lib.node`;
     const fileExists = existsSync(libPath);
@@ -173,15 +180,7 @@ export default class Windows_NT implements IPlatform {
    * @returns Created type and device data if given line is valid, undefined otherwise.
    */
   private lineParser(line: string): Record<string, string | Device> | undefined {
-    // Check for when video devices are encountered.
-    if (this.type === 'audio' && line.search(/DirectShow\svideo\sdevices/) > -1) {
-      this.type = 'video';
-      return;
-    }
-
-    // Check for when audio devices are encountered.
-    if (this.type === 'video' && line.search(/DirectShow\saudio\sdevices/) > -1) {
-      this.type = 'audio';
+    if (this.versionParse(line)) {
       return;
     }
 
@@ -204,5 +203,41 @@ export default class Windows_NT implements IPlatform {
     }
 
     return undefined;
+  }
+
+  /**
+   * Parse given string to check for video or audio indicators.
+   * @param line Line to check for video or audio indicators.
+   * @returns Returns false to continue parsing line.
+   */
+  private v5LineParser(line: string): boolean {
+    // Check for when video and audio devices are encountered.
+    if (this.type === 'audio' && line.search(/\(video\)/) > -1) {
+      this.type = 'video';
+    } else if (this.type === 'video' && line.search(/\(audio\)/) > -1) {
+      this.type = 'audio';
+    }
+    return false;
+  }
+
+  /**
+   * Parse given string to check for video or audio indicators.
+   * @param line Line to check for video or audio indicators.
+   * @returns Returns true to stop parsing line; false otherwise.
+   */
+  private v4LineParser(line: string): boolean {
+    // Check for when video devices are encountered.
+    if (this.type === 'audio' && line.search(/DirectShow\svideo\sdevices/) > -1) {
+      this.type = 'video';
+      return true;
+    }
+
+    // Check for when audio devices are encountered.
+    if (this.type === 'video' && line.search(/DirectShow\saudio\sdevices/) > -1) {
+      this.type = 'audio';
+      return true;
+    }
+
+    return false;
   }
 }

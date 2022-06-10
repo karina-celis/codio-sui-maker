@@ -14,10 +14,15 @@ const player = new Player();
 const recorder = new Recorder();
 
 export async function activate(context: ExtensionContext): Promise<void> {
+  UI.shouldDisplayMessages = true;
+  const hasFFmpeg = checkForFFmpeg();
+  if (!hasFFmpeg) {
+    await UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
+    return;
+  }
+
   saveExtensionPath(context.extensionPath);
   await Environment.getInstance().resolveDependencies();
-
-  UI.shouldDisplayMessages = true;
   UI.createStatusBar(context);
   registerTreeViews(fsManager, context.extensionPath);
 
@@ -45,12 +50,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   });
 
   const playStartDisposable = commands.registerCommand(Commands.PLAY_START, async (source: Uri, workspaceUri?: Uri) => {
-    const hasFFmpeg = checkForFFmpeg();
-    if (!hasFFmpeg) {
-      UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
-      return;
-    }
-
     if (recorder && recorder.isRecording) {
       UI.showMessage(MESSAGES.cantPlayWhileRecording);
       return;
@@ -98,12 +97,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
   });
 
   const recordStartDisposable = commands.registerCommand(Commands.RECORD_START, async () => {
-    const hasFFmpeg = checkForFFmpeg();
-    if (!hasFFmpeg) {
-      UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
-      return;
-    }
-
     if (player.isPlaying) {
       player.stop();
     }

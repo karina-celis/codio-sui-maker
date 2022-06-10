@@ -45,14 +45,38 @@ export function getDeviceList(deviceParser: IDeviceParser, callback?: (value: un
     return new Promise(execute) as Promise<DeviceList>;
   }
 }
+interface FFmpegVersion {
+  major: number;
+  minor: number;
+  patch: number;
+}
+
+let ffmpegVersion: FFmpegVersion = { major: 0, minor: 0, patch: 0 };
+
+export const getFFmpegVersion = (): FFmpegVersion => {
+  return ffmpegVersion;
+};
 
 /**
- * Check if FFmpeg is on the system.
- * @returns Output string of executed command or false.
+ * Check if FFmpeg is on the system and update version info.
+ * @returns Return FFmpeg version object or false otherwise.
  */
-export const checkForFFmpeg = (): string | boolean => {
+export const checkForFFmpeg = (): FFmpegVersion | boolean => {
   try {
-    return execFileSync('ffmpeg', ['-version'], { encoding: 'utf8' });
+    const output = execFileSync('ffmpeg', ['-version'], { encoding: 'utf8' });
+    const versionRE = RegExp(/\d+\.\d+\.\d+/);
+    const results = versionRE.exec(output);
+    if (!results.length) {
+      return false;
+    }
+
+    const parts = results[0].split('.');
+    ffmpegVersion = {
+      major: parseInt(parts[0]),
+      minor: parseInt(parts[1]),
+      patch: parseInt(parts[2]),
+    };
+    return ffmpegVersion;
   } catch (error) {
     console.log('error', error.message);
     return false;

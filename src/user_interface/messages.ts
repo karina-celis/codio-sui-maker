@@ -173,9 +173,9 @@ class UIController {
     }
   }
 
-  showModalMessage(mm: ModalMessage): void {
+  showModalMessage(mm: ModalMessage): Thenable<string> {
     if (this.shouldDisplayMessages) {
-      window.showInformationMessage(mm.msg, { modal: true, detail: mm.detail });
+      return window.showInformationMessage(mm.msg, { modal: true, detail: mm.detail });
     }
   }
 
