@@ -2,7 +2,7 @@ import EditorRecorder from '../editor/EditorRecorder';
 import ProgressTimer from '../ProgressTimer';
 import FSManager from '../filesystem/FSManager';
 import { Uri, commands } from 'vscode';
-import AudioHandler from '../audio/Audio';
+import AudioRecorder from '../audio/AudioRecorder';
 import Environment from '../environment/Environment';
 import DebugRecorder from '../debug/DebugRecorder';
 
@@ -14,7 +14,7 @@ const IS_PAUSED = 'isRecordingPaused';
  * Manage media to record, cancel, stop, and save recordings.
  */
 export default class Recorder {
-  audioRecorder: AudioHandler;
+  audioRecorder: AudioRecorder;
   editorRecorder: EditorRecorder;
   debugRecorder: DebugRecorder;
   timer: ProgressTimer;
@@ -39,7 +39,7 @@ export default class Recorder {
   async loadCodio(codioPath: string, codioName: string, destinationUri: Uri, workspaceUri: Uri): Promise<void> {
     console.log('loadCodio', { codioPath, codioName, destinationUri, workspaceUri });
     this.timer = new ProgressTimer(0);
-    this.audioRecorder = new AudioHandler(FSManager.audioPath(codioPath), Environment.getInstance());
+    this.audioRecorder = new AudioRecorder(FSManager.audioPath(codioPath), Environment.getInstance());
     this.editorRecorder = new EditorRecorder(workspaceUri.path);
     this.debugRecorder = new DebugRecorder();
     this.setInitialState(codioPath, codioName, destinationUri, workspaceUri);
@@ -98,7 +98,7 @@ export default class Recorder {
     this.recordingStartTime = Date.now() + 300;
 
     this.timer.start(0);
-    await this.audioRecorder.record();
+    await this.audioRecorder.start();
     await this.editorRecorder.start(this.recordingStartTime);
     this.debugRecorder.start(this.recordingStartTime);
     this.process = new Promise((resolve) => (this.stopRecordingResolver = resolve));
@@ -137,7 +137,7 @@ export default class Recorder {
 
     this.debugRecorder.stop();
     this.editorRecorder.stop();
-    await this.audioRecorder.stopRecording();
+    await this.audioRecorder.stop();
     this.timer.stop();
 
     // Todo: Check situation where pause time > recording time

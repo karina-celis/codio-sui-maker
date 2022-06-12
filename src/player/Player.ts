@@ -2,7 +2,7 @@ import EditorPlayer from '../editor/EditorPlayer';
 import ProgressTimer from '../ProgressTimer';
 import FSManager from '../filesystem/FSManager';
 import { commands, Disposable, TextEditorSelectionChangeEvent, TextEditorSelectionChangeKind, window } from 'vscode';
-import AudioHandler from '../audio/Audio';
+import AudioPlayer from '../audio/AudioPlayer';
 import SubtitlesPlayer from '../subtitles/SubtitlesPlayer';
 import Environment from '../environment/Environment';
 import DebugPlayer from '../debug/DebugPlayer';
@@ -25,7 +25,7 @@ export default class Player {
 
   editorPlayer: EditorPlayer;
   debugPlayer: DebugPlayer;
-  audioPlayer: AudioHandler;
+  audioPlayer: AudioPlayer;
   subtitlesPlayer: SubtitlesPlayer;
   timer: ProgressTimer;
 
@@ -60,7 +60,7 @@ export default class Player {
     this.debugPlayer = new DebugPlayer();
     this.debugPlayer.import(FSManager.debugPath(this.codioPath));
 
-    this.audioPlayer = new AudioHandler(FSManager.audioPath(this.codioPath), Environment.getInstance());
+    this.audioPlayer = new AudioPlayer(FSManager.audioPath(this.codioPath), Environment.getInstance());
 
     this.subtitlesPlayer = new SubtitlesPlayer();
     this.subtitlesPlayer.import(FSManager.subtitlesPath(this.codioPath));
@@ -150,7 +150,7 @@ export default class Player {
   private pauseMedia(): void {
     this.editorPlayer.stop();
     this.debugPlayer.stop();
-    this.audioPlayer.pause();
+    this.audioPlayer.stop();
     this.subtitlesPlayer.stop();
     this.timer.stop();
     this.onPauseHandler?.dispose();
@@ -182,7 +182,7 @@ export default class Player {
     this.timer.stop();
     this.editorPlayer.stop();
     this.debugPlayer.stop();
-    this.audioPlayer.pause();
+    this.audioPlayer.stop();
     this.subtitlesPlayer.stop();
     this.closeCodioResolver();
     this.onPauseHandler?.dispose();
