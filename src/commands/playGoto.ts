@@ -4,11 +4,11 @@ import { showPlayFromInputBox, UI, MODAL_MESSAGE_OBJS } from '../user_interface/
 /**
  * Make given player go to given time in milliseconds.
  * @param player Player to activate.
- * @param time Given milliseconds time to go into codio.
+ * @param timeMs Time in milliseconds to go into codio.
  */
-export default async function playGoto(player: Player, time?: number): Promise<void> {
+export default async function playGoto(player: Player, timeMs?: number): Promise<void> {
   // Ask for a time if none given.
-  if (!time) {
+  if (!timeMs) {
     let timeInSeconds = parseInt(await showPlayFromInputBox(player));
 
     // Validate input
@@ -17,13 +17,13 @@ export default async function playGoto(player: Player, time?: number): Promise<v
       return;
     } else if (timeInSeconds < 0) {
       timeInSeconds = 0;
-    } else if (timeInSeconds > player.codioLength / 1000) {
-      timeInSeconds = player.codioLength / 1000;
+    } else if (timeInSeconds > player.totalMs / 1000) {
+      timeInSeconds = player.totalMs / 1000;
     }
 
-    time = timeInSeconds * 1000;
+    timeMs = timeInSeconds * 1000;
   }
 
-  player.goto(time);
+  player.goto(timeMs);
   UI.showPlayerStatusBar(player);
 }

@@ -63,16 +63,16 @@ export default class AudioHandler {
 
   /**
    * Play audio file with no visuals and exit when done.
-   * @param time Time in seconds to seek into audio file.
+   * @param timeMs Time in milliseconds to seek into audio file.
    */
-  play(time: number): void {
+  start(timeMs: number): void {
     this.currentAudioProcess = spawn('ffplay', [
       '-hide_banner',
       '-nodisp',
       '-nostats',
       '-autoexit',
       '-ss',
-      `${time}`,
+      `${timeMs / 1000}`,
       `${this.audioFilePath}`,
     ]);
     this.pid = this.currentAudioProcess.pid;

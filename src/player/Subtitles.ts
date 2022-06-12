@@ -14,7 +14,7 @@ interface Cue {
 /**
  * Class handles loading and manipulation of the subtitles.
  */
-export default class Subtitles {
+export default class Subtitles implements IMedia {
   private oc: vscode.OutputChannel;
   private timerRef: NodeJS.Timer;
   private cues: Cue[] = [];
@@ -56,7 +56,7 @@ export default class Subtitles {
    */
   destroy(): void {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    this.play = () => { };
+    this.start = () => {};
     this.oc.dispose();
     this.oc = null;
   }
@@ -80,30 +80,15 @@ export default class Subtitles {
   }
 
   /**
-   * Play subtitles from given milliseconds.
-   * @param timeMs Milliseconds into subtitles to play.
+   * Start subtitles from given milliseconds.
+   * @param timeMs Time in milliseconds into subtitles to start.
    */
-  play(timeMs = 0): void {
-    this.stop();
-
-    this.oc.clear();
-
-    const cueIndex = this.cues.findIndex((cue) => {
-      return cue.startTime >= timeMs;
-    });
+  start(timeMs: number): void {
+    const cueIndex = this.goto(timeMs);
     if (cueIndex === -1) {
       return;
     }
 
-    // Build previous cues to display.
-    let cueOutput = 'Codio Subtitles Starting...\n';
-    const prevCues = this.cues.slice(0, cueIndex);
-    prevCues.forEach((cue, index) => {
-      cueOutput += this.getCueStr(cue) + '\n';
-    });
-    cueOutput = cueOutput.slice(0, cueOutput.length - 1); // remove last newline
-    this.display(cueOutput);
-    
     this.startMS = Date.now() - timeMs;
     const cue = this.cues[cueIndex];
     this.showCue(cue, cue.startTime - timeMs);
@@ -114,7 +99,7 @@ export default class Subtitles {
    * @param cue The current cue to show.
    * @param delay Time in milliseconds to delay showing given cue.
    */
-  showCue(cue: Cue, delay: number): void {
+  private showCue(cue: Cue, delay: number): void {
     if (!cue || isNaN(delay)) {
       return;
     }
@@ -135,17 +120,38 @@ export default class Subtitles {
   }
 
   /**
-   * Pause subtitles display.
-   */
-  pause(): void {
-    this.stop();
-  }
-
-  /**
    * Stop subtitles display.
    */
   stop(): void {
     clearTimeout(this.timerRef);
     this.timerRef = null;
+  }
+
+  /**
+   * Make media go to given time and update state.
+   * @param timeMs Time in milliseconds to go to.
+   */
+  goto(timeMs: number): number {
+    this.stop();
+
+    this.oc.clear();
+
+    const cueIndex = this.cues.findIndex((cue) => {
+      return cue.startTime >= timeMs;
+    });
+    if (cueIndex === -1) {
+      return cueIndex;
+    }
+
+    // Build previous cues to display.
+    let cueOutput = 'Codio Subtitles Starting...\n';
+    const prevCues = this.cues.slice(0, cueIndex);
+    prevCues.forEach((cue) => {
+      cueOutput += this.getCueStr(cue) + '\n';
+    });
+    cueOutput = cueOutput.slice(0, cueOutput.length - 1); // remove last newline
+    this.display(cueOutput);
+
+    return cueIndex;
   }
 }

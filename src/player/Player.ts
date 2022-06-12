@@ -1,5 +1,5 @@
 import EditorPlayer from '../editor/EditorPlayer';
-import Timer from '../ProgressTimer';
+import ProgressTimer from '../ProgressTimer';
 import FSManager from '../filesystem/FSManager';
 import { commands, Disposable, TextEditorSelectionChangeEvent, TextEditorSelectionChangeKind, window } from 'vscode';
 import AudioHandler from '../audio/Audio';
@@ -19,7 +19,7 @@ export default class Player {
   codioName: string;
   stateObservers: Array<(isPlaying: boolean, isPaused: boolean) => void>;
 
-  codioLength: number;
+  totalMs: number;
   codioStartTimeMs: number;
   elapsedTimeMs = 0;
 
@@ -27,7 +27,7 @@ export default class Player {
   debugPlayer: DebugPlayer;
   audioPlayer: AudioHandler;
   subtitlesPlayer: Subtitles;
-  timer: Timer;
+  timer: ProgressTimer;
 
   closeCodioResolver: (value?: unknown) => void;
   process: Promise<unknown>;
@@ -52,7 +52,7 @@ export default class Player {
 
     console.log('loadCodio metaData', metadata);
     this.codioName = metadata.name;
-    this.codioLength = metadata.length;
+    this.totalMs = metadata.length;
 
     this.editorPlayer = new EditorPlayer(workspaceToPlayOn);
     this.editorPlayer.import(FSManager.editorPath(codioPath));
@@ -68,7 +68,7 @@ export default class Player {
       this.subtitlesPlayer.destroy();
     }
 
-    this.timer = new Timer(this.codioLength);
+    this.timer = new ProgressTimer(this.totalMs);
     this.timer.onFinish(() => {
       this.stop();
       FSManager.update();
@@ -80,7 +80,7 @@ export default class Player {
   private setInitialState(): void {
     this.elapsedTimeMs = 0;
     this.codioStartTimeMs = undefined;
-    this.codioLength = undefined;
+    this.totalMs = undefined;
     this.closeCodioResolver = undefined;
     this.process = undefined;
     this.stateObservers = [];
@@ -100,7 +100,7 @@ export default class Player {
 
   /**
    * Play media from given time in seconds.
-   * @param timeMs Milliseconds to start playing media from.
+   * @param timeMs Time in milliseconds to start playing media from.
    */
   play(timeMs: number): void {
     if (this.isPlaying) {
@@ -115,9 +115,9 @@ export default class Player {
     this.codioStartTimeMs = Date.now(); // The editor adjusts events' time.
     this.editorPlayer.start(timeMs);
     this.debugPlayer.start(timeMs);
-    this.subtitlesPlayer.play(timeMs);
-    this.audioPlayer.play(timeMs / 1000);
-    this.timer.run(timeMs / 1000);
+    this.subtitlesPlayer.start(timeMs);
+    this.audioPlayer.start(timeMs);
+    this.timer.start(timeMs);
 
     this.isPlaying = true;
     this.updateContext(IS_PLAYING, this.isPlaying);
@@ -154,7 +154,7 @@ export default class Player {
     this.editorPlayer.stop();
     this.debugPlayer.stop();
     this.audioPlayer.pause();
-    this.subtitlesPlayer.pause();
+    this.subtitlesPlayer.stop();
     this.timer.stop();
     this.onPauseHandler?.dispose();
   }
@@ -237,8 +237,8 @@ export default class Player {
 
     // Get time from when/if the codio was paused.
     let timeToForward = this.elapsedTimeMs + timeSecs * 1000;
-    if (timeToForward > this.codioLength) {
-      timeToForward = this.codioLength;
+    if (timeToForward > this.totalMs) {
+      timeToForward = this.totalMs;
     }
     this.goto(timeToForward);
   }
@@ -250,10 +250,15 @@ export default class Player {
   goto(relativeTimeMs: number): void {
     console.log('goto', relativeTimeMs);
     this.elapsedTimeMs = relativeTimeMs;
-    if (!this.isPaused) {
-      this.pauseMedia();
-      this.resume();
+    if (this.isPaused) {
+      this.timer.goto(relativeTimeMs);
+      this.editorPlayer.goto(relativeTimeMs);
+      this.subtitlesPlayer.goto(relativeTimeMs);
+      console.log('Player.goto done');
+      return;
     }
-    // TODO: Add goto methods to media.
+
+    this.pauseMedia();
+    this.resume();
   }
 }

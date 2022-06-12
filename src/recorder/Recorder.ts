@@ -1,5 +1,5 @@
 import EditorRecorder from '../editor/EditorRecorder';
-import Timer from '../ProgressTimer';
+import ProgressTimer from '../ProgressTimer';
 import FSManager from '../filesystem/FSManager';
 import { Uri, commands } from 'vscode';
 import AudioHandler from '../audio/Audio';
@@ -17,7 +17,7 @@ export default class Recorder {
   audioRecorder: AudioHandler;
   editorRecorder: EditorRecorder;
   debugRecorder: DebugRecorder;
-  timer: Timer;
+  timer: ProgressTimer;
   codioPath: string;
   destinationUri: Uri | null;
   workspaceUri: Uri | null;
@@ -38,7 +38,7 @@ export default class Recorder {
 
   async loadCodio(codioPath: string, codioName: string, destinationUri: Uri, workspaceUri: Uri): Promise<void> {
     console.log('loadCodio', { codioPath, codioName, destinationUri, workspaceUri });
-    this.timer = new Timer();
+    this.timer = new ProgressTimer(0);
     this.audioRecorder = new AudioHandler(FSManager.audioPath(codioPath), Environment.getInstance());
     this.editorRecorder = new EditorRecorder(workspaceUri.path);
     this.debugRecorder = new DebugRecorder();
@@ -97,7 +97,7 @@ export default class Recorder {
   async startRecording(): Promise<void> {
     this.recordingStartTime = Date.now() + 300;
 
-    this.timer.run();
+    this.timer.start(0);
     await this.audioRecorder.record();
     await this.editorRecorder.start(this.recordingStartTime);
     this.debugRecorder.start(this.recordingStartTime);
@@ -175,7 +175,7 @@ export default class Recorder {
       this.pauseStartTime = 0;
     }
 
-    this.timer.run(this.timer.currentSecond);
+    this.timer.start(this.timer.currentSecond * 1000);
     await this.audioRecorder.resume();
     this.editorRecorder.start(this.recordingStartTime);
     this.debugRecorder.start(this.recordingStartTime);

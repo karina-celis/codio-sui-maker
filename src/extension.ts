@@ -26,12 +26,12 @@ export async function activate(context: ExtensionContext): Promise<void> {
   UI.createStatusBar(context);
   registerTreeViews(fsManager, context.extensionPath);
 
-  const playForwardDisposable = commands.registerCommand(Commands.PLAY_FORWARD, async (time?: number) => {
-    funcs.playForward(player, time);
+  const playForwardDisposable = commands.registerCommand(Commands.PLAY_FORWARD, async (timeMs?: number) => {
+    funcs.playForward(player, timeMs);
   });
 
-  const playGotoDisposable = commands.registerCommand(Commands.PLAY_GOTO, async (time?: number) => {
-    funcs.playGoto(player, time);
+  const playGotoDisposable = commands.registerCommand(Commands.PLAY_GOTO, async (timeMs?: number) => {
+    funcs.playGoto(player, timeMs);
     FSManager.update();
   });
 
@@ -45,8 +45,8 @@ export async function activate(context: ExtensionContext): Promise<void> {
     FSManager.update();
   });
 
-  const playRewindDisposable = commands.registerCommand(Commands.PLAY_REWIND, async (time?: number) => {
-    funcs.playRewind(player, time);
+  const playRewindDisposable = commands.registerCommand(Commands.PLAY_REWIND, async (timeMs?: number) => {
+    funcs.playRewind(player, timeMs);
   });
 
   const playStartDisposable = commands.registerCommand(Commands.PLAY_START, async (source: Uri, workspaceUri?: Uri) => {

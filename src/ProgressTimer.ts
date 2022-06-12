@@ -1,16 +1,16 @@
 /**
  * Keep track of time passed and alert any observers.
  */
-export default class CodioProgressTimer {
-  codioLength: number | undefined;
-  timer: NodeJS.Timer;
+export default class ProgressTimer implements IMedia {
+  private totalMs: number;
+  private timer: NodeJS.Timer;
   currentSecond: number;
 
   private onUpdateObservers: Array<(currentSecond: number, totalSeconds: number) => void> = [];
   private onFinishObservers: Array<() => void> = [];
 
-  constructor(codioLength?: number) {
-    this.codioLength = codioLength;
+  constructor(totalMs: number) {
+    this.totalMs = totalMs;
   }
 
   setInitialState(): void {
@@ -41,28 +41,38 @@ export default class CodioProgressTimer {
 
   /**
    * Run timer and alert observers on update and on finish.
-   * @param codioTime Time to set current second to.
+   * @param timeMs Time in milliseconds to set current second to.
    */
-  run(codioTime = 0): void {
+  start(timeMs: number): void {
     try {
       if (this.timer) {
         this.stop();
       }
 
-      this.currentSecond = codioTime;
+      this.currentSecond = timeMs / 1000;
       this.timer = setInterval(() => {
         this.currentSecond++;
 
-        if (this.codioLength && this.currentSecond > this.codioLength / 1000) {
-          this.onUpdateObservers.forEach((observer) => observer(this.codioLength / 1000, this.codioLength / 1000));
+        const totalSeconds = this.totalMs / 1000;
+        if (this.totalMs && this.currentSecond > totalSeconds) {
+          this.onUpdateObservers.forEach((observer) => observer(totalSeconds, totalSeconds));
           this.onFinishObservers.forEach((observer) => observer());
           this.stop();
         } else {
-          this.onUpdateObservers.forEach((observer) => observer(this.currentSecond, this.codioLength / 1000));
+          this.onUpdateObservers.forEach((observer) => observer(this.currentSecond, totalSeconds));
         }
       }, 1000);
     } catch (e) {
       console.log('report progress error,', e);
     }
+  }
+
+  /**
+   * Make media go to given time and update state.
+   * @param timeMs Time in milliseconds to go to.
+   */
+  goto(timeMs: number): void {
+    this.currentSecond = timeMs / 1000;
+    this.onUpdateObservers.forEach((observer) => observer(this.currentSecond, this.totalMs / 1000));
   }
 }

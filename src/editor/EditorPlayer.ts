@@ -8,7 +8,7 @@ import { nthIndex, replaceRange } from '../utils';
 import { Position, Range } from 'vscode';
 import { readFileSync } from 'fs';
 
-export default class EditorPlayer implements IImport {
+export default class EditorPlayer implements IMedia, IImport {
   currentEventTimer: NodeJS.Timer;
   workspacePath: string;
   private events: DocumentEvent[];
@@ -54,6 +54,20 @@ export default class EditorPlayer implements IImport {
     console.log('play events', events);
     console.log('play absoluteEvents', absoluteEvents.length);
     this.playEvents(absoluteEvents);
+  }
+
+  /**
+   * Make media go to given time and update state.
+   * @param timeMs Time in milliseconds to go to.
+   */
+  goto(timeMs: number): void {
+    const [pastEvts] = this.getPastAndFutureEvents(this.events, timeMs);
+    const adjustedPastEvents = this.handlePastEvents(pastEvts);
+    (async () => {
+      for (const event of adjustedPastEvents) {
+        await processEvent(event);
+      }
+    })();
   }
 
   /**
@@ -121,22 +135,26 @@ export default class EditorPlayer implements IImport {
       return this.events;
     }
 
+    const [pastEvts, futureEvts] = this.getPastAndFutureEvents(this.events, timeMs);
+    const adjustedPastEvents = this.handlePastEvents(pastEvts);
+    const adjustedFutureEvents = this.handleFutureEvents(futureEvts, timeMs);
+    return adjustedPastEvents.concat(adjustedFutureEvents);
+  }
+
+  private handlePastEvents(events: DocumentEvent[]): DocumentEvent[] {
     const vitalEvents = [];
 
-    const [pastEvts, futureEvts] = this.getPastAndFutureEvents(this.events, timeMs);
-    const adjustedEvents = createEventsWithRelativeTime(futureEvts, timeMs);
-
-    const lastVisibleRange = this.getLastEventOfType(pastEvts, DocumentEvents.DOCUMENT_VISIBLE_RANGE);
+    const lastVisibleRange = this.getLastEventOfType(events, DocumentEvents.DOCUMENT_VISIBLE_RANGE);
     if (lastVisibleRange) {
       vitalEvents.push(lastVisibleRange);
     }
 
-    const lastSelection = this.getLastEventOfType(pastEvts, DocumentEvents.DOCUMENT_SELECTION);
+    const lastSelection = this.getLastEventOfType(events, DocumentEvents.DOCUMENT_SELECTION);
     if (lastSelection) {
       vitalEvents.push(lastSelection);
     }
 
-    const coreEvents = this.getEventsWithoutTypes(pastEvts, [
+    const coreEvents = this.getEventsWithoutTypes(events, [
       DocumentEvents.DOCUMENT_VISIBLE_RANGE,
       DocumentEvents.DOCUMENT_SELECTION,
     ]);
@@ -220,7 +238,11 @@ export default class EditorPlayer implements IImport {
       clonedEvents.push(clone);
     }
 
-    return clonedEvents.concat(adjustedEvents);
+    return clonedEvents;
+  }
+
+  private handleFutureEvents(events: DocumentEvent[], timeMs: number): DocumentEvent[] {
+    return createEventsWithRelativeTime(events, timeMs);
   }
 
   /**
@@ -283,7 +305,7 @@ export default class EditorPlayer implements IImport {
       // Check for Rename events.
       const path =
         e.type === DocumentEvents.DOCUMENT_RENAME
-          ? ((e as unknown) as DocumentRenameEvent)?.data.oldUri.path
+          ? (e as unknown as DocumentRenameEvent)?.data.oldUri.path
           : e.data.uri.path;
 
       if (!paths[path]) {

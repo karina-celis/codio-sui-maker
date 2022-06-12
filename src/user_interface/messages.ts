@@ -28,7 +28,7 @@ export const showPlayFromInputBox = async (player: Player): Promise<string> => {
   return await window.showInputBox({
     ignoreFocusOut: true,
     placeHolder: 'Seconds',
-    prompt: `Valid entry from 0 to ${player.codioLength / 1000} seconds.`,
+    prompt: `Valid entry from 0 to ${player.totalMs / 1000} seconds.`,
     title: 'Starting Time',
   });
 };
