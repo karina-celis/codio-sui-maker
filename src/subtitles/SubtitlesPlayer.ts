@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as parser from 'subtitles-parser-vtt';
+import { readFileSync } from 'fs';
 
 /**
  * Cue object properties.
@@ -14,7 +15,7 @@ interface Cue {
 /**
  * Class handles loading and manipulation of the subtitles.
  */
-export default class Subtitles implements IMedia {
+export default class SubtitlesPlayer implements IMedia, IImport {
   private oc: vscode.OutputChannel;
   private timerRef: NodeJS.Timer;
   private cues: Cue[] = [];
@@ -30,13 +31,10 @@ export default class Subtitles implements IMedia {
   /**
    * Load given subtitles file and create dictionary.
    * @param filePath Subtitles file to load.
-   * @returns True if loaded correctly, false otherwise.
    */
-  async load(filePath: string): Promise<boolean> {
-    const uri = vscode.Uri.file(filePath);
-
+  import(filePath: string): void {
     try {
-      const srtData = (await vscode.workspace.openTextDocument(uri)).getText();
+      const srtData = readFileSync(filePath);
       this.cues = parser.fromSrt(srtData, 'ms');
       if (!this.cues.length) {
         throw new Error('No subtitles found.');
@@ -45,16 +43,14 @@ export default class Subtitles implements IMedia {
       this.display('Codio Subtitles Loaded');
     } catch (error) {
       console.warn('Subtitles Load', error.message);
-      return false;
+      this.destroy();
     }
-
-    return true;
   }
 
   /**
    * Release memory and guard against future errors.
    */
-  destroy(): void {
+  private destroy(): void {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.start = () => {};
     this.oc.dispose();

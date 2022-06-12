@@ -3,7 +3,7 @@ import ProgressTimer from '../ProgressTimer';
 import FSManager from '../filesystem/FSManager';
 import { commands, Disposable, TextEditorSelectionChangeEvent, TextEditorSelectionChangeKind, window } from 'vscode';
 import AudioHandler from '../audio/Audio';
-import Subtitles from './Subtitles';
+import SubtitlesPlayer from '../subtitles/SubtitlesPlayer';
 import Environment from '../environment/Environment';
 import DebugPlayer from '../debug/DebugPlayer';
 import { CODIO_FORMAT_VERSION } from '../recorder/Recorder';
@@ -26,7 +26,7 @@ export default class Player {
   editorPlayer: EditorPlayer;
   debugPlayer: DebugPlayer;
   audioPlayer: AudioHandler;
-  subtitlesPlayer: Subtitles;
+  subtitlesPlayer: SubtitlesPlayer;
   timer: ProgressTimer;
 
   closeCodioResolver: (value?: unknown) => void;
@@ -62,11 +62,8 @@ export default class Player {
 
     this.audioPlayer = new AudioHandler(FSManager.audioPath(this.codioPath), Environment.getInstance());
 
-    this.subtitlesPlayer = new Subtitles();
-    const loaded = await this.subtitlesPlayer.load(FSManager.subtitlesPath(this.codioPath));
-    if (!loaded) {
-      this.subtitlesPlayer.destroy();
-    }
+    this.subtitlesPlayer = new SubtitlesPlayer();
+    this.subtitlesPlayer.import(FSManager.subtitlesPath(this.codioPath));
 
     this.timer = new ProgressTimer(this.totalMs);
     this.timer.onFinish(() => {
