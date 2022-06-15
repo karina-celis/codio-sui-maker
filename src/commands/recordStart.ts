@@ -1,4 +1,3 @@
-import { v4 as uuid } from 'uuid';
 import { UI, MESSAGES, showChooseAudioDevice, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
 import Recorder from '../recorder/Recorder';
 import FSManager from '../filesystem/FSManager';
@@ -16,7 +15,7 @@ export default async function recordStart(
     recorder.saveRecording();
   }
 
-  const path = fsManager.createTempCodioFolder(uuid());
+  const path = fsManager.createTempCodioFolder();
   await recorder.loadCodio(path, codioName, destUri, workspaceRoot);
   const isDeviceAvailable = await recorder.setRecordingDevice(showChooseAudioDevice);
   if (!isDeviceAvailable) {

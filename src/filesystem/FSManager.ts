@@ -2,7 +2,7 @@ import { Uri } from 'vscode';
 import { tmpdir } from 'os';
 import { lstatSync, PathLike, readFileSync, writeFileSync, readdirSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'crypto';
 import { getWorkspaceCodioData } from './workspace';
 import { choose } from '../user_interface/messages';
 import { compress, decompress } from './zlib_utils';
@@ -95,9 +95,9 @@ export default class FSManager {
     onCodiosChangedSubscribers.forEach((func) => func());
   }
 
-  createTempCodioFolder(codioId: string): string {
+  createTempCodioFolder(): string {
+    const path = join(this.tempFolder, randomUUID());
     try {
-      const path = join(this.tempFolder, codioId);
       mkdirSync(path);
       return path;
     } catch (e) {
@@ -140,7 +140,7 @@ export default class FSManager {
    * @returns Temporary folder path of unzipped source.
    */
   private unzipCodio(srcPath: string): string {
-    const codioTempFolder = this.createTempCodioFolder(uuid());
+    const codioTempFolder = this.createTempCodioFolder();
     try {
       decompress(srcPath, codioTempFolder);
       return codioTempFolder;
