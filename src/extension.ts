@@ -6,7 +6,7 @@ import { registerTreeViews } from './user_interface/Viewers';
 import FSManager from './filesystem/FSManager';
 import { funcs, Commands } from './commands';
 import { getRecordProject } from './filesystem/workspace';
-import { checkForFFmpeg, isTreeItem, saveExtensionPath } from './utils';
+import { containsFFmpeg, containsTar, isTreeItem, saveExtensionPath } from './utils';
 import Environment from './environment/Environment';
 
 const fsManager = new FSManager();
@@ -15,8 +15,13 @@ const recorder = new Recorder();
 
 export async function activate(context: ExtensionContext): Promise<void> {
   UI.shouldDisplayMessages = true;
-  const hasFFmpeg = checkForFFmpeg();
-  if (!hasFFmpeg) {
+
+  if (!containsTar()) {
+    await UI.showModalMessage(MODAL_MESSAGE_OBJS.tarNotAvailable);
+    return;
+  }
+
+  if (!containsFFmpeg()) {
     await UI.showModalMessage(MODAL_MESSAGE_OBJS.ffmpegNotAvailable);
     return;
   }

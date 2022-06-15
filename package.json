@@ -15,7 +15,7 @@
   "bugs": {
     "url": "https://github.com/rbrisita/codio-sui/projects/2"
   },
-  "version": "0.14.21",
+  "version": "0.14.22",
   "license": "AGPL-3.0-only",
   "publisher": "rbrisita",
   "author": {
@@ -312,10 +312,8 @@
     "webpack-cli": "^4.7.2"
   },
   "dependencies": {
-    "cross-zip": "^3.0.0",
     "node-abort-controller": "^3.0.1",
     "subtitles-parser-vtt": "rbrisita/subtitles-parser#semver:~0.0.9",
-    "uuid": "^7.0.3",
-    "which": "^2.0.2"
+    "uuid": "^7.0.3"
   }
 }

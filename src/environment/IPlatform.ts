@@ -9,22 +9,6 @@ export default interface IPlatform {
   resolveDependencies(): Promise<boolean>;
 
   /**
-   * Save files found in given codio path to a zip file in given destination path.
-   * @param srcPath Source folder where files live.
-   * @param destPath Destination folder where created zip file will live.
-   * @note Throws an Error object.
-   */
-  zip(srcPath: string, destPath: string): void;
-
-  /**
-   * Uncompress given file to given destination.
-   * @param srcPath Path of compressed file.
-   * @param destPath Path to uncompress files to.
-   * @note Throws an Error object.
-   */
-  unzip(srcPath: string, destPath: string): void;
-
-  /**
    * Record using dependencies according to OS type.
    * @param inputDevice Input device identifier to use.
    * @param filePath File path to save at.

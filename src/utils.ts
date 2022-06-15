@@ -45,6 +45,21 @@ export function getDeviceList(deviceParser: IDeviceParser, callback?: (value: un
     return new Promise(execute) as Promise<DeviceList>;
   }
 }
+
+/**
+ * Check if the archival program `tar` exists.
+ * @returns True is `tar` exists.
+ */
+export function containsTar(): boolean {
+  try {
+    execFileSync('tar', ['--version']);
+    return true;
+  } catch (error) {
+    console.log('error', error.message);
+    return false;
+  }
+}
+
 interface FFmpegVersion {
   major: number;
   minor: number;
@@ -61,7 +76,7 @@ export const getFFmpegVersion = (): FFmpegVersion => {
  * Check if FFmpeg is on the system and update version info.
  * @returns Return FFmpeg version object or false otherwise.
  */
-export const checkForFFmpeg = (): FFmpegVersion | boolean => {
+export const containsFFmpeg = (): FFmpegVersion | boolean => {
   try {
     const output = execFileSync('ffmpeg', ['-version'], { encoding: 'utf8' });
     const versionRE = RegExp(/\d+\.\d+\.\d+/);

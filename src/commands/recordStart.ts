@@ -16,7 +16,7 @@ export default async function recordStart(
     recorder.saveRecording();
   }
 
-  const path = await fsManager.createTempCodioFolder(uuid());
+  const path = fsManager.createTempCodioFolder(uuid());
   await recorder.loadCodio(path, codioName, destUri, workspaceRoot);
   const isDeviceAvailable = await recorder.setRecordingDevice(showChooseAudioDevice);
   if (!isDeviceAvailable) {

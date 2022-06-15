@@ -121,7 +121,7 @@ export default class DebugPlayer implements IMedia, IImport {
 
   /**
    * Process debug start event.
-   * @param dse Debug start event
+   * @param dse Debug start event.
    */
   private async processDebugStart(dse: DebugStartEvent) {
     console.log('processDebugStart', dse);

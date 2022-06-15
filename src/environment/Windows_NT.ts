@@ -1,7 +1,6 @@
 import { ChildProcess, execFile, spawn } from 'child_process';
 import { existsSync } from 'fs';
 import { sep } from 'path';
-import { unzipSync, zipSync } from 'cross-zip';
 import { getExtensionPath, getFFmpegVersion } from '../utils';
 import IPlatform from './IPlatform';
 import IDeviceParser from './IDeviceParser';
@@ -59,14 +58,6 @@ export default class Windows_NT implements IPlatform {
         rej(false);
       }
     });
-  }
-
-  public zip(srcPath: string, destPath: string): void {
-    zipSync(srcPath, destPath);
-  }
-
-  public unzip(srcPath: string, destPath: string): void {
-    unzipSync(srcPath, destPath);
   }
 
   public normalizeFilePath(filePath: string): string {

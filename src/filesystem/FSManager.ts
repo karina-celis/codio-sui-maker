@@ -4,8 +4,8 @@ import { lstatSync, PathLike, readFileSync, writeFileSync, readdirSync, mkdirSyn
 import { join } from 'path';
 import { v4 as uuid } from 'uuid';
 import { getWorkspaceCodioData } from './workspace';
-import Environment from '../environment/Environment';
 import { choose } from '../user_interface/messages';
+import { compress, decompress } from './zlib_utils';
 
 const onCodiosChangedSubscribers = [];
 
@@ -75,7 +75,7 @@ export default class FSManager {
     this.saveFile(join(codioPath, CODIO_DEBUG_FILE), debugContent);
     this.saveFile(join(codioPath, CODIO_EDITOR_FILE), editorContent);
     this.saveFile(join(codioPath, CODIO_META_FILE), metaDataContent);
-    await this.zip(codioPath, destinationFolder.fsPath);
+    compress(codioPath, destinationFolder.fsPath);
     this.update();
   }
 
@@ -89,28 +89,13 @@ export default class FSManager {
   }
 
   /**
-   * Save files found in given codio path to a zip file in given destination path.
-   * @param srcPath Source folder where files live.
-   * @param destPath Destination folder where created zip file will live.
-   * @returns The destination string where the zip file was successfully saved.
-   */
-  static async zip(srcPath: string, destPath: string): Promise<string> {
-    try {
-      await Environment.getInstance().zip(srcPath, destPath);
-      return `${destPath}`;
-    } catch (e) {
-      console.log(`zip for folder ${srcPath} failed`, e);
-    }
-  }
-
-  /**
    * Alert subscribers that the configuration has changed.
    */
   static update(): void {
     onCodiosChangedSubscribers.forEach((func) => func());
   }
 
-  async createTempCodioFolder(codioId: string): Promise<string> {
+  createTempCodioFolder(codioId: string): string {
     try {
       const path = join(this.tempFolder, codioId);
       mkdirSync(path);
@@ -155,9 +140,9 @@ export default class FSManager {
    * @returns Temporary folder path of unzipped source.
    */
   private unzipCodio(srcPath: string): string {
-    const codioTempFolder = join(this.tempFolder, uuid());
+    const codioTempFolder = this.createTempCodioFolder(uuid());
     try {
-      Environment.getInstance().unzip(srcPath, codioTempFolder);
+      decompress(srcPath, codioTempFolder);
       return codioTempFolder;
     } catch (e) {
       console.error(`unzipping codio with path: ${srcPath} failed`, e);

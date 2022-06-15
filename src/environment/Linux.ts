@@ -1,15 +1,10 @@
-import { ChildProcess, execSync, spawn } from 'child_process';
-import { sep } from 'path';
-import { chmod, constants } from 'fs';
-import which = require('which');
+import { ChildProcess, spawn } from 'child_process';
 import IDeviceParser from './IDeviceParser';
 import IPlatform from './IPlatform';
-import { getExtensionPath } from '../utils';
 
 export default class Linux implements IPlatform {
   // Line Parser specific
   private type = 'audio';
-  private zipPgm = '';
 
   /**
    * Check if dependencies need to be installed.
@@ -17,81 +12,7 @@ export default class Linux implements IPlatform {
    */
   public async resolveDependencies(): Promise<boolean> {
     // TODO: ffmpeg
-
-    // Global install?
-    let found = which.sync('7z', { nothrow: true });
-    if (found) {
-      this.zipPgm = '7z';
-      return true;
-    }
-
-    // Local valid install?
-    const libPath = `${getExtensionPath()}${sep}dependencies${sep}linux${sep}`;
-    found = which.sync('7za', { nothrow: true, path: `${libPath}` });
-    if (found) {
-      this.zipPgm = `${libPath}7za`;
-      return true;
-    }
-
-    // Install and change to executable
-    const success = await this.install7zip();
-    if (success) {
-      const exeOptions =
-        constants.S_IXUSR |
-        constants.S_IXGRP |
-        constants.S_IXOTH |
-        constants.S_IRUSR |
-        constants.S_IRGRP |
-        constants.S_IROTH;
-
-      this.zipPgm = `${libPath}7za`;
-
-      // Not on Windows
-      chmod(`${this.zipPgm}`, exeOptions, (err) => {
-        console.log('chmod error: ', err);
-      });
-      console.info('Installed 7za!');
-    }
-    return success;
-  }
-
-  /**
-   * Install 7zip.
-   */
-  private install7zip(): Promise<boolean> {
-    const installPath = `${getExtensionPath()}${sep}dependencies${sep}linux${sep}install.cjs`;
-
-    return new Promise((res, rej) => {
-      try {
-        const cp = spawn('node', ['--unhandled-rejections=strict', installPath]);
-        cp.on('close', (code) => {
-          if (code) {
-            console.error('install7zip process error code:', code);
-            rej(false);
-          }
-
-          res(true);
-        });
-
-        cp.on('error', (data) => {
-          console.error('install7zip error data', data.toString());
-        });
-        cp.stderr.on('data', (data) => {
-          console.info('install7zip info:', data.toString());
-        });
-      } catch (error) {
-        console.error('Install Error', error.message);
-        rej(false);
-      }
-    });
-  }
-
-  public zip(srcPath: string, destPath: string): void {
-    execSync(`cd ${srcPath} && ${this.zipPgm} a -tzip ${destPath} .`);
-  }
-
-  public unzip(srcPath: string, destPath: string): void {
-    execSync(`${this.zipPgm} x -o${destPath} ${srcPath}`);
+    return true;
   }
 
   public async record(inputDevice: string, filePath: string): Promise<[ChildProcess, number]> {

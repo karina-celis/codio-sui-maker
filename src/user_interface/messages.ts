@@ -105,6 +105,10 @@ export const MODAL_MESSAGE_OBJS = {
   recordingCanceled: { msg: 'Recording canceled.' },
   noActiveCodio: { msg: 'No codio playing.', detail: 'Please resume or select a codio from the list.' },
   noStartTime: { msg: 'No start time entered.', detail: 'Please enter a time is seconds to start from.' },
+  tarNotAvailable: {
+    msg: 'Codio requires tar to work.',
+    detail: 'Path accessible? Please reinstall tar; it should be native to your OS.',
+  },
   ffmpegNotAvailable: {
     msg: 'Codio requires FFmpeg to work.',
     detail: 'Please install FFmpeg: https://www.ffmpeg.org/download.html',

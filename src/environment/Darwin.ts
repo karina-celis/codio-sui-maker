@@ -1,5 +1,4 @@
-import { ChildProcess, execSync, spawn } from 'child_process';
-import { unzipSync } from 'cross-zip';
+import { ChildProcess, spawn } from 'child_process';
 import IDeviceParser from './IDeviceParser';
 import IPlatform from './IPlatform';
 
@@ -14,14 +13,6 @@ export default class Darwin implements IPlatform {
   public async resolveDependencies(): Promise<boolean> {
     // TODO: ffmpeg
     return true;
-  }
-
-  public zip(srcPath: string, destPath: string): void {
-    execSync(`cd ${srcPath} && zip -r ${destPath} .`);
-  }
-
-  public unzip(srcPath: string, destPath: string): void {
-    unzipSync(srcPath, destPath);
   }
 
   public async record(inputDevice: string, filePath: string): Promise<[ChildProcess, number]> {
