@@ -18,7 +18,7 @@ import {
 } from 'vscode';
 import { TextDecoder } from 'util';
 import serializeEvents from './serialize';
-import * as eventCreators from './event_creator';
+import * as eventCreator from './event_creator';
 import { createEventsWithRelativeTime } from './event_time';
 import { DocumentEvents } from './consts';
 import { schemeSupported } from '../utils';
@@ -95,7 +95,7 @@ export default class EditorRecorder implements IMedia, IExport {
         await commands.executeCommand('workbench.action.joinEditorInGroup');
 
         // These events don't have a viewColumn because they aren't viewable yet.
-        const event = eventCreators.createDocumentEvent(
+        const event = eventCreator.createDocumentEvent(
           DocumentEvents.DOCUMENT_OPEN,
           td.uri,
           td.getText(),
@@ -110,7 +110,7 @@ export default class EditorRecorder implements IMedia, IExport {
       await commands.executeCommand('workbench.action.joinEditorInGroup');
 
       // Create active document to have focus.
-      const event = eventCreators.createDocumentEvent(
+      const event = eventCreator.createDocumentEvent(
         DocumentEvents.DOCUMENT_OPEN,
         editor.document.uri,
         editor.document.getText(),
@@ -243,7 +243,7 @@ export default class EditorRecorder implements IMedia, IExport {
     }
 
     // Switch to already opened document
-    const event = eventCreators.createDocumentEvent(
+    const event = eventCreator.createDocumentEvent(
       DocumentEvents.DOCUMENT_ACTIVE,
       td.uri,
       td.getText(),
@@ -281,7 +281,7 @@ export default class EditorRecorder implements IMedia, IExport {
     }
 
     // Create scroll event
-    const event = eventCreators.createDocumentVisibleRangeEvent(e);
+    const event = eventCreator.createDocumentVisibleRangeEvent(e);
     this.events.push(event);
   }
 
@@ -313,7 +313,7 @@ export default class EditorRecorder implements IMedia, IExport {
         }
 
         this.foldDowns.push({ line: line, path, viewColumn });
-        event = eventCreators.createDocumentFoldDownEvent(e, line);
+        event = eventCreator.createDocumentFoldDownEvent(e, line);
         this.events.push(event);
       }
     }
@@ -391,7 +391,7 @@ export default class EditorRecorder implements IMedia, IExport {
       }
 
       this.foldUps.push({ line: line, path, viewColumn });
-      event = eventCreators.createDocumentFoldUpEvent(e, line);
+      event = eventCreator.createDocumentFoldUpEvent(e, line);
       this.events.push(event);
     }
 
@@ -404,7 +404,7 @@ export default class EditorRecorder implements IMedia, IExport {
    */
   private onDidChangeTextEditorSelection(e: TextEditorSelectionChangeEvent): void {
     console.log('onDidChangeTextEditorSelection e', e);
-    const event = eventCreators.createDocumentSelectionEvent(e);
+    const event = eventCreator.createDocumentSelectionEvent(e);
     this.events.push(event);
   }
 
@@ -472,28 +472,28 @@ export default class EditorRecorder implements IMedia, IExport {
       switch (group?.state) {
         case GroupState.DESTROY: {
           groups.splice(group.index, 1);
-          const event = eventCreators.createDocumentUngroupEvent(te.document, te.viewColumn);
+          const event = eventCreator.createDocumentUngroupEvent(te.document, te.viewColumn);
           this.events.push(event);
           return;
         }
         case GroupState.CREATE: {
           group.state = GroupState.LIVE;
           group.viewColumn = te.viewColumn;
-          const event = eventCreators.createDocumentGroupEvent(te.document, te.viewColumn);
+          const event = eventCreator.createDocumentGroupEvent(te.document, te.viewColumn);
           this.events.push(event);
           return;
         }
       }
 
       // Regular visible event with possible prior group event to act like native VSCode.
-      const event = eventCreators.createDocumentVisibleEvent(te.document, te.viewColumn);
+      const event = eventCreator.createDocumentVisibleEvent(te.document, te.viewColumn);
       this.events.push(event);
 
       const foundGroup = groups.find((g) => {
         return g.state === GroupState.LIVE && g.path === te.document.uri.path && g.viewColumn !== te.viewColumn;
       });
       if (foundGroup) {
-        const event = eventCreators.createDocumentGroupEvent(te.document, te.viewColumn);
+        const event = eventCreator.createDocumentGroupEvent(te.document, te.viewColumn);
         this.events.push(event);
       }
     });
@@ -505,7 +505,7 @@ export default class EditorRecorder implements IMedia, IExport {
    */
   private onDidChangeTextEditorViewColumn(e: TextEditorViewColumnChangeEvent): void {
     console.log('onDidChangeTextEditorViewColumn e', e);
-    const event = eventCreators.createDocumentViewColumnEvent(e.textEditor.document, e.viewColumn);
+    const event = eventCreator.createDocumentViewColumnEvent(e.textEditor.document, e.viewColumn);
     this.events.push(event);
   }
 
@@ -521,7 +521,7 @@ export default class EditorRecorder implements IMedia, IExport {
       console.log('To be processed', this.processPaths);
 
       // Creating file so no content needed.
-      const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_CREATE, uri);
+      const event = eventCreator.createDocumentEvent(DocumentEvents.DOCUMENT_CREATE, uri);
       this.events.push(event);
     });
   }
@@ -542,7 +542,7 @@ export default class EditorRecorder implements IMedia, IExport {
       (async () => {
         const uInt8Arr = await workspace.fs.readFile(rename.oldUri);
         const content = new TextDecoder().decode(uInt8Arr);
-        const event = eventCreators.createDocumentRenameEvent(rename.oldUri, rename.newUri, content);
+        const event = eventCreator.createDocumentRenameEvent(rename.oldUri, rename.newUri, content);
         this.events.push(event);
       })();
     });
@@ -574,7 +574,7 @@ export default class EditorRecorder implements IMedia, IExport {
 
     // The document that is opened could be in a different state than expected.
     // No viewColumn because it is not viewable yet.
-    const event = eventCreators.createDocumentEvent(
+    const event = eventCreator.createDocumentEvent(
       DocumentEvents.DOCUMENT_OPEN,
       td.uri,
       td.getText(),
@@ -604,7 +604,7 @@ export default class EditorRecorder implements IMedia, IExport {
       this.processPaths.push(uri.path);
       console.log('To be processed', this.processPaths);
 
-      const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_DELETE, uri);
+      const event = eventCreator.createDocumentEvent(DocumentEvents.DOCUMENT_DELETE, uri);
       this.events.push(event);
     });
   }
@@ -643,9 +643,9 @@ export default class EditorRecorder implements IMedia, IExport {
 
     let event;
     if (td.isUntitled) {
-      event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_DELETE, td.uri, td.getText(), td.isUntitled);
+      event = eventCreator.createDocumentEvent(DocumentEvents.DOCUMENT_DELETE, td.uri, td.getText(), td.isUntitled);
     } else {
-      event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_CLOSE, td.uri, td.getText());
+      event = eventCreator.createDocumentEvent(DocumentEvents.DOCUMENT_CLOSE, td.uri, td.getText());
     }
     this.events.push(event);
   }
@@ -666,7 +666,7 @@ export default class EditorRecorder implements IMedia, IExport {
       return;
     }
 
-    const event = eventCreators.createDocumentChangeEvent(e);
+    const event = eventCreator.createDocumentChangeEvent(e);
     this.events.push(event);
   }
 
@@ -686,7 +686,7 @@ export default class EditorRecorder implements IMedia, IExport {
     this.processPaths.push(td.uri.path);
     console.log('To be processed', this.processPaths);
 
-    const event = eventCreators.createDocumentEvent(DocumentEvents.DOCUMENT_SAVE, td.uri, td.getText());
+    const event = eventCreator.createDocumentEvent(DocumentEvents.DOCUMENT_SAVE, td.uri, td.getText());
     this.events.push(event);
   }
 

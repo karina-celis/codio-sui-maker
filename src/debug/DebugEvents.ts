@@ -89,13 +89,13 @@ function createDebugStopEvent(): DebugStopEvent {
  */
 function serializeDebugStartEvent(dse: DebugStartEvent): SerializedDebugStartEvent {
   const { workspaceFolder, ...eventData } = dse.data;
-  return ({
+  return {
     ...dse,
     data: {
       ...eventData,
       workspaceFolderJson: JSON.stringify(workspaceFolder),
     },
-  } as unknown) as SerializedDebugStartEvent;
+  } as unknown as SerializedDebugStartEvent;
 }
 
 /**
@@ -103,13 +103,13 @@ function serializeDebugStartEvent(dse: DebugStartEvent): SerializedDebugStartEve
  */
 function deserializeDebugStartEvent(sde: SerializedDebugStartEvent): DebugStartEvent {
   const { workspaceFolderJson, ...eventData } = sde.data;
-  return ({
+  return {
     ...sde,
     data: {
       ...eventData,
       workspaceFolder: JSON.parse(workspaceFolderJson),
     },
-  } as unknown) as DebugStartEvent;
+  } as unknown as DebugStartEvent;
 }
 
 export {

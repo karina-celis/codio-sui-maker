@@ -1,4 +1,3 @@
-
 import { type as os_type } from 'os';
 import Darwin from './Darwin';
 import IPlatform from './IPlatform';
@@ -19,7 +18,7 @@ platform = 'aix'
 
 arch = 'arm', 'arm64', 'ia32', 'mips', 'mipsel', 'ppc', 'ppc64', 's390', 's390x', 'x32', and 'x64'.
 
-type = 
+type =
   Darwin,
   Linux,
   Windows_NT
@@ -33,7 +32,9 @@ const supported = {
 
 export default class Environment {
   private static instance: IPlatform;
-  private constructor() { }
+  private constructor() {
+    // Intentionally left blank.
+  }
 
   /**
    * Find OS type and create associated class for it.

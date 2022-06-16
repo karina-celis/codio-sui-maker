@@ -21,14 +21,6 @@ export function createEventsWithRelativeTime(events: DocumentEvent[], startTime:
   });
 }
 
-export function cutTimelineFrom(events: DocumentEvent[], time: number): DocumentEvent[] {
-  return events.filter((event) => event.data.time > time);
-}
-
-export function cutTimelineUntil(events: DocumentEvent[], time: number): DocumentEvent[] {
-  return events.filter((event) => event.data.time < time);
-}
-
 /**
  * Adjust given events by given start time.
  * @param eventsWithRelativeTime Editor and document events with relative time in milliseconds.

@@ -1,5 +1,5 @@
 import Player from '../player/Player';
-import { showPlayFromInputBox, UI, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
+import { showGotoInputBox, UI, MODAL_MESSAGE_OBJS } from '../user_interface/messages';
 
 /**
  * Make given player go to given time in milliseconds.
@@ -9,7 +9,7 @@ import { showPlayFromInputBox, UI, MODAL_MESSAGE_OBJS } from '../user_interface/
 export default async function playGoto(player: Player, timeMs?: number): Promise<void> {
   // Ask for a time if none given.
   if (!timeMs) {
-    let timeInSeconds = parseInt(await showPlayFromInputBox(player));
+    let timeInSeconds = parseInt(await showGotoInputBox(player));
 
     // Validate input
     if (isNaN(timeInSeconds)) {
@@ -25,5 +25,4 @@ export default async function playGoto(player: Player, timeMs?: number): Promise
   }
 
   player.goto(timeMs);
-  UI.showPlayerStatusBar(player);
 }

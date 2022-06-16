@@ -2,7 +2,7 @@ import { Position, Range } from 'vscode';
 import { readFileSync } from 'fs';
 import { clearTimeout } from 'timers';
 import { AbortController } from 'node-abort-controller';
-import { processEvent, removeSelection } from './event_dispatcher';
+import { processEvent, removeSelection } from './event_processor';
 import deserializeEvents from './deserialize';
 import { createEventsWithAbsoluteTime, createEventsWithRelativeTime, createEventWithModifiedTime } from './event_time';
 import { DocumentEvents } from './consts';

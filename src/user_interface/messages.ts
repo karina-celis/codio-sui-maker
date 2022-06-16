@@ -25,7 +25,7 @@ export const showCodioNameInputBox = async (): Promise<string> => {
   });
 };
 
-export const showPlayFromInputBox = async (player: Player): Promise<string> => {
+export const showGotoInputBox = async (player: Player): Promise<string> => {
   return await window.showInputBox({
     ignoreFocusOut: true,
     placeHolder: 'Seconds',
@@ -46,7 +46,7 @@ export const showChooseAudioDevice = async (items: string[]): Promise<string | u
 /**
  * Allow user to choose from given codios.
  * @param codiosMetadata An array of codio interface objects.
- * @returns An object containg the path and root of chosen codio or undefined.
+ * @returns An object containing the path and root of chosen codio or undefined.
  */
 export const choose = async (codiosMetadata: Codio[]): Promise<{ path: string; workspaceRoot: Uri } | undefined> => {
   let unlock: (value?: unknown) => void;
@@ -129,13 +129,10 @@ export const MODAL_MESSAGE_OBJS = {
 };
 
 class UIController {
-  shouldDisplayMessages: boolean;
   private statusBar: StatusBarItem;
   private mds: MarkdownString;
 
-  constructor(shouldDisplayMessages) {
-    this.shouldDisplayMessages = shouldDisplayMessages;
-
+  constructor() {
     this.mds = new MarkdownString('', true);
     this.mds.isTrusted = true;
     this.mds.supportHtml = true;
@@ -155,33 +152,29 @@ class UIController {
   }
 
   showMessage(message: string): void {
-    if (this.shouldDisplayMessages) {
-      window.showInformationMessage(message);
+    window.showInformationMessage(message);
 
-      // Best case effort to clear or hide notification.
-      const validMsgs = Object.values(MESSAGES);
-      setTimeout(() => {
-        commands.executeCommand('notifications.focusLastToast').then((msg: string) => {
-          if (validMsgs.indexOf(msg)) {
-            commands.executeCommand('notification.clear');
-          } else {
-            commands.executeCommand('notifications.focusPreviousToast').then((msg: string) => {
-              if (validMsgs.indexOf(msg)) {
-                commands.executeCommand('notification.clear');
-              } else {
-                commands.executeCommand('notifications.hideToasts');
-              }
-            });
-          }
-        });
-      }, 3000);
-    }
+    // Best case effort to clear or hide notification.
+    const validMsgs = Object.values(MESSAGES);
+    setTimeout(() => {
+      commands.executeCommand('notifications.focusLastToast').then((msg: string) => {
+        if (validMsgs.indexOf(msg)) {
+          commands.executeCommand('notification.clear');
+        } else {
+          commands.executeCommand('notifications.focusPreviousToast').then((msg: string) => {
+            if (validMsgs.indexOf(msg)) {
+              commands.executeCommand('notification.clear');
+            } else {
+              commands.executeCommand('notifications.hideToasts');
+            }
+          });
+        }
+      });
+    }, 3000);
   }
 
   showModalMessage(mm: ModalMessage): Thenable<string> {
-    if (this.shouldDisplayMessages) {
-      return window.showInformationMessage(mm.msg, { modal: true, detail: mm.detail });
-    }
+    return window.showInformationMessage(mm.msg, { modal: true, detail: mm.detail });
   }
 
   /**
@@ -319,4 +312,4 @@ class UIController {
   }
 }
 
-export const UI = new UIController(false);
+export const UI = new UIController();

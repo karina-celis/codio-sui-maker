@@ -137,7 +137,7 @@ async function processCreateEvent(de: DocumentEvent) {
 
     await ate.document.save();
   } else {
-    // @TODO: Check if encode parameter can be undefined
+    // TODO: Check if encode parameter can be undefined
     const content = data.content ? new TextEncoder().encode(data.content) : new Uint8Array();
     await workspace.fs.writeFile(data.uri, content);
   }

@@ -101,10 +101,6 @@ class CodioItem extends vscode.TreeItem {
   private getMsTooltip(ms: number): string {
     return Intl.NumberFormat('en-US', {
       style: 'unit',
-      // error TS2345 - NumberFormat does not have unit and unitDisplay properties.
-      // https://github.com/microsoft/TypeScript/issues/38012
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       unit: 'millisecond',
       unitDisplay: 'narrow',
     }).format(ms);

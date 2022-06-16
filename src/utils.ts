@@ -48,7 +48,7 @@ export function getDeviceList(deviceParser: IDeviceParser, callback?: (value: un
 
 /**
  * Check if the archival program `tar` exists.
- * @returns True is `tar` exists.
+ * @returns True if `tar` exists; false otherwise
  */
 export function containsTar(): boolean {
   try {

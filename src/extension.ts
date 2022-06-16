@@ -14,8 +14,6 @@ const player = new Player();
 const recorder = new Recorder();
 
 export async function activate(context: ExtensionContext): Promise<void> {
-  UI.shouldDisplayMessages = true;
-
   if (!containsTar()) {
     await UI.showModalMessage(MODAL_MESSAGE_OBJS.tarNotAvailable);
     return;
@@ -37,7 +35,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
   const playGotoDisposable = commands.registerCommand(Commands.PLAY_GOTO, async (timeMs?: number) => {
     funcs.playGoto(player, timeMs);
-    FSManager.update();
   });
 
   const playPauseDisposable = commands.registerCommand(Commands.PLAY_PAUSE, () => {

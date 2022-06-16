@@ -21,7 +21,6 @@ function serializeTextEvent(event: DocumentChangeEvent, rootPath: string): Seria
   serializeFilePath(event, rootPath);
   if (event.data.changes.length === 0) {
     console.log('serializeTextEvent with 0 length', event);
-    //@TODO: figure out which actions do not have a change
     return undefined;
   }
   const { uri, ...eventData } = event.data;

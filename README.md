@@ -3,64 +3,59 @@
   <!-- <img src="media/dark/logo.svg#gh-dark-mode-only" height="128" alt="Codio logo"/> -->
   <!-- <img src="media/light/logo.svg#gh-light-mode-only" height="128" alt="Codio logo"/> -->
 </div>
-
+<br>
+<h1 align="center">VSC Codio</h1>
 <h3 align="center">
-Codio
+A media format for VS Code to record and playback the process of programming.
 </h3>
-<h4 align="center">
-  A media format to record and playback the process of programming
-</h4>
+<hr>
+<p>
+Record VS Code events with an audio commentary and subtitles to play back at a later time.
+</p>
+<p>
+Create interactive, exploratory, developmental tutorials that engage all four learning styles. Introduce a new library, framework, or SDK. Teach, interview, or onboard a new employee to a company’s tech stack.
+</p>
 
-Create interactive tutorials, code messages and embedded documentation with a media format that turns your IDE to a media player.
+Inspired by the [Codio](https://github.com/wix-incubator/codio) prototype by [Elad Bogomolny](https://twitter.com/eladbogo).
 
-##### Check out the [demo video](https://youtu.be/XC2liN3OhA8) and [follow](https://twitter.com/eladbogo) for updates
+## Features
+* Create, open, close, rename, save, and delete files.
+* Scroll, fold, group, and split files.
+* Pause, resume. forward, or rewind.
+* Simple debug feature.
+* Subtitles available.
 
-  - [Getting Started With VSCode](./vscode/README.md)
-  - [About](#about)
-  - [Why?](#why)
-  - [Use cases](#use-cases)
-    - [Tutorials](#tutorials)
-    - [Messaging](#messaging)
-    - [Documentation](#documentation)
-  - [Continue Reading](#continue-reading)
+All VS Code OSes supported. Record on one and play on all!
 
-## About
-Codio is a media format for recording the process of programming.
+## Dependencies
+* [VS Code v1.66+](https://code.visualstudio.com/Download)
+* [FFmpeg v4+](https://ffmpeg.org/download.html)
 
-The format is composed of code editor operations and audio/video.
+### Recording a Codio
+```
+todo New Recorder GIF
+```
+<img width="800px" src="https://user-images.githubusercontent.com/8999993/81228522-dd8db580-8ff6-11ea-834b-4c5a6120c3fa.gif" />
 
-A codio recorder allows you to record the proccess of programming inside an IDE with an accompanying audio commentary. A codio player will playback that recording inside another IDE.
+### Playing a Codio
+```
+todo New Player GIF
+```
+<img width="800px" src="https://user-images.githubusercontent.com/8999993/81228503-d5ce1100-8ff6-11ea-827d-da4dc280f618.gif" />
 
-## Why?
+### UIs
+```
+todo
+```
+* Command Palette
+* View/Title UIs
+* View/Item/Context UI
+* StatusBar UI
+* StatusBar Hover UI
 
-Codio was created out of a desire to imporve learning infrastructure.
+## RoadMap
+```
+todo
+```
 
-Communication tools are core to learning.
-
-Codio aims to be a medium for effortless creation of explorable and interactive communication between programmers.
-
-## Use cases
-
-Codio is a new media format and as such enables a new medium of communication. As with every new medium, it is hard to predict which use cases will have the greatest benefit.
-
-Here are a few that seem reasonable:
-
-### Tutorials
-
-Recording tutorials in Codio is the easiest way to make your tutorial explorable and interactive.
-
-Being able to play a recording inside an IDE means that the learner can always pause and interact with the code.
-
-It also means he can use his own tools and environment immediately.
-
-### Messaging
-
-Codio opens a completely new way of async communication between programmers. Recording codio messages is effortless and the messages contain dynamic information that is otherwise hard to convey.
-
-### Documentation
-Codio could be used to enhance code by appending codios to specific functions or libraries as help.
-
-***
-## Continue Reading
-1) [Getting Started with Codio in VSCode](./vscode/vscode.md)
-2) [The Format Spec - WIP](https://github.com/rbrisita/codio-sui/wiki/Codio-Format)
+Check out the [Wiki](https://github.com/rbrisita/codio-sui/wiki) for more info.

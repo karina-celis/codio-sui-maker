@@ -176,7 +176,6 @@ export default class Player {
 
   /**
    * Stop all media.
-   * @todo Add stop method to audioPlayer.
    */
   private closeCodio(): void {
     this.timer.stop();

@@ -91,13 +91,13 @@ function deserializeTextEvent(event: SerializedDocumentChangeEvent): DocumentCha
     }
   });
 
-  return ({
+  return {
     ...event,
     data: {
       ...event.data,
       changes,
     },
-  } as unknown) as DocumentChangeEvent;
+  } as unknown as DocumentChangeEvent;
 }
 
 /**
@@ -110,13 +110,13 @@ function deserializeSelectionEvent(event: SerializedDocumentSelectionEvent): Doc
     return new Selection(deserializePosition(selection.anchor), deserializePosition(selection.active));
   });
 
-  return ({
+  return {
     ...event,
     data: {
       ...event.data,
       selections,
     },
-  } as unknown) as DocumentSelectionEvent;
+  } as unknown as DocumentSelectionEvent;
 }
 
 /**
@@ -126,13 +126,13 @@ function deserializeSelectionEvent(event: SerializedDocumentSelectionEvent): Doc
  */
 function deserializeVisibleRangeEvent(event: SerializedDocumentVisibleRangeEvent): DocumentVisibleRangeEvent {
   console.log('deserializeVisibleRangeEvent', event.data);
-  return ({
+  return {
     ...event,
     data: {
       ...event.data,
       visibleRange: deserializeRange(event.data.visibleRange),
     },
-  } as unknown) as DocumentVisibleRangeEvent;
+  } as unknown as DocumentVisibleRangeEvent;
 }
 
 function deserializeRange(range: Range): Range {

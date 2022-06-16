@@ -51,8 +51,10 @@ export default class SubtitlesPlayer implements IMedia, IImport {
    * Release memory and guard against future errors.
    */
   private destroy(): void {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    this.start = () => {};
+    this.start = () => {
+      // Intentionally left blank.
+    };
+    this.goto = () => -1;
     this.oc.dispose();
     this.oc = null;
   }

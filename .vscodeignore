@@ -2,10 +2,10 @@
 .vscode-test/**
 .codio/**
 .eslintignore
-# node_modules
-out/test/**
+node_modules
 out/src
-src/**
+out/test
+src/
 .gitignore
 vsc-extension-quickstart.md
 **/tsconfig.json
@@ -15,3 +15,4 @@ vsc-extension-quickstart.md
 deploy*.*
 *.vsix
 vscode.md
+zip.md
