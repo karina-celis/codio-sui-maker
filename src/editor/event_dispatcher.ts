@@ -46,7 +46,7 @@ const eventsToProcess = {
  * @param event Event to process.
  * @returns void.
  */
-export default async function processEvent(event: CodioEvent | DocumentEvent): Promise<void> {
+export async function processEvent(event: CodioEvent | DocumentEvent): Promise<void> {
   try {
     if (event.type in eventsToProcess) {
       console.log(DocumentEvents[event.type], event);

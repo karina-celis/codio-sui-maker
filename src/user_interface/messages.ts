@@ -9,6 +9,7 @@ import {
   QuickInputButtons,
   ThemeIcon,
   Uri,
+  ProgressLocation,
 } from 'vscode';
 import { Commands } from '../commands';
 import Player from '../player/Player';
@@ -293,6 +294,28 @@ class UIController {
     this.statusBar.command = '';
     this.statusBar.tooltip = '';
     this.statusBar.text = '';
+  }
+
+  /**
+   * Show progress of given title and observer.
+   * @param title Title to show on progress notification.
+   * @param observer Observer type to act on outcomes.
+   */
+  showProgress(title: string, observer: Observer): void {
+    window.withProgress(
+      {
+        location: ProgressLocation.Notification,
+        title,
+        cancellable: true,
+      },
+      async (progress, token) => {
+        token.onCancellationRequested(observer.cancel);
+        observer.onUpdate((increment, message) => {
+          progress.report({ increment, message });
+        });
+        await observer.unitilFinished;
+      },
+    );
   }
 }
 

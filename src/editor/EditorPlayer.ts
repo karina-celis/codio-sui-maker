@@ -1,12 +1,13 @@
+import { Position, Range } from 'vscode';
+import { readFileSync } from 'fs';
 import { clearTimeout } from 'timers';
 import { AbortController } from 'node-abort-controller';
-import processEvent, { removeSelection } from './event_dispatcher';
+import { processEvent, removeSelection } from './event_dispatcher';
 import deserializeEvents from './deserialize';
 import { createEventsWithAbsoluteTime, createEventsWithRelativeTime, createEventWithModifiedTime } from './event_time';
 import { DocumentEvents } from './consts';
 import { nthIndex, replaceRange } from '../utils';
-import { Position, Range } from 'vscode';
-import { readFileSync } from 'fs';
+import { UI } from '../user_interface/messages';
 
 export default class EditorPlayer implements IMedia, IImport {
   currentEventTimer: NodeJS.Timer;
@@ -62,10 +63,37 @@ export default class EditorPlayer implements IMedia, IImport {
    */
   goto(timeMs: number): void {
     const [pastEvts] = this.getPastAndFutureEvents(this.events, timeMs);
+    if (!pastEvts.length) {
+      return;
+    }
+
+    // Create observer to show progress of processed events.
+    let total: number;
+    let done: (value: unknown) => void;
+    let update: (increment: number, message: string) => void;
+    const observer = {
+      onUpdate: (f: (increment: number, message: string) => void) => {
+        update = f;
+      },
+      unitilFinished: new Promise((resolve) => (done = resolve)),
+      cancel: () => {
+        total = 0;
+      },
+    };
+    UI.showProgress('Processing Events', observer);
+
+    // Process events.
     const adjustedPastEvents = this.handlePastEvents(pastEvts);
+    total = adjustedPastEvents.length;
     (async () => {
-      for (const event of adjustedPastEvents) {
+      for (let i = 0; i < total; i++) {
+        const increment = ((i + 1) / total) * 100;
+        update(increment, `${i + 1} of ${total}.`);
+        const event = adjustedPastEvents[i];
         await processEvent(event);
+      }
+      if (total) {
+        done(null);
       }
     })();
   }
@@ -141,6 +169,11 @@ export default class EditorPlayer implements IMedia, IImport {
     return adjustedPastEvents.concat(adjustedFutureEvents);
   }
 
+  /**
+   * Reconcile and consolidate to important events to process.
+   * @param events Past events to reconcile and consolidate.
+   * @returns An array of important events to process.
+   */
   private handlePastEvents(events: DocumentEvent[]): DocumentEvent[] {
     const vitalEvents = [];
 

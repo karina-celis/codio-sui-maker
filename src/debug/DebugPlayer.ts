@@ -65,7 +65,7 @@ export default class DebugPlayer implements IMedia, IImport {
    */
   private processEvents(events: DebugEvent[]): void {
     if (!events.length) {
-      console.log('processEvents no events');
+      console.log('DebugPlayer processEvents no events');
       return;
     }
 
