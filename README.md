@@ -21,7 +21,7 @@ Inspired by the [Codio](https://github.com/wix-incubator/codio) prototype by [El
 ## Features
 * Create, open, close, rename, save, and delete files.
 * Scroll, fold, group, and split files.
-* Pause, resume. forward, or rewind.
+* Pause, interact, resume, forward, or rewind.
 * Simple debug feature.
 * Subtitles available.
 
@@ -43,19 +43,27 @@ todo New Player GIF
 ```
 <img width="800px" src="https://user-images.githubusercontent.com/8999993/81228503-d5ce1100-8ff6-11ea-827d-da4dc280f618.gif" />
 
-### UIs
-```
-todo
-```
-* Command Palette
-* View/Title UIs
-* View/Item/Context UI
-* StatusBar UI
-* StatusBar Hover UI
+### User Interface
+* Command Palette available
+* Side Bar view with title icons
+* Side Bar view with item icons
+* Status Bar indicator with hover controls
 
-## RoadMap
-```
-todo
-```
+## Future Functionality
+* Finalize [Canon format](https://github.com/rbrisita/codio-sui/wiki/Canon-Format)
+* Add playback speed
+* Customized FFmpeg versions to control reproducibility
+* Add more subtitle interaction
+* Identify language locale
+* Code search
+* Better UI
+* Add recording of more complex Debugger events
+* Support [VSCodium](https://vscodium.com)
+* Support Terminals
+* Support Virtual Workspaces and Documents
+* Support Web
+* Support Remote Development
+* Support SSH
+* Support Containers
 
 Check out the [Wiki](https://github.com/rbrisita/codio-sui/wiki) for more info.
