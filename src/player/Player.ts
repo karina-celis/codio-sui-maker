@@ -168,13 +168,6 @@ export default class Player {
   }
 
   /**
-   * Resume playing of loaded codio.
-   */
-  resume(): void {
-    this.play(this.elapsedTimeMs);
-  }
-
-  /**
    * Stop all media.
    */
   private closeCodio(): void {
@@ -254,7 +247,6 @@ export default class Player {
       return;
     }
 
-    this.pauseMedia();
-    this.resume();
+    this.play(this.elapsedTimeMs);
   }
 }
