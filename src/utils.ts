@@ -79,7 +79,7 @@ export const getFFmpegVersion = (): FFmpegVersion => {
 export const containsFFmpeg = (): FFmpegVersion | boolean => {
   try {
     const output = execFileSync('ffmpeg', ['-version'], { encoding: 'utf8' });
-    const versionRE = RegExp(/\d+\.\d+\.\d+/);
+    const versionRE = RegExp(/\d+\.\d+\.?\d*/);
     const results = versionRE.exec(output);
     if (!results.length) {
       return false;
