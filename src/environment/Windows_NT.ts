@@ -141,7 +141,7 @@ export default class Windows_NT implements IPlatform {
     resume(pid);
   }
 
-  async kill(pid: number): Promise<void> {
+  kill(pid: number): void {
     this.taskKill(pid);
   }
 

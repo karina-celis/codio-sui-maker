@@ -41,8 +41,21 @@ export default class Linux implements IPlatform {
     process.kill(pid, 'SIGCONT');
   }
 
-  async kill(pid: number, cp: ChildProcess): Promise<void> {
-    cp.kill();
+  kill(pid: number, cp: ChildProcess): void {
+    console.log('kill', { pid, cp });
+    if (cp) {
+      cp.kill();
+      return;
+    }
+    try {
+      process.kill(pid);
+    } catch (error) {
+      if (error.code === 'ESRCH') {
+        console.log('PID: ${pid} not found.');
+      } else {
+        console.log(`${error.code}: ${error.message}`);
+      }
+    }
   }
 
   getDeviceParser(): IDeviceParser {

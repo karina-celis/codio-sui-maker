@@ -32,7 +32,7 @@ export default interface IPlatform {
    * @param pid Process ID to stop.
    * @param cp Child process to try to quit.
    */
-  kill(pid: number, cp: ChildProcess): Promise<void>;
+  kill(pid: number, cp: ChildProcess): void;
 
   /**
    * Returns a device parser to be used to find input (audio and video) devices according to OS type.

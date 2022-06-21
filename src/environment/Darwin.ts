@@ -40,7 +40,7 @@ export default class Darwin implements IPlatform {
     process.kill(pid, 'SIGCONT');
   }
 
-  async kill(pid: number, cp: ChildProcess): Promise<void> {
+  kill(pid: number, cp: ChildProcess): void {
     // process.kill(pid); // kill ESRCH because of unresolved promise
     cp.kill();
   }
