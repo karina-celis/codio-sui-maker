@@ -7,7 +7,7 @@ import deserializeEvents from './deserialize';
 import { createEventsWithAbsoluteTime, createEventsWithRelativeTime, createEventWithModifiedTime } from './event_time';
 import { DocumentEvents } from './consts';
 import { nthIndex, replaceRange } from '../utils';
-import { UI } from '../user_interface/messages';
+import { ProgressObserver, UI } from '../user_interface/messages';
 
 export default class EditorPlayer implements IMedia, IImport {
   currentEventTimer: NodeJS.Timer;
@@ -67,33 +67,19 @@ export default class EditorPlayer implements IMedia, IImport {
       return;
     }
 
-    // Create observer to show progress of processed events.
-    let total: number;
-    let done: (value: unknown) => void;
-    let update: (increment: number, message: string) => void;
-    const observer = {
-      onUpdate: (f: (increment: number, message: string) => void) => {
-        update = f;
-      },
-      unitilFinished: new Promise((resolve) => (done = resolve)),
-      cancel: () => {
-        total = 0;
-      },
-    };
-    UI.showProgress('Processing Events', observer);
-
-    // Process events.
     const adjustedPastEvents = this.handlePastEvents(pastEvts);
-    total = adjustedPastEvents.length;
+    const obs = new ProgressObserver(adjustedPastEvents.length);
+    UI.showProgress('Processing Events', obs);
+
     (async () => {
-      for (let i = 0; i < total; i++) {
-        const increment = ((i + 1) / total) * 100;
-        update(increment, `${i + 1} of ${total}.`);
+      for (let i = 0; i < obs.total; i++) {
+        const increment = Math.round(((i + 1) / obs.total) * 100);
+        obs.update(increment, `${i + 1} of ${obs.total}.`);
         const event = adjustedPastEvents[i];
         await processEvent(event);
       }
-      if (total) {
-        done(null);
+      if (obs.total) {
+        obs.done(null);
       }
     })();
   }

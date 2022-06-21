@@ -128,6 +128,28 @@ export const MODAL_MESSAGE_OBJS = {
   },
 };
 
+/**
+ * Create an observer for the progress popup.
+ */
+export class ProgressObserver {
+  total: number;
+  update: (increment: number, message: string) => void;
+  done: (value: unknown) => void;
+  untilFinished = new Promise((resolve) => (this.done = resolve));
+
+  constructor(total = 0) {
+    this.total = total;
+  }
+
+  cancel = (): void => {
+    this.total = 0;
+  };
+
+  onUpdate = (f: (increment: number, message: string) => void): void => {
+    this.update = f;
+  };
+}
+
 class UIController {
   private statusBar: StatusBarItem;
   private mds: MarkdownString;
@@ -292,21 +314,24 @@ class UIController {
   /**
    * Show progress of given title and observer.
    * @param title Title to show on progress notification.
-   * @param observer Observer type to act on outcomes.
+   * @param observer ProgressObserver type to act on outcomes.
    */
-  showProgress(title: string, observer: Observer): void {
+  showProgress(title: string, observer: ProgressObserver): void {
     window.withProgress(
       {
         location: ProgressLocation.Notification,
         title,
-        cancellable: true,
+        cancellable: !!observer.cancel,
       },
       async (progress, token) => {
-        token.onCancellationRequested(observer.cancel);
+        if (observer.cancel) {
+          token.onCancellationRequested(observer.cancel);
+        }
         observer.onUpdate((increment, message) => {
+          console.log('observer.onUpdate', { increment, message });
           progress.report({ increment, message });
         });
-        await observer.unitilFinished;
+        await observer.untilFinished;
       },
     );
   }

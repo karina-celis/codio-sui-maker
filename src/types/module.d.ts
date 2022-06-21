@@ -215,9 +215,3 @@ declare interface ModalMessage {
   msg: string;
   detail?: string;
 }
-
-declare interface Observer {
-  onUpdate: (f: (increment: number, message: string) => void) => void;
-  unitilFinished: Promise<unknown>;
-  cancel: () => void;
-}
