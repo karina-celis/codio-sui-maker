@@ -79,7 +79,7 @@ export default class EditorPlayer implements IMedia, IImport {
         await processEvent(event);
       }
       if (obs.total) {
-        obs.done(null);
+        obs.done();
       }
     })();
   }

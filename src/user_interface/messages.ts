@@ -132,18 +132,22 @@ export const MODAL_MESSAGE_OBJS = {
  * Create an observer for the progress popup.
  */
 export class ProgressObserver {
+  cancel: (() => void) | false;
   total: number;
   update: (increment: number, message: string) => void;
-  done: (value: unknown) => void;
+  done: (value?: unknown) => void;
   untilFinished = new Promise((resolve) => (this.done = resolve));
 
-  constructor(total = 0) {
+  constructor(total = 0, cancel = true) {
     this.total = total;
+    if (cancel) {
+      this.cancel = (): void => {
+        this.total = 0;
+      };
+    } else {
+      this.cancel = false;
+    }
   }
-
-  cancel = (): void => {
-    this.total = 0;
-  };
 
   onUpdate = (f: (increment: number, message: string) => void): void => {
     this.update = f;

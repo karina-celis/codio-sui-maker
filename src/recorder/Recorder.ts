@@ -204,7 +204,7 @@ export default class Recorder {
       );
       this.recordingSavedObservers.forEach((obs) => obs());
     } catch (e) {
-      console.log('Saving recording failed', e);
+      console.error('Saving recording failed', e);
     }
   }
 }

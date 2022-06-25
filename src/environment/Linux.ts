@@ -51,9 +51,9 @@ export default class Linux implements IPlatform {
       process.kill(pid);
     } catch (error) {
       if (error.code === 'ESRCH') {
-        console.log('PID: ${pid} not found.');
+        console.warn(`PID: ${pid} not found.`);
       } else {
-        console.log(`${error.code}: ${error.message}`);
+        console.error(`${error.code}: ${error.message}`);
       }
     }
   }

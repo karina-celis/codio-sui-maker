@@ -4,7 +4,7 @@ import { lstatSync, PathLike, readFileSync, writeFileSync, readdirSync, mkdirSyn
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import { getWorkspaceCodioData } from './workspace';
-import { choose } from '../user_interface/messages';
+import { choose, ProgressObserver, UI } from '../user_interface/messages';
 import { compress, decompress } from './zlib_utils';
 
 const onCodiosChangedSubscribers = [];
@@ -72,10 +72,21 @@ export default class FSManager {
     codioPath: string,
     destinationFolder: Uri,
   ): Promise<void> {
+    const obs = new ProgressObserver(0, false);
+
+    UI.showProgress('Save Files', obs);
+    obs.update(33, `Saving '${CODIO_DEBUG_FILE}'.`);
     this.saveFile(join(codioPath, CODIO_DEBUG_FILE), debugContent);
+    obs.update(67, `Saving '${CODIO_EDITOR_FILE}'.`);
     this.saveFile(join(codioPath, CODIO_EDITOR_FILE), editorContent);
+    obs.update(100, `Saving '${CODIO_META_FILE}'.`);
     this.saveFile(join(codioPath, CODIO_META_FILE), metaDataContent);
+    obs.done();
+
+    UI.showProgress('Compressing Archive', obs);
     compress(codioPath, destinationFolder.fsPath);
+    obs.done();
+
     this.update();
   }
 
@@ -84,7 +95,7 @@ export default class FSManager {
       writeFileSync(path, content);
       console.log('The file was saved!', path);
     } catch (e) {
-      console.log('save file fail', e);
+      console.error(`Saving file: ${path} fail`, e);
     }
   }
 
@@ -209,7 +220,7 @@ export default class FSManager {
       const metaData = readFileSync(join(codioFolderPath, CODIO_META_FILE));
       return JSON.parse(metaData.toString());
     } catch (e) {
-      console.log(`Problem getting codio ${codioFolderPath} metadata`, e);
+      console.warn(`Problem getting codio ${codioFolderPath} metadata`, e);
     }
   }
 
