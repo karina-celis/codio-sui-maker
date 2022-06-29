@@ -24,7 +24,17 @@ export default class DebugPlayer implements IMedia, IImport {
   start(timeMs: number): void {
     this.ac = new AbortController();
     const events = this.getEventsFrom(timeMs);
-    const absoluteEvents = this.getAbsoluteEvents(events, Date.now());
+    const relativeEvents = events.map((event) => {
+      const newTime = event.data.time - timeMs;
+      return {
+        type: event.type,
+        data: {
+          ...event.data,
+          time: newTime,
+        },
+      };
+    });
+    const absoluteEvents = this.getAbsoluteEvents(relativeEvents, Date.now());
     this.processEvents(absoluteEvents);
   }
 
