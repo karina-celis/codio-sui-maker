@@ -338,12 +338,19 @@ async function processSaveEvent(de: DocumentEvent) {
 
 async function processSelectionEvent(dse: DocumentSelectionEvent) {
   const data = dse.data;
-  const RangesToDecorate = data.selections.map((selection: Selection) => {
+  const rangesToDecorate = data.selections.map((selection: Selection) => {
     return new Range(selection.anchor, selection.active);
   });
   const textEditor: TextEditor = findTextEditor(dse);
   if (textEditor) {
-    textEditor.setDecorations(cursorStyle, RangesToDecorate);
+    const start = (rangesToDecorate[0] as Range).start;
+    const end = (rangesToDecorate[0] as Range).end;
+    if (start.line === end.line && start.character === end.character) {
+      await textEditor.insertSnippet(new SnippetString(''), start); // Place cursor; selection(s) doesn't always work.
+      removeSelection();
+    } else {
+      textEditor.setDecorations(cursorStyle, rangesToDecorate);
+    }
   }
 
   await window.showTextDocument(data.uri, { viewColumn: data.viewColumn, preview: false });
