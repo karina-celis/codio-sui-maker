@@ -29,20 +29,20 @@ export default class SubtitlesPlayer implements IMedia, IImport {
   }
 
   /**
-   * Load given subtitles file and create dictionary.
-   * @param filePath Subtitles file to load.
+   * Import given subtitles file and create dictionary.
+   * @param filePath Subtitles file to import.
    */
   import(filePath: string): void {
     try {
-      const srtData = readFileSync(filePath);
-      this.cues = parser.fromSrt(srtData, 'ms');
+      const content = readFileSync(filePath);
+      this.cues = parser.fromSrt(content.toString(), 'ms');
       if (!this.cues.length) {
         throw new Error('No subtitles found.');
       }
 
-      this.display('Codio Subtitles Loaded');
+      this.display('Codio Subtitles Imported');
     } catch (error) {
-      console.warn('Subtitles Load', error.message);
+      console.warn('Subtitles Import', error.message);
       this.destroy();
     }
   }
