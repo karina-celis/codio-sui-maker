@@ -32,16 +32,10 @@ All VS Code OSes supported. Record on one and play on all!
 * [FFmpeg v4+](https://ffmpeg.org/download.html)
 
 ### Recording a Codio
-```
-todo New Recorder GIF
-```
-<img width="800px" src="https://user-images.githubusercontent.com/8999993/81228522-dd8db580-8ff6-11ea-834b-4c5a6120c3fa.gif" />
+<img width="800px" src="https://user-images.githubusercontent.com/98481598/177939480-a59aa89b-12cd-4672-a51f-39acfa068125.gif" />
 
 ### Playing a Codio
-```
-todo New Player GIF
-```
-<img width="800px" src="https://user-images.githubusercontent.com/8999993/81228503-d5ce1100-8ff6-11ea-827d-da4dc280f618.gif" />
+<img width="800px" src="https://user-images.githubusercontent.com/98481598/177939495-74bc48eb-ad6b-4190-95d7-cc67757c3ec8.gif" />
 
 ### User Interface
 * Command Palette available
