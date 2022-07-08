@@ -57,6 +57,7 @@ export function decompress(src: string, dest: string): void {
   const tarPath = `${dest}${sep}${tarFile}`;
   writeFileSync(tarPath, tarContents);
   restore(tarPath, dest);
+  rm(tarPath, { force: true, maxRetries: 3, recursive: true }, () => undefined);
 }
 
 /**
