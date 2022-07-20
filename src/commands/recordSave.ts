@@ -42,7 +42,7 @@ export default async function recordSave(recorder: Recorder): Promise<void> {
     // Saved opened but not visible documents
     for (let i = 0; i < obs.total; i++) {
       const td = workspace.textDocuments[i];
-      if (!schemeSupported(td.uri.scheme)) {
+      if (!td || !schemeSupported(td.uri.scheme)) {
         continue;
       }
 

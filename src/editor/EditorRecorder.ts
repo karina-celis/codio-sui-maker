@@ -87,7 +87,7 @@ export default class EditorRecorder implements IMedia, IExport {
       for (let i = 0; i < unfocusedTds.length; i++) {
         const td = unfocusedTds[i];
         if (!schemeSupported(td.uri.scheme)) {
-          return;
+          continue;
         }
 
         await window.showTextDocument(td.uri, { preserveFocus: true, preview: false });
