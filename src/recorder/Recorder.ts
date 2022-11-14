@@ -192,7 +192,12 @@ export default class Recorder {
     try {
       const debugContent = this.debugRecorder.export();
       const editorContent = this.editorRecorder.export();
-      const metaDataJsonContent = { length: this.recordingLength, name: this.codioName, version: CODIO_FORMAT_VERSION };
+      const metaDataJsonContent = { 
+        length: this.recordingLength, 
+        name: this.codioName, 
+        version: CODIO_FORMAT_VERSION,
+        events: this.debugRecorder.debugList(),
+      };
       const metaDataContent = JSON.stringify(metaDataJsonContent);
 
       await FSManager.saveRecordingToFile(

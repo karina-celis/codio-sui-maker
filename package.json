@@ -1,9 +1,9 @@
 {
-  "name": "codio-sui",
-  "displayName": "Codio-SUI",
-  "description": "Record and playback the process of programming",
+  "name": "codio-sui-maker",
+  "displayName": "Codio-SUI-Maker",
+  "description": "Record and playback the process of programming. Fork from Codio-SUI which is fork from Codio.",
   "repository": {
-    "url": "https://github.com/rbrisita/codio-sui",
+    "url": "https://github.com/karina-celis/codio-sui-maker",
     "directory": "vscode",
     "type": "git"
   },
@@ -12,17 +12,18 @@
     "/media"
   ],
   "bugs": {
-    "url": "https://github.com/rbrisita/codio-sui/projects/2"
+    "url": "https://github.com/karina-celis/codio-sui-maker/projects"
   },
-  "version": "0.14.36",
+  "version": "0.1.18",
   "license": "AGPL-3.0-only",
-  "publisher": "rbrisita",
+  "publisher": "techiemom",
   "author": {
-    "name": "Robert Brisita"
+    "name": "Techie Mom - KC"
   },
   "contributors": [
     "Elad Bogomolny",
-    "Brady Dowling"
+    "Brady Dowling",
+    "Robert Brisita"
   ],
   "icon": "media/logo.png",
   "engines": {
@@ -70,7 +71,8 @@
       {
         "command": "codio.play.goto",
         "category": "Codio",
-        "title": "Player Go To..."
+        "title": "Player Go To...",
+        "icon": "$(debug)"
       },
       {
         "command": "codio.play.pause",
@@ -199,6 +201,11 @@
           "command": "codio.play.resume",
           "when": "viewItem == codio && !isRecording && isPlaying && isPlayerPaused",
           "group": "inline"
+        },
+        {
+          "command": "codio.play.goto",
+          "when": "viewItem == debug && !isRecording && isPlaying",
+          "group": "inline"
         }
       ],
       "view/title": [
@@ -294,7 +301,7 @@
     "mocha": "^10.0.0",
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
-    "typescript": "^4.7.3",
+    "typescript": "^4.8.4",
     "vsce": "^2.9.1"
   },
   "dependencies": {

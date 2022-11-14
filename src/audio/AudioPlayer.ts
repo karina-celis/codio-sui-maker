@@ -23,7 +23,9 @@ export default class AudioPlayer extends Audio implements IMedia {
   }
 
   stop(): void {
-    this.iPlatform.kill(this.pid, this.currentAudioProcess);
-    this.currentAudioProcess = null;
+    if(this.currentAudioProcess) {
+      this.iPlatform.kill(this.pid, this.currentAudioProcess);
+      this.currentAudioProcess = null;
+    }
   }
 }
