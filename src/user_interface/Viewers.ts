@@ -33,14 +33,18 @@ export class CodiosDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
     return element;
   }
 
-  getChildren(): vscode.TreeItem[] {
+  getChildren(element?:CodioItem): vscode.TreeItem[] {
     const workspaceCodios = this.fsManager.getWorkspaceCodios();
 
     if (!workspaceCodios.length) {
       return [new RecordActionItem(this.extensionPath)];
     }
-
-    return workspaceCodios.map((codio) => new CodioItem(codio, this.extensionPath));
+    if(element){
+      return element.children;
+    }
+    return workspaceCodios.map((codio) => {
+      return new CodioItem(codio.name, codio.length, this.extensionPath, codio.uri, codio.workspaceRoot, codio.events.map((e) => new CodioItem("Debug Started", e.data.time, this.extensionPath)));
+    });
   }
 }
 
@@ -66,20 +70,35 @@ class RecordActionItem extends vscode.TreeItem {
  * Creates an interactive item to play a codio.
  */
 class CodioItem extends vscode.TreeItem {
-  constructor(codio: Codio, extensionPath: string) {
-    super(codio.name);
+  children: RecordActionItem[]|undefined;
+
+  constructor(name: string, timeMs: number, extensionPath: string, uri?: string, workspaceRoot?: string, children?: CodioItem[]) {
+    super(
+      name, 
+      children === undefined || children.length == 0 ? vscode.TreeItemCollapsibleState.None :
+      vscode.TreeItemCollapsibleState.Collapsed);
     this.iconPath = {
       dark: join(extensionPath, 'media/dark/logo.svg'),
       light: join(extensionPath, 'media/light/logo.svg'),
     };
-    this.command = {
-      command: Commands.PLAY_START,
-      title: 'Play Start',
-      arguments: [codio.uri, codio.workspaceRoot],
-    };
-    this.description = this.getTimeDescription(codio.length);
-    this.tooltip = this.getMsTooltip(codio.length);
-    this.contextValue = 'codio';
+    this.description = this.getTimeDescription(timeMs);
+    this.tooltip = this.getMsTooltip(timeMs);
+    this.children = children;
+    if(uri === undefined) {
+      this.contextValue = 'debug';
+      this.command = {
+        command: Commands.PLAY_GOTO,
+        title: `Go To Debug time ${this.description}`,
+        arguments: [timeMs]
+      };
+    } else {
+      this.contextValue = 'codio';
+      this.command = {
+        command: Commands.PLAY_START,
+        title: 'Play Start',
+        arguments: [uri, workspaceRoot],
+      };
+    }
   }
 
   /**

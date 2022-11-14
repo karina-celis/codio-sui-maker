@@ -30,6 +30,7 @@ declare interface Metadata {
   length: number;
   name: string;
   version: string;
+  events?:IEvent[];
 }
 
 declare interface Codio extends Metadata {

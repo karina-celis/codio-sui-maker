@@ -33,8 +33,13 @@ export async function activate(context: ExtensionContext): Promise<void> {
     funcs.playForward(player, timeMs);
   });
 
-  const playGotoDisposable = commands.registerCommand(Commands.PLAY_GOTO, async (timeMs?: number) => {
-    funcs.playGoto(player, timeMs);
+  const playGotoDisposable = commands.registerCommand(Commands.PLAY_GOTO, async (source?: number) => {
+    if (isTreeItem(source)) {
+      // A tree item execution by button will have the source in a different format.
+      const command = source['command'];
+      source = command?.arguments[0];
+    }
+    funcs.playGoto(player, source);
   });
 
   const playPauseDisposable = commands.registerCommand(Commands.PLAY_PAUSE, () => {

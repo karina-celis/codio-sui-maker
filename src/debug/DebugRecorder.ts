@@ -86,4 +86,22 @@ export default class DebugRecorder implements IMedia, IExport {
 
     return JSON.stringify(serializedEvents);
   }
+
+  /**
+  * Convert recorded event data times to relative times and create serialized events.
+  * @returns JSON string of serialized events.
+  */
+   debugList(): object {
+    const relativeEvents = this.events.map((e) => {
+      return {
+        ...e,
+        data: {
+          time: e.data.time - this.startTimeMs,
+        },
+      };
+    });
+
+    const serializedEvents = relativeEvents.filter((e) => e.type === DebugEvents.DEBUG_START);
+    return serializedEvents;
+   }
 }

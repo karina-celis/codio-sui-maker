@@ -1,4 +1,4 @@
-import { basename } from 'path';
+import { basename, relative } from 'path';
 import { DebugSession, WorkspaceFolder } from 'vscode';
 
 enum DebugEvents {
@@ -57,7 +57,7 @@ interface SerializedDebugStartEvent {
  */
 function createDebugStartEvent(ds: DebugSession): DebugStartEvent {
   // The program variable is the file that is being debugged.
-  const program = basename(ds.configuration['program']);
+  const program = ds.configuration['program'].replace(ds.configuration['workspaceFolder']+"/", "");
   return {
     type: DebugEvents.DEBUG_START,
     data: {

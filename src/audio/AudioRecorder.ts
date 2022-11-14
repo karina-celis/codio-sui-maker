@@ -76,8 +76,13 @@ export default class AudioRecorder extends Audio implements IMedia {
     const killFunc = () => {
       this.iPlatform.kill(this.pid, cp);
     };
-    process.once('exit', killFunc);
 
+    if(!this.processExitedCleanly(cp.exitCode, cp.signalCode)){
+      killFunc();
+      console.log('stopAudioProcess processExitedCleanly Error');
+      return;
+    }
+    process.once('exit', killFunc);
     // Listen to child process events and handle accordingly when quitting
     const p = new Promise<string>((res, rej) => {
       cp.once('exit', (code, signal) => {
@@ -104,7 +109,6 @@ export default class AudioRecorder extends Audio implements IMedia {
 
     this.quitRecording(cp);
     await p;
-
     this.clear();
   }
 
